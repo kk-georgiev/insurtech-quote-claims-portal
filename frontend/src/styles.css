@@ -1,0 +1,106 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap');
+
+:root {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  color: #132032;
+  background: #edf2f6;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 320px; min-height: 100vh; }
+h1, h2, h3, p { margin-top: 0; }
+
+.hero {
+  min-height: 430px;
+  color: #f8fbff;
+  background:
+    radial-gradient(circle at 85% 20%, rgba(43, 188, 174, 0.25), transparent 32%),
+    linear-gradient(135deg, #092238 0%, #103b57 60%, #0c4d55 100%);
+  padding: 0 max(6vw, 24px) 90px;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 24px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.12);
+}
+
+.brand-mark {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  font: 800 14px 'Manrope', sans-serif;
+  color: #092238;
+  background: #54d5c4;
+}
+
+.brand-name { font-weight: 700; }
+.connection {
+  margin-left: auto;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  background: rgba(255,255,255,0.1);
+}
+.connection::before { content: ''; display: inline-block; width: 7px; height: 7px; margin-right: 8px; border-radius: 50%; background: #f8c66a; }
+.connection--connected::before { background: #54d5c4; }
+.connection--offline::before { background: #fa8c8c; }
+
+.hero__content { max-width: 920px; margin: 0 auto; padding-top: 68px; }
+.eyebrow { margin-bottom: 12px; color: #5b7186; font-size: 12px; font-weight: 800; letter-spacing: 0.13em; }
+.hero .eyebrow { color: #54d5c4; }
+h1 { max-width: 850px; margin-bottom: 20px; font: 800 clamp(38px, 6vw, 68px)/1.04 'Manrope', sans-serif; letter-spacing: -0.045em; }
+.lead { max-width: 700px; color: #bfd0dd; font-size: 19px; line-height: 1.6; }
+.stack-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 30px; }
+.stack-list span { padding: 8px 12px; border: 1px solid rgba(255,255,255,0.17); border-radius: 8px; color: #dce8f0; font-size: 13px; }
+
+.content-grid {
+  display: grid;
+  grid-template-columns: 1.25fr 0.75fr;
+  gap: 20px;
+  width: min(1180px, calc(100% - 40px));
+  margin: -54px auto 70px;
+}
+.panel { padding: 30px; border: 1px solid #dfe7ed; border-radius: 18px; background: #fff; box-shadow: 0 14px 40px rgba(17, 46, 67, 0.07); }
+.panel--wide { grid-column: 1 / -1; }
+.panel--accent { color: #eaf8f6; background: #0e4951; border-color: #0e4951; }
+.panel--accent .eyebrow { color: #6de0d1; }
+.panel--accent p:last-child { margin-bottom: 0; color: #c4dddf; line-height: 1.7; }
+.panel__heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
+h2 { margin-bottom: 20px; font: 700 25px/1.25 'Manrope', sans-serif; letter-spacing: -0.025em; }
+.status-pill { white-space: nowrap; padding: 8px 12px; border-radius: 999px; color: #0e5b51; background: #daf6f0; font-size: 13px; font-weight: 700; }
+
+.stages { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.stage { min-height: 145px; padding: 18px; border: 1px solid #e3e9ee; border-radius: 14px; background: #f8fafb; }
+.stage--current { border-color: #54d5c4; background: #effbf8; }
+.stage__number { display: block; margin-bottom: 24px; color: #7890a1; font: 700 12px 'Manrope', sans-serif; }
+.stage h3 { margin-bottom: 7px; font: 700 16px 'Manrope', sans-serif; }
+.stage p { margin: 0; color: #64798b; font-size: 13px; line-height: 1.5; }
+
+.decision-list { display: grid; gap: 13px; margin: 0; padding: 0; list-style: none; }
+.decision-list li { position: relative; padding: 13px 14px 13px 38px; border-radius: 10px; color: #41566a; background: #f5f8fa; line-height: 1.45; }
+.decision-list li::before { content: '?'; position: absolute; left: 13px; top: 13px; display: grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; color: #fff; background: #e2a64b; font-size: 11px; font-weight: 800; }
+
+@media (max-width: 800px) {
+  .content-grid { grid-template-columns: 1fr; }
+  .stages { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 520px) {
+  .brand-name { display: none; }
+  .hero { padding-bottom: 78px; }
+  .hero__content { padding-top: 46px; }
+  .content-grid { width: min(100% - 24px, 1180px); }
+  .panel { padding: 22px; }
+  .panel__heading { display: block; }
+  .status-pill { display: inline-block; margin-bottom: 20px; }
+  .stages { grid-template-columns: 1fr; }
+}

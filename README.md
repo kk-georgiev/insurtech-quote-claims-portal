@@ -3,15 +3,16 @@
 Учебен InsurTech портал за изчисляване на оферта, издаване на автомобилна
 полица и завеждане и обработване на щета (FNOL).
 
-> Текущ етап: **техническа основа за среща с ментора**. Домейн функционалностите
-> още не са реализирани. Целта на този branch е екипът да демонстрира избрания
-> подход и да валидира важните решения, преди да започне същинската разработка.
+> Текущ етап: **първи vertical slice — Quote**. Тарифата е демонстрационна и
+> очаква mentor validation, но целият поток от React форма до запазена оферта в
+> PostgreSQL работи end to end.
 
 ## Какво работи в момента
 
-- Spring Boot backend skeleton с health endpoint и PostgreSQL конфигурация;
-- React + TypeScript frontend с mentor-checkpoint екран;
-- малък frontend → backend поток през `GET /api/v1/system/info`;
+- Spring Boot backend с валидиран Quote API и versioned pricing service;
+- React + TypeScript форма за водач, автомобил и bonus–malus;
+- прозрачна разбивка на премията по всички използвани коефициенти;
+- запазване и прочитане на quote snapshot с 30-дневна валидност;
 - PostgreSQL чрез Docker Compose и начална Flyway миграция;
 - отделни backend и frontend CI проверки;
 - документация за архитектурата, срещата с ментора и екипната работа.
@@ -104,14 +105,29 @@ npm run typecheck
 npm run build
 ```
 
-## Налични технически endpoints
+## Налични endpoints
 
 | Метод | Път | Предназначение |
 |---|---|---|
+| `POST` | `/api/v1/quotes` | изчислява и запазва оферта |
+| `GET` | `/api/v1/quotes/{id}` | връща запазен quote snapshot |
 | `GET` | `/api/v1/system/info` | демонстрация на frontend/backend връзката |
 | `GET` | `/actuator/health` | технически health check |
 
-Тези endpoints не представляват завършена бизнес функционалност.
+Примерна заявка:
+
+```json
+{
+  "driverAge": 35,
+  "drivingExperienceYears": 12,
+  "region": "SOFIA",
+  "vehiclePowerKw": 100,
+  "bonusMalusLevel": "NEUTRAL"
+}
+```
+
+Коефициентите и ограниченията са описани в
+[Quote pricing v1](docs/quote_pricing_v1.md).
 
 ## Документация
 
@@ -121,12 +137,11 @@ npm run build
 - [Въпроси към ментора](docs/questions.md)
 - [Mentor checkpoint](docs/mentor_checkpoint.md)
 - [Development diary](docs/development_diary.md)
+- [Quote pricing v1](docs/quote_pricing_v1.md)
 - [Правила за работа](docs/contributing.md)
 
 ## Следваща стъпка
 
-След срещата с ментора екипът записва решенията в
-`docs/mentor_checkpoint.md` и `docs/development_diary.md`, след което започва
-първият тънък вертикален процес: клиент и автомобил → оферта → разбивка на
-премията. Не започваме паралелно всички модули преди да е потвърден MVP
-обхватът.
+Следва mentor review на `2026.1-demo`, след което офертата получава operation за
+приемане и се създава immutable policy snapshot. Customer/vehicle master data и
+authentication се добавят, след като ролите и личните данни бъдат потвърдени.

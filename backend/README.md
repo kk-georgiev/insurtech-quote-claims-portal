@@ -1,11 +1,19 @@
 # Backend
 
-Spring Boot API skeleton for the Motor Insurance portal.
+Spring Boot API for the Motor Insurance portal.
 
 ## Current responsibility
 
-The backend currently exposes only technical checkpoint endpoints. Domain
-modules will be introduced one vertical slice at a time after mentor validation.
+The first domain module implements a persistent, versioned motor quote with
+input validation and a transparent premium breakdown. The coefficients in
+`2026.1-demo` are placeholders for mentor validation.
+
+## Quote endpoints
+
+- `POST /api/v1/quotes` — calculate and save a quote;
+- `GET /api/v1/quotes/{id}` — retrieve the saved quote snapshot.
+
+See [`docs/quote_pricing_v1.md`](../docs/quote_pricing_v1.md) for the formula.
 
 ## Commands
 
@@ -14,5 +22,6 @@ mvn spring-boot:run
 mvn verify
 ```
 
-The application expects PostgreSQL on `localhost:5432` by default. Values can
+The application expects the Docker PostgreSQL instance on host port
+`localhost:5433` by default (container port `5432`). Values can
 be overridden through `DB_URL`, `DB_USERNAME` and `DB_PASSWORD`.

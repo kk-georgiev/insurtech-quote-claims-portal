@@ -12,7 +12,7 @@ class SystemInfoControllerTest {
     void shouldDescribeTheFoundationWithoutStartingInfrastructure() {
         var response = controller.getSystemInfo();
 
-        assertThat(response.status()).isEqualTo("FOUNDATION_READY");
+        assertThat(response.status()).isEqualTo("QUOTE_SLICE_READY");
         assertThat(response.project()).contains("Motor Insurance");
         assertThat(response.stack()).contains("Java 21", "React", "PostgreSQL");
     }

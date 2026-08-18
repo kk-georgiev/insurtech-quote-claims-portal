@@ -1,7 +1,8 @@
 # Frontend
 
-React + TypeScript mentor-checkpoint application created with a minimal Vite
-setup. It intentionally contains no business forms yet.
+React + TypeScript quote calculator created with Vite. The form calls the
+Spring Boot Quote API and renders the saved premium snapshot and factor
+breakdown.
 
 ## Commands
 

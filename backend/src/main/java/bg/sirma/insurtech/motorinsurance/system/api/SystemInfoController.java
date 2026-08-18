@@ -13,7 +13,7 @@ public class SystemInfoController {
     @GetMapping("/info")
     public SystemInfoResponse getSystemInfo() {
         return new SystemInfoResponse(
-                "FOUNDATION_READY",
+                "QUOTE_SLICE_READY",
                 "Motor Insurance Quote & Claims Portal",
                 List.of("Java 21", "Spring Boot", "React", "PostgreSQL"));
     }

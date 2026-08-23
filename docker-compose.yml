@@ -19,8 +19,12 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
     ports:
       - '${POSTGRES_PORT:-5432}:5432'
+    # Mounted at the parent dir, not /var/lib/postgresql/data: the postgres:18+
+    # image expects pg_ctlcluster-style major-version-specific subdirectories
+    # under /var/lib/postgresql and refuses to start against the old-style
+    # convention (https://github.com/docker-library/postgres/pull/1259).
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-motorinsurance}']
       interval: 5s

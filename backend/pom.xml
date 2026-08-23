@@ -57,6 +57,27 @@
       <artifactId>flyway-database-postgresql</artifactId>
     </dependency>
 
+    <!-- JJWT (Story 1.3, AD-11) - issues/parses HS256-signed JWTs. api is
+         compile-time only; impl + jackson (for claims (de)serialization) are
+         runtime-only, per the library's documented usage pattern. -->
+    <dependency>
+      <groupId>io.jsonwebtoken</groupId>
+      <artifactId>jjwt-api</artifactId>
+      <version>0.13.0</version>
+    </dependency>
+    <dependency>
+      <groupId>io.jsonwebtoken</groupId>
+      <artifactId>jjwt-impl</artifactId>
+      <version>0.13.0</version>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.jsonwebtoken</groupId>
+      <artifactId>jjwt-jackson</artifactId>
+      <version>0.13.0</version>
+      <scope>runtime</scope>
+    </dependency>
+
     <dependency>
       <groupId>org.postgresql</groupId>
       <artifactId>postgresql</artifactId>

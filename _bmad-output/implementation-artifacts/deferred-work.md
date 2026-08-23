@@ -44,4 +44,12 @@ Append-only. Entries collected from bmad-build review loopbacks. Do not modify e
 
 - source_spec: `_bmad-output/implementation-artifacts/spec-1-2-client-self-registration.md`
   summary: Email is not normalized (trimmed/lowercased) before the duplicate-email check or persistence in `RegistrationService`, so `User@Example.com` and `user@example.com` can register as two distinct accounts (or collide unpredictably depending on DB collation).
-  evidence: Not required by this story's AC; worth fixing before Story 1.3 (login) if login ends up doing a case-sensitive lookup against the same column — flag for that story's planning.
+  evidence: RESOLVED in Story 1.3's review loop — two independent reviewers confirmed this exact risk materializes for login (a correctly-typed login could fail to match a differently-cased stored email), so it was fixed as a patch across both `RegistrationService` and `AuthenticationService` rather than deferred further. Kept here for history.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-1-3-login-issuing-a-role-bearing-jwt.md`
+  summary: `RegisterRequest`/`LoginRequest` allow passwords up to 100 characters, but `BCryptPasswordEncoder` only considers the first 72 bytes of input — two different passwords sharing a 72-byte prefix authenticate identically, with no truncation, warning, or documentation of the mismatch anywhere.
+  evidence: Well-known, industry-wide BCrypt characteristic, not a security bypass (doesn't weaken auth for typical passwords) — worth a consistency pass (e.g. cap both DTOs at 72, or document the limitation) whenever registration/login validation is revisited, not urgent enough to block this story.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-1-3-login-issuing-a-role-bearing-jwt.md`
+  summary: No logout capability anywhere — `frontend/src/api/authToken.ts` has `saveToken`/`getToken` but no `clearToken`, and `RootLayout`'s nav isn't auth-aware (no "Logout" link, still shows plain Register/Login after a successful login).
+  evidence: Not required by this story's AC (no role-based post-login UX yet — that's Epic 2). Natural follow-up once Epic 2's role-based routing/nav lands.

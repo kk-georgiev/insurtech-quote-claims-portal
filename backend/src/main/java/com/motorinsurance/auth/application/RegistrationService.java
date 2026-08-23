@@ -27,14 +27,26 @@ public class RegistrationService {
 
     @Transactional
     public User register(String email, String rawPassword) {
+        // Normalize before both the lookup and the persisted value: emails
+        // are case-insensitive in practice (mobile keyboards auto-capitalize,
+        // people type carelessly), but `users.email` is a plain case-sensitive
+        // UNIQUE column. Without this, "User@Example.com" and
+        // "user@example.com" would register as two distinct accounts, and
+        // login's case-sensitive lookup (AuthenticationService) would fail
+        // to match a differently-cased login attempt against either one.
+        // A separate final variable (not a reassigned parameter) because the
+        // lambda below captures it - reassigning `email` itself would no
+        // longer be effectively final and fail to compile.
+        final String normalizedEmail = email.trim().toLowerCase();
+
         // Fast path for the common case - avoids a hash+insert round trip
         // when the email is obviously already taken.
-        userRepository.findByEmail(email).ifPresent(existing -> {
-            throw new EmailAlreadyRegisteredException(email);
+        userRepository.findByEmail(normalizedEmail).ifPresent(existing -> {
+            throw new EmailAlreadyRegisteredException(normalizedEmail);
         });
 
         String passwordHash = passwordEncoder.encode(rawPassword);
-        User user = new User(email, passwordHash, Role.CLIENT);
+        User user = new User(normalizedEmail, passwordHash, Role.CLIENT);
         try {
             // saveAndFlush (not save) is required here: plain save() only
             // schedules the INSERT and normally defers it to transaction
@@ -51,7 +63,7 @@ public class RegistrationService {
             // the DB's UNIQUE constraint on users.email is the actual source
             // of truth, and its violation here still maps to the same clean
             // 409 AUTH_EMAIL_TAKEN instead of falling through as a raw 500.
-            throw new EmailAlreadyRegisteredException(email);
+            throw new EmailAlreadyRegisteredException(normalizedEmail);
         }
     }
 }

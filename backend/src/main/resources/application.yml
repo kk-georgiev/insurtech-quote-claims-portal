@@ -6,6 +6,16 @@ app:
   # both pointed at this one property prevents them drifting out of sync.
   dev-cors-origins: http://localhost:5173,http://127.0.0.1:5173
 
+# JWT issuance (Story 1.3, AD-11). `secret` mirrors the Postgres-credentials
+# ${VAR:default} pattern from Story 1.1 - the fallback here is an insecure,
+# clearly-labeled dev-only value so `mvn spring-boot:run` still works out of
+# the box on a clean checkout; a real deployment overrides it via the actual
+# JWT_SECRET environment variable (documented in .env.example). Must stay at
+# least 32 bytes long - HS256 requires a >=256-bit signing key.
+jwt:
+  secret: ${JWT_SECRET:insecure-dev-only-default-jwt-secret-do-not-use-in-any-real-deployment-override-via-JWT_SECRET}
+  expiration-hours: 8
+
 spring:
   application:
     name: motor-insurance-backend

@@ -23,8 +23,9 @@
 hs_err_pid*
 replay_pid*
 
-# BMAD (AI-first dev framework) — local tooling and generated artifacts,
-# not part of the delivered product
+# BMAD (AI-first dev framework) — the framework/tooling itself, reinstallable
+# via `npx bmad-method install`. _bmad-output/ (PRD, architecture, epics,
+# sprint tracking) is intentionally NOT ignored below — those are real team
+# decisions/documentation, not disposable tooling output.
 _bmad/
-_bmad-output/
 .claude/skills/

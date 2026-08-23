@@ -22,3 +22,9 @@
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 replay_pid*
+
+# BMAD (AI-first dev framework) — local tooling and generated artifacts,
+# not part of the delivered product
+_bmad/
+_bmad-output/
+.claude/skills/

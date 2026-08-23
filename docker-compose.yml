@@ -1,0 +1,31 @@
+# Local dev Compose file — Story 1.1 scope: `postgres` service only.
+#
+# `docker compose up postgres` starts just the database; backend and
+# frontend run natively (`mvn spring-boot:run` / `npm run dev`) against it
+# (AD-9). The `backend`/`frontend` services and their Dockerfiles are added
+# in Epic 4 (Stories 4.1/4.2) for the fully containerized stack — not here.
+#
+# Values below fall back to insecure local-dev defaults (via `${VAR:-default}`)
+# so `docker compose up postgres` works out of the box on a clean checkout.
+# Copy `.env.example` to `.env` and override them for anything beyond local dev.
+
+services:
+  postgres:
+    image: postgres:18
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-motorinsurance}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    ports:
+      - '${POSTGRES_PORT:-5432}:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-motorinsurance}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres_data:

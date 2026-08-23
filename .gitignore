@@ -29,3 +29,26 @@ replay_pid*
 # decisions/documentation, not disposable tooling output.
 _bmad/
 .claude/skills/
+
+# Environment files — never commit real secrets (NFR-2). Ignore every .env*
+# variant (.env, .env.local, .env.production, .env.staging, etc.) except the
+# template, which documents required variables with placeholders. Order
+# matters: the negation must come after the broad ignore.
+.env*
+!.env.example
+
+# Backend (Maven)
+backend/target/
+
+# Frontend (Node/Vite)
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+frontend/*.local
+frontend/*.tsbuildinfo
+npm-debug.log*
+
+# IDE
+.idea/
+*.iml
+.vscode/

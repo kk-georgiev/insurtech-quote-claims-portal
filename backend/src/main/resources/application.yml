@@ -1,0 +1,46 @@
+app:
+  # Single source of truth for the dev-only CORS allow-list: read by both
+  # shared/config/CorsConfig.java (regular @RestController endpoints) and
+  # management.endpoints.web.cors below (Actuator endpoints, which are
+  # dispatched separately and don't go through CorsConfig at all). Keeping
+  # both pointed at this one property prevents them drifting out of sync.
+  dev-cors-origins: http://localhost:5173,http://127.0.0.1:5173
+
+spring:
+  application:
+    name: motor-insurance-backend
+
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:motorinsurance}
+    username: ${POSTGRES_USER:postgres}
+    password: ${POSTGRES_PASSWORD:postgres}
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+      # Actuator endpoints are dispatched separately from regular @RestController
+      # endpoints and do NOT go through WebMvcConfigurer#addCorsMappings (see
+      # shared/config/CorsConfig.java for that side) - they need this dedicated
+      # property so the Vite dev server (:5173) can call /actuator/health
+      # directly for the Story 1.1 health round-trip. Sourced from app.dev-cors-origins
+      # above so the two CORS configs can't silently drift apart.
+      cors:
+        allowed-origins: ${app.dev-cors-origins}
+        allowed-methods: GET
+  endpoint:
+    health:
+      show-details: never

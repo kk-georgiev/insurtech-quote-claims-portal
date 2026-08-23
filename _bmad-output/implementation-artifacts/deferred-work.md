@@ -33,3 +33,15 @@ Append-only. Entries collected from bmad-build review loopbacks. Do not modify e
 - source_spec: `_bmad-output/implementation-artifacts/spec-1-1-project-scaffolding-runnable-backend-and-frontend-skeleton.md`
   summary: `application.yml` bakes the same insecure local-dev Postgres credentials in as its own defaults, with no separate profile that fails fast if those defaults are still active outside local dev.
   evidence: No production or shared deployment target exists yet (Epic 4 is still local Docker Compose); revisit once a real deployment target is defined.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-1-2-client-self-registration.md`
+  summary: Field-level validation messages (`ApiError.FieldError.message`) are raw Bean Validation text rendered directly to the user in `RegisterForm`, which contradicts AD-8's "backend never emits user-facing prose — only stable codes" invariant (the top-level `ApiError.code` already follows this; per-field errors don't).
+  evidence: Proper fix needs a stable code per validation rule plus a frontend i18n mapping, which is Epic 3's job; this milestone's I/O matrix explicitly expects "field-level messages" to reach the user, so it's an accepted simplification for now, not a regression.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-1-2-client-self-registration.md`
+  summary: `GlobalExceptionHandler` has no handler for a malformed JSON request body (`HttpMessageNotReadableException`) — it falls through to the generic 500 instead of a clean 400. Now that `/api/v1/auth/register` is the first real controller with a request body, this is reachable, not purely theoretical.
+  evidence: Not required by this story's AC/I/O matrix; consistent with the same category already deferred from Story 1.1. Worth adding once a second controller with a body lands, to do it once for the general case rather than per-endpoint.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-1-2-client-self-registration.md`
+  summary: Email is not normalized (trimmed/lowercased) before the duplicate-email check or persistence in `RegistrationService`, so `User@Example.com` and `user@example.com` can register as two distinct accounts (or collide unpredictably depending on DB collation).
+  evidence: Not required by this story's AC; worth fixing before Story 1.3 (login) if login ends up doing a case-sensitive lookup against the same column — flag for that story's planning.

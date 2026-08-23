@@ -1,15 +1,18 @@
 import { createBrowserRouter } from 'react-router';
 import { RootLayout } from './RootLayout';
 import { HealthStatus } from './HealthStatus';
+import { RegisterForm } from '../features/auth/RegisterForm';
 
-// React Router v8 owns all routing (AD-10). Near-empty this story: a single
-// index route proving the wiring via the health round-trip. Feature routes
-// (auth, quote, role-restricted shells + the role-guard wrapper) are added
-// by the stories that introduce those screens.
+// React Router v8 owns all routing (AD-10). Story 1.2 adds the first real
+// feature route (client self-registration). The role-guard wrapper and
+// remaining feature/shell routes are added by later stories.
 export const router = createBrowserRouter([
   {
     path: '/',
     element: <RootLayout />,
-    children: [{ index: true, element: <HealthStatus /> }],
+    children: [
+      { index: true, element: <HealthStatus /> },
+      { path: 'register', element: <RegisterForm /> },
+    ],
   },
 ]);

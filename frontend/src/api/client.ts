@@ -13,13 +13,29 @@ if (!API_URL) {
   );
 }
 
+/** One field-level validation failure, mirrors the backend's `ApiError.FieldError` (AD-7). */
+export interface ApiFieldError {
+  field: string;
+  message: string;
+}
+
 export class ApiRequestError extends Error {
   readonly status?: number;
+  /**
+   * The backend's stable `ApiError.code` (AD-7), when the failure was a
+   * shaped API error. This - not `message`, which is dev/log-facing only
+   * and must never be shown to an end user (AD-7/AD-8) - is what callers
+   * should branch on to pick user-facing copy.
+   */
+  readonly code?: string;
+  readonly fieldErrors?: ApiFieldError[];
 
-  constructor(message: string, status?: number) {
+  constructor(message: string, status?: number, code?: string, fieldErrors?: ApiFieldError[]) {
     super(message);
     this.name = 'ApiRequestError';
     this.status = status;
+    this.code = code;
+    this.fieldErrors = fieldErrors;
   }
 }
 
@@ -52,7 +68,25 @@ export async function apiFetch<TResponse>(
   }
 
   if (!response.ok) {
-    throw new ApiRequestError(`Request to ${path} failed with status ${response.status}`, response.status);
+    // Backend errors are shaped as the AD-7 envelope ({status, code, message,
+    // fieldErrors}); parse it out so callers can branch on `code`/`fieldErrors`
+    // instead of guessing from the HTTP status alone. Deliberately does NOT
+    // surface the envelope's `message` here - it's dev/log-facing only (AD-7).
+    let code: string | undefined;
+    let fieldErrors: ApiFieldError[] | undefined;
+    try {
+      const errorBody = (await response.json()) as Partial<{ code: string; fieldErrors: ApiFieldError[] }>;
+      code = errorBody?.code;
+      fieldErrors = errorBody?.fieldErrors;
+    } catch {
+      // Non-JSON error body (e.g. a plain-text 404) - fall back below.
+    }
+    throw new ApiRequestError(
+      `Request to ${path} failed with status ${response.status}`,
+      response.status,
+      code,
+      fieldErrors,
+    );
   }
 
   if (response.status === 204) {

@@ -17,10 +17,13 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
  * into the uniform {@link ApiError} envelope - no module handles its own
  * error shaping.
  *
- * <p>This story only seeds the generic, module-agnostic cases (request
- * validation failures and an unhandled-exception fallback). Module-specific
- * exceptions (e.g. {@code AUTH_INVALID_CREDENTIALS}) are added here by the
- * story that introduces them, each paired with its i18n entry per AD-7/AD-8.
+ * <p>Generic, module-agnostic cases (request validation failures and an
+ * unhandled-exception fallback) are seeded here directly. Module-specific
+ * errors are modeled as an {@link ApiException} subclass and handled by the
+ * single generic {@code @ExceptionHandler(ApiException.class)} method below
+ * - a new module error (e.g. {@code AUTH_INVALID_CREDENTIALS},
+ * {@code QUOTE_VALIDATION_ERROR}) never requires a new handler method here,
+ * only a new {@link ApiException} subclass plus its i18n entry per AD-7/AD-8.
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -55,6 +58,12 @@ public class GlobalExceptionHandler {
         ApiError body = ApiError.of(
                 HttpStatus.BAD_REQUEST.value(), VALIDATION_ERROR_CODE, "Request validation failed", fieldErrors);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+    }
+
+    @ExceptionHandler(ApiException.class)
+    public ResponseEntity<ApiError> handleApiException(ApiException ex) {
+        ApiError body = ApiError.of(ex.getStatus(), ex.getCode(), ex.getMessage(), ex.getFieldErrors());
+        return ResponseEntity.status(ex.getStatus()).body(body);
     }
 
     @ExceptionHandler(Exception.class)

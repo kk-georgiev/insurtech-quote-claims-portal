@@ -1,0 +1,151 @@
+import { useEffect, useRef, useState } from 'react';
+import type { FormEvent } from 'react';
+import { apiFetch, ApiRequestError } from '../../api/client';
+import type { ApiFieldError } from '../../api/client';
+
+interface RegisterResponse {
+  id: string;
+  email: string;
+  role: string;
+}
+
+type FormPhase = 'editing' | 'submitting' | 'success';
+
+// AD-7: `code` is the only thing the frontend uses to select user-facing
+// text - never the backend's dev/log-facing `message`. This story has no
+// i18n catalog yet (out of scope - see spec Design Notes), so the mapped
+// copy lives here as a plain string for now.
+const EMAIL_TAKEN_MESSAGE = 'This email is already registered.';
+const GENERIC_ERROR_MESSAGE = 'Something went wrong. Please try again.';
+
+function toFieldErrorMap(errors: ApiFieldError[]): Record<string, string> {
+  const map: Record<string, string> = {};
+  for (const error of errors) {
+    map[error.field] = error.message;
+  }
+  return map;
+}
+
+/**
+ * Client self-registration screen (Story 1.2). Always registers as CLIENT -
+ * there is no role selector, matching the backend's privilege-escalation
+ * invariant. No redirect to a login screen on success (it doesn't exist yet,
+ * Story 1.3) - shows a success state in place instead.
+ */
+export function RegisterForm() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [phase, setPhase] = useState<FormPhase>('editing');
+  const [formError, setFormError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  // Unmount guard, same intent as HealthStatus.tsx's `cancelled` flag: the
+  // request can still resolve after the user navigates away mid-submit, and
+  // without this the `then`/`catch` handlers below would call state setters
+  // on an unmounted component. A ref (not a plain effect-local variable) is
+  // needed here because the async work is kicked off from the submit event
+  // handler, not from an effect - but that means the mount effect must
+  // explicitly reset it to `false`, not just register the `true`-setting
+  // cleanup: React's StrictMode dev double-invoke (mount -> cleanup -> mount)
+  // would otherwise leave a stale `true` behind after the very first mount,
+  // permanently blocking every future submit's state updates.
+  const cancelledRef = useRef(false);
+  useEffect(() => {
+    cancelledRef.current = false;
+    return () => {
+      cancelledRef.current = true;
+    };
+  }, []);
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setPhase('submitting');
+    setFormError(null);
+    setFieldErrors({});
+
+    try {
+      await apiFetch<RegisterResponse>('/api/v1/auth/register', {
+        method: 'POST',
+        body: { email, password },
+      });
+      if (cancelledRef.current) return;
+      setPhase('success');
+    } catch (error) {
+      if (cancelledRef.current) return;
+
+      // Form stays editable after any error - never locked/cleared.
+      setPhase('editing');
+
+      if (error instanceof ApiRequestError) {
+        if (error.code === 'AUTH_EMAIL_TAKEN') {
+          setFormError(EMAIL_TAKEN_MESSAGE);
+          return;
+        }
+        if (error.fieldErrors && error.fieldErrors.length > 0) {
+          setFieldErrors(toFieldErrorMap(error.fieldErrors));
+          return;
+        }
+      }
+      setFormError(GENERIC_ERROR_MESSAGE);
+    }
+  }
+
+  if (phase === 'success') {
+    return (
+      <section>
+        <h2>Registration successful</h2>
+        <p data-testid="register-success">
+          Your account has been created. You will be able to log in once the login screen is available.
+        </p>
+      </section>
+    );
+  }
+
+  const submitting = phase === 'submitting';
+
+  return (
+    <section>
+      <h2>Create an account</h2>
+      <form onSubmit={handleSubmit} noValidate>
+        <div>
+          <label htmlFor="register-email">Email</label>
+          <input
+            id="register-email"
+            name="email"
+            type="email"
+            autoComplete="email"
+            required
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            disabled={submitting}
+          />
+          {fieldErrors.email && <p role="alert">{fieldErrors.email}</p>}
+        </div>
+        <div>
+          <label htmlFor="register-password">Password</label>
+          <input
+            id="register-password"
+            name="password"
+            type="password"
+            autoComplete="new-password"
+            required
+            minLength={8}
+            maxLength={100}
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            disabled={submitting}
+          />
+          {fieldErrors.password && <p role="alert">{fieldErrors.password}</p>}
+        </div>
+        {formError && (
+          <p role="alert" data-testid="register-error">
+            {formError}
+          </p>
+        )}
+        <button type="submit" disabled={submitting}>
+          {submitting ? 'Creating account…' : 'Register'}
+        </button>
+      </form>
+    </section>
+  );
+}

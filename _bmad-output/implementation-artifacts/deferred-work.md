@@ -53,3 +53,11 @@ Append-only. Entries collected from bmad-build review loopbacks. Do not modify e
 - source_spec: `_bmad-output/implementation-artifacts/spec-1-3-login-issuing-a-role-bearing-jwt.md`
   summary: No logout capability anywhere — `frontend/src/api/authToken.ts` has `saveToken`/`getToken` but no `clearToken`, and `RootLayout`'s nav isn't auth-aware (no "Logout" link, still shows plain Register/Login after a successful login).
   evidence: Not required by this story's AC (no role-based post-login UX yet — that's Epic 2). Natural follow-up once Epic 2's role-based routing/nav lands.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-1-4-backend-enforced-access-to-the-quote-endpoints.md`
+  summary: `JwtAuthenticationFilter`'s `"Bearer "` prefix match is case-sensitive, so a technically-valid `Authorization: bearer <token>` header (RFC 7235 scheme names are case-insensitive) is silently treated as anonymous and gets the generic 401 instead of being accepted.
+  evidence: Review-loop finding (edge-case-hunter). Every client this project controls (the frontend's own `apiFetch`, manual curl in docs) sends canonical `"Bearer"` casing, so there is no current trigger; worth a `regionMatches(true, ...)` fix if a non-canonical client is ever integrated.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-1-4-backend-enforced-access-to-the-quote-endpoints.md`
+  summary: `JwtAuthenticationFilterTest`'s expired-token test case re-derives the HMAC signing key from `jwt.secret` via `Keys.hmacShaKeyFor(...)` to forge a token, duplicating `JwtService`'s own private key-construction logic instead of using a seam on `JwtService` itself.
+  evidence: Review-loop finding (blind-hunter). Works correctly today because both places read the same property with the same JJWT call; if `JwtService`'s key-construction ever changes (e.g. a different KDF or key format), this test could silently start signing with a different key than production code verifies with, and drift undetected. Worth exposing a package-private/test-scoped key accessor on `JwtService` if this pattern is needed again.

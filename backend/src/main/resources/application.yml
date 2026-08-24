@@ -1,9 +1,10 @@
 app:
   # Single source of truth for the dev-only CORS allow-list: read by both
-  # shared/config/CorsConfig.java (regular @RestController endpoints) and
-  # management.endpoints.web.cors below (Actuator endpoints, which are
-  # dispatched separately and don't go through CorsConfig at all). Keeping
-  # both pointed at this one property prevents them drifting out of sync.
+  # shared/config/CorsConfig.java's CorsConfigurationSource (consumed by
+  # SecurityConfig's filter chain, which now covers every request including
+  # Actuator's) and management.endpoints.web.cors below. Keeping both
+  # pointed at this one property prevents them drifting out of sync even
+  # though the latter is likely redundant since Story 1.4 (see its comment).
   dev-cors-origins: http://localhost:5173,http://127.0.0.1:5173
 
 # JWT issuance (Story 1.3, AD-11). `secret` mirrors the Postgres-credentials
@@ -42,12 +43,17 @@ management:
     web:
       exposure:
         include: health
-      # Actuator endpoints are dispatched separately from regular @RestController
-      # endpoints and do NOT go through WebMvcConfigurer#addCorsMappings (see
-      # shared/config/CorsConfig.java for that side) - they need this dedicated
-      # property so the Vite dev server (:5173) can call /actuator/health
-      # directly for the Story 1.1 health round-trip. Sourced from app.dev-cors-origins
-      # above so the two CORS configs can't silently drift apart.
+      # Historically needed because Actuator endpoints were dispatched
+      # separately from regular @RestController endpoints and didn't go
+      # through shared/config/CorsConfig.java's WebMvcConfigurer. Since
+      # Story 1.4, that config exposes a CorsConfigurationSource consumed
+      # directly by SecurityConfig's filter chain, which now sits in front
+      # of every request including /actuator/health - so this property is
+      # likely redundant with that mechanism today. Left in place rather
+      # than removed without re-verifying Actuator's CORS behavior end to
+      # end; still sourced from the same app.dev-cors-origins property above
+      # so it can't silently drift from the Security-chain config even if
+      # both remain active.
       cors:
         allowed-origins: ${app.dev-cors-origins}
         allowed-methods: GET

@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -64,6 +65,27 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiError> handleApiException(ApiException ex) {
         ApiError body = ApiError.of(ex.getStatus(), ex.getCode(), ex.getMessage(), ex.getFieldErrors());
         return ResponseEntity.status(ex.getStatus()).body(body);
+    }
+
+    /**
+     * Deliberately re-throws rather than handling (Story 1.4, AD-4/AD-7).
+     * A {@code @PreAuthorize} denial (e.g. wrong role on a Quote endpoint)
+     * throws {@code AccessDeniedException} *during* controller method
+     * invocation - i.e. from inside {@code DispatcherServlet}, where this
+     * {@code @RestControllerAdvice} would otherwise be the first thing to
+     * see it and - via the generic {@link #handleUnexpected} fallback below
+     * - turn a should-be-403 into an opaque 500. Re-throwing makes this
+     * resolver decline to handle it, so it propagates back out through the
+     * servlet filter chain to Spring Security's {@code
+     * ExceptionTranslationFilter}, which is what actually renders the
+     * uniform 403 {@code AUTH_FORBIDDEN} envelope (see {@code
+     * auth.config.SecurityConfig}'s {@code AccessDeniedHandler}) - keeping
+     * exactly one place that builds that response, whether the denial came
+     * from a URL-level rule or a method-level {@code @PreAuthorize} check.
+     */
+    @ExceptionHandler(AccessDeniedException.class)
+    public void rethrowAccessDenied(AccessDeniedException ex) throws AccessDeniedException {
+        throw ex;
     }
 
     @ExceptionHandler(Exception.class)

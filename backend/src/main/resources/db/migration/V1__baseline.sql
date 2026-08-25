@@ -1,0 +1,7 @@
+-- V1 baseline migration.
+--
+-- Intentionally empty. No backend module owns a database table yet: modules
+-- are created on demand, not pre-scaffolded (AD-6). This migration exists
+-- only to prove Flyway runs cleanly against a fresh database; each module
+-- adds its own V{n}__*.sql migration(s) in the story that first introduces
+-- its schema.

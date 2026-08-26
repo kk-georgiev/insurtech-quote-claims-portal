@@ -54,7 +54,7 @@ NFR-6 (i18n maintainability): Adding a new screen or message later must not requ
 - AD-10: React Router v8; one role-guard wrapper component gates role-restricted routes; a single typed `fetch`-based API client module, no data-fetching library.
 - Stack/version pins: Java 21, Spring Boot 4.1.1, Maven, PostgreSQL 18, Flyway, React 19, TypeScript 6.x, Vite 8, React Router 8, react-i18next.
 - Source tree: `backend/src/main/java/com/motorinsurance/{auth,quote,pricing,shared}`, each internally layered `api/application/domain/persistence`; `frontend/src/{app,features/{auth,quote,shells},i18n,api}`.
-- Demo tariff formula and factor tables to implement in `pricing`, fully recorded in the PRD addendum (`addendum.md`, not `docs/quote_pricing_v1.md` — that file only exists on the unused prototype branch): `premium = base_premium × age_factor × experience_factor × region_factor × power_factor × bonus_malus_factor`; base 180.00 EUR; bounded 120.00–1500.00 EUR; full factor bands (age/experience/region/power/bonus-malus) reproduced there in full.
+- Tariff to implement in `pricing`: a real GO (motor third-party liability) tariff, zone/engine-cc based, superseding the earlier placeholder multiplicative formula — fully recorded in the PRD addendum (`addendum.md`, "Quote Engine — Milestone 1 tariff" section, updated 2026-08-26). `one_time_premium = base_premium(zone, engine_cc) + age_surcharge`; `total_premium = one_time_premium + installment_fee(installments)`. Inputs: `driver_age`, `region_code` (vehicle plate prefix), `engine_cc`, `installments` (1/2/4) — no experience or vehicle-power factor in this model. Full base-premium table (5 zones × 4 cc bands), age surcharge, installment fee, and the region→zone mapping (28 Bulgarian oblasti) are reproduced in the addendum in full.
 - Deferred item still requiring an implementation home: seed-data migration for the 3 staff demo accounts (hashed passwords), per Architecture Spine's Deferred section — assigned to the `auth` epic below.
 
 ### UX Design Requirements
@@ -167,17 +167,17 @@ So that quote data is never reachable without authorization.
 ### Story 1.5: Quote Calculation With Transparent Breakdown
 
 As an authenticated client,
-I want to submit driver/vehicle parameters and see the calculated premium and its full breakdown,
+I want to submit driver/vehicle/payment parameters and see the calculated premium and its full breakdown,
 So that I understand what I'd pay and why.
 
 **Acceptance Criteria:**
 
-**Given** valid inputs
+**Given** valid inputs (`driverAge`, `regionCode`, `engineCc`, `installments`)
 **When** I submit a quote
-**Then** I get the total Premium plus every individual Tariff Factor and the base premium
-**And** given an inconsistent input (e.g. experience exceeding age−17), when submitted, then I get a specific field-level error
+**Then** I get the zone, base premium, age surcharge (if any), one-time premium, installment fee, total premium, and per-installment amount — every component the total is built from, not just the total
+**And** given an unknown `regionCode`, an `engineCc` below 800, a `driverAge` under 18, or an `installments` value other than 1/2/4, when submitted, then I get a specific field-level error
 **And** given any calculation, when performed, then all arithmetic uses exact decimal precision, never floating point (AD-5)
-**And** this story implements `pricing`'s one application-layer service (AD-2/AD-6), using the factor tables recorded in `_bmad-output/planning-artifacts/prds/prd-motor-insurance-quote-claims-portal-2026-08-23/addendum.md` (not `docs/quote_pricing_v1.md` — that file exists only on the unused prototype branch)
+**And** this story implements `pricing`'s one application-layer service (AD-2/AD-6), using the tariff recorded in `_bmad-output/planning-artifacts/prds/prd-motor-insurance-quote-claims-portal-2026-08-23/addendum.md` ("Quote Engine — Milestone 1 tariff" section — driving experience and vehicle power are **not** rating factors in this model, unlike the superseded placeholder formula also kept in that file)
 
 ### Story 1.6: Quote Persistence and Retrieval
 

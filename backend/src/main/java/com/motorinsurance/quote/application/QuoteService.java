@@ -26,6 +26,7 @@ public class QuoteService {
 
         return new QuoteResponse(
                 result.zoneId(),
+                result.zoneName(),
                 result.basePremium(),
                 result.ageSurcharge(),
                 result.oneTimePremium(),

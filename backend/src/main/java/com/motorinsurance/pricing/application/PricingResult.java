@@ -8,6 +8,7 @@ import java.math.BigDecimal;
  */
 public record PricingResult(
         short zoneId,
+        String zoneName,
         BigDecimal basePremium,
         BigDecimal ageSurcharge,
         BigDecimal oneTimePremium,

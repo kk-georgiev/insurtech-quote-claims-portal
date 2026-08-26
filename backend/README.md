@@ -53,11 +53,12 @@ starting in a broken state.
 mvn test
 ```
 
-Needs Docker running: `pricing`/`quote`'s repository and controller tests
-use Testcontainers to spin up a throwaway Postgres automatically (real
-Flyway migrations, real constraints - no H2 approximation). `auth`'s tests
-still expect the `docker compose up postgres` instance from the steps above
-to already be running.
+Needs Docker running: every test class touching a database (`auth`,
+`pricing`, `quote`) uses Testcontainers to spin up a throwaway Postgres
+automatically (real Flyway migrations, real constraints - no H2
+approximation) - no need for `docker compose up postgres` to already be
+running first. `JwtServiceTest` is the one exception: a plain unit test
+with no Spring context or database at all.
 
 ## Project layout
 

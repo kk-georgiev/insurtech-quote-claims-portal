@@ -41,6 +41,7 @@ class PricingServiceTest {
         PricingResult result = pricingService.calculate(20, "KH", 1500, 2);
 
         assertThat(result.zoneId()).isEqualTo((short) 1);
+        assertThat(result.zoneName()).isEqualTo("Zone 1");
         assertThat(result.basePremium()).isEqualByComparingTo("141.12");
         assertThat(result.ageSurcharge()).isEqualByComparingTo("36.00");
         assertThat(result.oneTimePremium()).isEqualByComparingTo("177.12");
@@ -49,6 +50,33 @@ class PricingServiceTest {
         assertThat(result.totalPremium()).isEqualByComparingTo("179.12");
         assertThat(result.installmentAmount()).isEqualByComparingTo("89.56");
         assertThat(result.currency()).isEqualTo("EUR");
+    }
+
+    @Test
+    void calculate_oneInstallment_totalEqualsOneTimePremiumWithNoFee() {
+        PricingResult result = pricingService.calculate(30, "KH", 900, 1);
+
+        assertThat(result.installmentFee()).isEqualByComparingTo("0.00");
+        assertThat(result.oneTimePremium()).isEqualByComparingTo("131.91");
+        assertThat(result.totalPremium()).isEqualByComparingTo("131.91");
+        assertThat(result.installmentAmount()).isEqualByComparingTo("131.91");
+    }
+
+    @Test
+    void calculate_fourInstallments_returnsExactExpectedBreakdown() {
+        PricingResult result = pricingService.calculate(30, "KH", 900, 4);
+
+        assertThat(result.installmentFee()).isEqualByComparingTo("4.00");
+        assertThat(result.totalPremium()).isEqualByComparingTo("135.91");
+        assertThat(result.installmentAmount()).isEqualByComparingTo("33.98");
+    }
+
+    @Test
+    void calculate_regionCodeLowercase_isNormalizedAndStillResolves() {
+        PricingResult lowercase = pricingService.calculate(20, "kh", 1500, 2);
+        PricingResult uppercase = pricingService.calculate(20, "KH", 1500, 2);
+
+        assertThat(lowercase.totalPremium()).isEqualByComparingTo(uppercase.totalPremium());
     }
 
     @Test
@@ -99,6 +127,25 @@ class PricingServiceTest {
     @Test
     void calculate_unsupportedInstallmentCount_throws() {
         assertThatThrownBy(() -> pricingService.calculate(30, "B", 1000, 3))
+                .isInstanceOf(UnsupportedInstallmentCountException.class);
+    }
+
+    @Test
+    void calculate_installmentsOverflowsShortRange_isRejectedNotAliased() {
+        // 65540 narrows via (short) cast to 4 (65540 mod 65536), which IS a
+        // seeded plan - without the explicit range guard in PricingService,
+        // this would silently succeed with a nonsensical installmentAmount
+        // instead of being rejected (review-loop finding, Story 1.5).
+        // CreateQuoteRequest's @Max(4) stops this before it reaches here from
+        // HTTP; this proves PricingService itself refuses it too, as pricing's
+        // sole entry point (AD-2), regardless of caller.
+        assertThatThrownBy(() -> pricingService.calculate(30, "KH", 1500, 65540))
+                .isInstanceOf(UnsupportedInstallmentCountException.class);
+    }
+
+    @Test
+    void calculate_negativeInstallments_isRejected() {
+        assertThatThrownBy(() -> pricingService.calculate(30, "KH", 1500, -1))
                 .isInstanceOf(UnsupportedInstallmentCountException.class);
     }
 }

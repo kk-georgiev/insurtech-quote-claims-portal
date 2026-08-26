@@ -4,10 +4,12 @@ import com.motorinsurance.pricing.domain.AgeSurcharge;
 import com.motorinsurance.pricing.domain.InstallmentPlan;
 import com.motorinsurance.pricing.domain.RegionZoneMap;
 import com.motorinsurance.pricing.domain.TariffRate;
+import com.motorinsurance.pricing.domain.TariffZone;
 import com.motorinsurance.pricing.persistence.AgeSurchargeRepository;
 import com.motorinsurance.pricing.persistence.InstallmentPlanRepository;
 import com.motorinsurance.pricing.persistence.RegionZoneMapRepository;
 import com.motorinsurance.pricing.persistence.TariffRateRepository;
+import com.motorinsurance.pricing.persistence.TariffZoneRepository;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import org.springframework.stereotype.Service;
@@ -38,26 +40,39 @@ import org.springframework.stereotype.Service;
 public class PricingService {
 
     private final RegionZoneMapRepository regionZoneMapRepository;
+    private final TariffZoneRepository tariffZoneRepository;
     private final TariffRateRepository tariffRateRepository;
     private final AgeSurchargeRepository ageSurchargeRepository;
     private final InstallmentPlanRepository installmentPlanRepository;
 
     public PricingService(
             RegionZoneMapRepository regionZoneMapRepository,
+            TariffZoneRepository tariffZoneRepository,
             TariffRateRepository tariffRateRepository,
             AgeSurchargeRepository ageSurchargeRepository,
             InstallmentPlanRepository installmentPlanRepository) {
         this.regionZoneMapRepository = regionZoneMapRepository;
+        this.tariffZoneRepository = tariffZoneRepository;
         this.tariffRateRepository = tariffRateRepository;
         this.ageSurchargeRepository = ageSurchargeRepository;
         this.installmentPlanRepository = installmentPlanRepository;
     }
 
     public PricingResult calculate(int driverAge, String regionCode, int engineCc, int installments) {
-        short zoneId = regionZoneMapRepository
-                .findById(regionCode)
-                .map(RegionZoneMap::getZoneId)
-                .orElseThrow(() -> new UnknownRegionCodeException(regionCode));
+        // Seed data (V3__create_pricing_tables.sql) stores every code
+        // uppercase; normalizing here means a lowercase but otherwise-valid
+        // plate prefix isn't wrongly rejected as unknown (review-loop
+        // finding, Story 1.5) - same rationale as auth's email normalization
+        // (RegistrationService).
+        String normalizedRegionCode = regionCode.trim().toUpperCase();
+        RegionZoneMap zoneMap = regionZoneMapRepository
+                .findById(normalizedRegionCode)
+                .orElseThrow(() -> new UnknownRegionCodeException(normalizedRegionCode));
+        short zoneId = zoneMap.getZoneId();
+
+        TariffZone zone = tariffZoneRepository
+                .findById(zoneId)
+                .orElseThrow(() -> new IllegalStateException("No tariff_zone row configured for zone " + zoneId));
 
         TariffRate rate = tariffRateRepository
                 .findApplicableRate(zoneId, engineCc)
@@ -68,6 +83,15 @@ public class PricingService {
                 .findApplicableSurcharge(driverAge)
                 .orElseThrow(() -> new IllegalStateException("No age surcharge band configured for age " + driverAge));
 
+        // Guards the narrowing cast just below: an int outside short range
+        // (e.g. 65540) would otherwise silently alias to a valid plan id on
+        // overflow (65540 -> (short) 4) instead of being rejected -
+        // review-loop finding, Story 1.5. CreateQuoteRequest's @Min/@Max
+        // already stops this from the HTTP path; this is this method's own
+        // defense as pricing's sole entry point (AD-2), independent of caller.
+        if (installments < 1 || installments > Short.MAX_VALUE) {
+            throw new UnsupportedInstallmentCountException(installments);
+        }
         InstallmentPlan plan = installmentPlanRepository
                 .findById((short) installments)
                 .orElseThrow(() -> new UnsupportedInstallmentCountException(installments));
@@ -81,6 +105,7 @@ public class PricingService {
 
         return new PricingResult(
                 zoneId,
+                zone.getZoneName(),
                 basePremium,
                 ageSurcharge.getSurcharge(),
                 oneTimePremium,

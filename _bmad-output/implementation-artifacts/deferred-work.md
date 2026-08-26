@@ -61,3 +61,13 @@ Append-only. Entries collected from bmad-build review loopbacks. Do not modify e
 - source_spec: `_bmad-output/implementation-artifacts/spec-1-4-backend-enforced-access-to-the-quote-endpoints.md`
   summary: `JwtAuthenticationFilterTest`'s expired-token test case re-derives the HMAC signing key from `jwt.secret` via `Keys.hmacShaKeyFor(...)` to forge a token, duplicating `JwtService`'s own private key-construction logic instead of using a seam on `JwtService` itself.
   evidence: Review-loop finding (blind-hunter). Works correctly today because both places read the same property with the same JJWT call; if `JwtService`'s key-construction ever changes (e.g. a different KDF or key format), this test could silently start signing with a different key than production code verifies with, and drift undetected. Worth exposing a package-private/test-scoped key accessor on `JwtService` if this pattern is needed again.
+
+## Deferred from: code review of story-1-5 (2026-08-26)
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-1-5-quote-calculation-with-transparent-breakdown.md`
+  summary: No overlap-prevention constraint exists on `tariff_rate`/`age_surcharge` ranges (only a within-row `max >= min` CHECK) — a future migration mistake introducing an overlapping cc-band or age-band row would surface only as a runtime `NonUniqueResultException` (opaque 500) from `TariffRateRepository.findApplicableRate`/`AgeSurchargeRepository.findApplicableSurcharge`, not something caught at migration/insert time.
+  evidence: Review-loop finding (blind-hunter). Current seed data (`V3__create_pricing_tables.sql`) has no such overlap — 5 zones x 4 cc bands and 3 age bands, all verified contiguous and non-overlapping. Real risk only materializes if a future migration adds a bad row; a DB-level exclusion constraint (Postgres `EXCLUDE USING gist` with a range type) or an application-level check on insert would close it, deferred as structural hardening beyond this story's scope.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-1-5-quote-calculation-with-transparent-breakdown.md`
+  summary: No end-to-end frontend exists for quote calculation — Story 1.5's AC is phrased "as a client, I want to submit driver/vehicle parameters and see the calculated premium," but only the backend endpoint exists.
+  evidence: Review-loop finding (blind-hunter). Pre-existing scope gap, not introduced by this diff — no frontend story for the quote flow exists anywhere in `epics.md` yet either (Epic 2's Story 2.3 covers role placeholder screens only, not a quote form/result view). Worth raising as a possible `epics.md` gap separately from this story's own fixes.

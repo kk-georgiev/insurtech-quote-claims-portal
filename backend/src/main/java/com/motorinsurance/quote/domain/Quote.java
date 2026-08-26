@@ -42,6 +42,9 @@ public class Quote {
     @Column(name = "zone_id", nullable = false)
     private short zoneId;
 
+    @Column(name = "zone_name", nullable = false)
+    private String zoneName;
+
     @Column(name = "base_premium", nullable = false)
     private BigDecimal basePremium;
 
@@ -79,6 +82,7 @@ public class Quote {
             String regionCode,
             int engineCc,
             short zoneId,
+            String zoneName,
             BigDecimal basePremium,
             BigDecimal ageSurcharge,
             BigDecimal oneTimePremium,
@@ -93,6 +97,7 @@ public class Quote {
         this.regionCode = regionCode;
         this.engineCc = engineCc;
         this.zoneId = zoneId;
+        this.zoneName = zoneName;
         this.basePremium = basePremium;
         this.ageSurcharge = ageSurcharge;
         this.oneTimePremium = oneTimePremium;
@@ -126,6 +131,10 @@ public class Quote {
 
     public short getZoneId() {
         return zoneId;
+    }
+
+    public String getZoneName() {
+        return zoneName;
     }
 
     public BigDecimal getBasePremium() {

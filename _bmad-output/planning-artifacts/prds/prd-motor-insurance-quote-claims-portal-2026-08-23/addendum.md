@@ -68,6 +68,8 @@ installment_amount = total_premium ÷ installments, rounded HALF_UP to 2 decimal
 | Zone 4 | A (Burgas), OB (Lovech), X (Haskovo), CT (Stara Zagora), CO (Sofia-oblast/province), Y (Yambol) |
 | Zone 5 | B (Varna) |
 
+**Note on the zone groupings themselves:** the region-code-to-oblast mapping above (which code belongs to which of Bulgaria's 28 oblasti) was independently verified against public plate-code references. Which oblasti get *bucketed into the same pricing zone* (e.g. Plovdiv sharing Zone 2 with Sofia-city) was taken as given from the source spreadsheet and not independently re-derived — that grouping is the insurer's own actuarial risk-tiering choice, not something verifiable against a public reference the way an oblast's plate code is (review-loop finding, Story 1.5).
+
 **Unresolved before seeding this table — confirm with the teammate who produced it, do not guess:**
 - `BA` was listed in the source sheet as a Sofia-city sub-code (Zone 2). Cross-checking public sources shows `BA` is Bulgaria's special code for *military* vehicles, not a civilian regional code — excluded from the mapping above pending confirmation. Do not seed it as Zone 2 civilian data without resolving this.
 - `CP` and `XX` were listed as further Sofia-city overflow codes in the source sheet but weren't independently verifiable against public sources during this review — kept out of the table above until confirmed. Low risk either way: it only affects quotes for those two specific plate prefixes, which fail closed as "unknown region" (a clear error) rather than silently mispricing.

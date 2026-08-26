@@ -13,6 +13,7 @@ CREATE TABLE quotes (
     region_code        VARCHAR(5) NOT NULL,
     engine_cc          INTEGER NOT NULL,
     zone_id            SMALLINT NOT NULL,
+    zone_name          VARCHAR(20) NOT NULL,
     base_premium       NUMERIC(10, 2) NOT NULL,
     age_surcharge      NUMERIC(6, 2) NOT NULL,
     one_time_premium   NUMERIC(10, 2) NOT NULL,

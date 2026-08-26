@@ -13,6 +13,7 @@ public record QuoteResponse(
         UUID id,
         Instant createdAt,
         short zoneId,
+        String zoneName,
         BigDecimal basePremium,
         BigDecimal ageSurcharge,
         BigDecimal oneTimePremium,

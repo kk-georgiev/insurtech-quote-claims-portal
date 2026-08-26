@@ -73,8 +73,35 @@ class QuoteControllerTest {
         ResponseEntity<String> response = postJson(validRequestBody(), clientToken);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).contains("\"zoneName\":\"Zone 1\"");
         assertThat(response.getBody()).contains("\"totalPremium\":179.12");
         assertThat(response.getBody()).contains("\"installmentAmount\":89.56");
+    }
+
+    @Test
+    void clientRole_regionCodeLowercase_isNormalizedAndStillSucceeds() {
+        String clientToken = jwtService.issueToken(registerClient(), Role.CLIENT);
+        String body = "{\"driverAge\":20,\"regionCode\":\"kh\",\"engineCc\":1500,\"installments\":2}";
+
+        ResponseEntity<String> response = postJson(body, clientToken);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).contains("\"totalPremium\":179.12");
+    }
+
+    @Test
+    void clientRole_installmentsAboveFour_returnsFieldLevelValidationError() {
+        // Also covers the int->short overflow case (65540 aliases to a valid
+        // plan without this bound) - both are values @Max(4) rejects the
+        // same way, before PricingService's own narrowing cast ever runs.
+        String clientToken = jwtService.issueToken(UUID.randomUUID(), Role.CLIENT);
+        String body = "{\"driverAge\":30,\"regionCode\":\"KH\",\"engineCc\":1000,\"installments\":65540}";
+
+        ResponseEntity<String> response = postJson(body, clientToken);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody()).contains("\"code\":\"SHARED_VALIDATION_ERROR\"");
+        assertThat(response.getBody()).contains("\"field\":\"installments\"");
     }
 
     @Test
@@ -132,6 +159,9 @@ class QuoteControllerTest {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(response.getBody()).contains("\"code\":\"SHARED_VALIDATION_ERROR\"");
+        // Review-loop finding, Story 1.5: this handler used to return no
+        // field information at all, unlike every other 400 in the API.
+        assertThat(response.getBody()).contains("\"field\":\"driverAge\"");
     }
 
     @Test

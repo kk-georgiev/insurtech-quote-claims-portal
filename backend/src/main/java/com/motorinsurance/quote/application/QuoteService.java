@@ -36,7 +36,7 @@ public class QuoteService {
         Quote quote = new Quote(
                 customerId,
                 request.driverAge(),
-                request.regionCode(),
+                result.regionCode(),
                 request.engineCc(),
                 result.zoneId(),
                 result.zoneName(),
@@ -65,6 +65,9 @@ public class QuoteService {
         return new QuoteResponse(
                 quote.getId(),
                 quote.getCreatedAt(),
+                quote.getDriverAge(),
+                quote.getRegionCode(),
+                quote.getEngineCc(),
                 quote.getZoneId(),
                 quote.getZoneName(),
                 quote.getBasePremium(),

@@ -71,3 +71,33 @@ Append-only. Entries collected from bmad-build review loopbacks. Do not modify e
 - source_spec: `_bmad-output/implementation-artifacts/spec-1-5-quote-calculation-with-transparent-breakdown.md`
   summary: No end-to-end frontend exists for quote calculation — Story 1.5's AC is phrased "as a client, I want to submit driver/vehicle parameters and see the calculated premium," but only the backend endpoint exists.
   evidence: Review-loop finding (blind-hunter). Pre-existing scope gap, not introduced by this diff — no frontend story for the quote flow exists anywhere in `epics.md` yet either (Epic 2's Story 2.3 covers role placeholder screens only, not a quote form/result view). Worth raising as a possible `epics.md` gap separately from this story's own fixes.
+
+## Deferred from: code review of story-1-6 (2026-08-26)
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-1-6-quote-persistence-and-retrieval.md`
+  summary: `Quote`'s constructor narrows `int installments` to `short` with no bounds check, unlike `PricingService`'s explicit guard against the identical overflow risk.
+  evidence: Review-loop finding (acceptance-auditor, edge-case-hunter, blind-hunter — 3 of 4 layers). Not reachable today: the only call path to `Quote`'s constructor is `QuoteService.calculate`, which always passes `PricingResult.installments()`, already range-checked by `PricingService` before it ever builds that result. Worth a defensive check on `Quote` itself if a second construction path is ever added.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-1-6-quote-persistence-and-retrieval.md`
+  summary: `QuoteService.calculate`'s `quoteRepository.save(quote)` call doesn't catch `DataIntegrityViolationException` — an unexpected DB constraint violation (e.g. a corrupted FK) would surface as the generic 500 rather than a controlled error.
+  evidence: Review-loop finding (edge-case-hunter). Same "shouldn't happen given upstream validation" category already accepted for `PricingService`'s tariff-rate/age-surcharge lookups (see Story 1.5's spec) — every value reaching `save()` has already passed through validated request DTOs and successful reference-data lookups.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-1-6-quote-persistence-and-retrieval.md`
+  summary: No explicit length validation before persisting `regionCode`/`zoneName`/`currency` against their `VARCHAR(5)`/`VARCHAR(20)`/`VARCHAR(3)` column widths in `quotes`.
+  evidence: Review-loop finding (edge-case-hunter). Low risk given provenance: `zoneName`/`currency` come from `pricing`'s seed data (bounded, controlled at migration time); `regionCode` only reaches persistence after a successful `region_zone_map` lookup, which means it already matched a `VARCHAR(5)` primary key.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-1-6-quote-persistence-and-retrieval.md`
+  summary: `QuoteController.currentUserId()` casts `Authentication.getPrincipal()` straight to `UUID` with no failure handling — a `ClassCastException` would surface as an opaque 500 if that assumption is ever violated.
+  evidence: Review-loop finding (blind-hunter). Safe today: `auth.config.JwtAuthenticationFilter` is the only thing in this codebase that ever populates the Spring Security context, and it always sets the principal to the JWT subject's `UUID` directly (see its own javadoc). Revisit if a second authentication mechanism (e.g. session-based staff login) is ever added alongside JWT.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-1-6-quote-persistence-and-retrieval.md`
+  summary: `QuoteControllerTest.extractId()` parses response JSON with a hand-written regex (`"id":"..."`) instead of proper deserialization.
+  evidence: Review-loop finding (blind-hunter). Works today because every response DTO is flat with one unique `id` field; would silently break or match the wrong occurrence if a response ever nests another `id`-bearing object. Test-quality cleanup, not a production code issue.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-1-6-quote-persistence-and-retrieval.md`
+  summary: `quotes.customer_id REFERENCES users(id)` has no explicit `ON DELETE` behavior, defaulting to Postgres's `NO ACTION`/`RESTRICT`.
+  evidence: Review-loop finding (blind-hunter). Only matters once account deletion exists (no such feature anywhere in the app yet) — deleting a user with existing quotes would fail outright under the current default, which nobody has visibly decided is the right behavior for that not-yet-built feature.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-1-6-quote-persistence-and-retrieval.md`
+  summary: No documented retention/PII stance for `driverAge`/`regionCode`/`engineCc` now that Story 1.6 makes them durable indefinitely (Story 1.5 only calculated them transiently).
+  evidence: Review-loop finding (blind-hunter). A data-governance/compliance question (how long is a quote retained, does this data need special handling) rather than a code defect — worth a decision once the project has an actual retention policy to point to.

@@ -87,6 +87,12 @@ class QuoteControllerTest {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).contains("\"totalPremium\":179.12");
+        // Review-loop finding, Story 1.6: the persisted/returned regionCode
+        // must be the canonical form actually priced against, not whatever
+        // case the client sent - otherwise the record would show "kh"
+        // alongside a "Zone 1"/zoneId derived from "KH", inconsistent with
+        // itself.
+        assertThat(response.getBody()).contains("\"regionCode\":\"KH\"");
     }
 
     @Test
@@ -175,7 +181,19 @@ class QuoteControllerTest {
         ResponseEntity<String> getResponse = getWithBearer(QUOTES_PATH + "/" + quoteId, clientToken);
 
         assertThat(getResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        // Review-loop finding, Story 1.6: the AC asks for "the full original
+        // quote" back, not just a couple of spot-checked fields - comparing
+        // the entire body catches a mapping bug in QuoteService.toResponse
+        // dropping or mismatching any field, not just the two checked below.
+        // createdAt is normalized out first: Postgres TIMESTAMPTZ rounds to
+        // microseconds, so the create response's in-memory Instant.now()
+        // (nanosecond precision) and the retrieve response's freshly-read
+        // value can render as different strings for the exact same instant.
+        assertThat(withoutCreatedAt(getResponse.getBody())).isEqualTo(withoutCreatedAt(createResponse.getBody()));
         assertThat(getResponse.getBody()).contains("\"id\":\"" + quoteId + "\"");
+        assertThat(getResponse.getBody()).contains("\"driverAge\":20");
+        assertThat(getResponse.getBody()).contains("\"regionCode\":\"KH\"");
+        assertThat(getResponse.getBody()).contains("\"engineCc\":1500");
         assertThat(getResponse.getBody()).contains("\"totalPremium\":179.12");
     }
 
@@ -213,6 +231,33 @@ class QuoteControllerTest {
         assertThat(response.getBody()).contains("\"code\":\"AUTH_UNAUTHENTICATED\"");
     }
 
+    @Test
+    void nonClientRole_onGetById_isRejectedForbidden() {
+        // Review-loop finding, Story 1.6: the sibling POST endpoint already
+        // had this test - GET's identical @PreAuthorize("hasRole('CLIENT')")
+        // had no equivalent, so a regression weakening/removing it would
+        // have shipped with nothing failing.
+        String agentToken = jwtService.issueToken(UUID.randomUUID(), Role.AGENT);
+
+        ResponseEntity<String> response = getWithBearer(QUOTES_PATH + "/" + UUID.randomUUID(), agentToken);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        assertThat(response.getBody()).contains("\"code\":\"AUTH_FORBIDDEN\"");
+    }
+
+    @Test
+    void clientRole_malformedQuoteId_returnsFieldLevelValidationError() {
+        // Review-loop finding, Story 1.6: a non-UUID path segment used to
+        // fall through to the generic 500 handler instead of a clean 400.
+        String clientToken = jwtService.issueToken(UUID.randomUUID(), Role.CLIENT);
+
+        ResponseEntity<String> response = getWithBearer(QUOTES_PATH + "/not-a-uuid", clientToken);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody()).contains("\"code\":\"SHARED_VALIDATION_ERROR\"");
+        assertThat(response.getBody()).contains("\"field\":\"id\"");
+    }
+
     private String validRequestBody() {
         return "{\"driverAge\":20,\"regionCode\":\"KH\",\"engineCc\":1500,\"installments\":2}";
     }
@@ -238,6 +283,10 @@ class QuoteControllerTest {
                 .exchange(this::toEntity);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         return extractId(response.getBody());
+    }
+
+    private static String withoutCreatedAt(String responseBody) {
+        return responseBody.replaceAll("\"createdAt\":\"[^\"]*\"", "\"createdAt\":\"<omitted>\"");
     }
 
     private static UUID extractId(String responseBody) {

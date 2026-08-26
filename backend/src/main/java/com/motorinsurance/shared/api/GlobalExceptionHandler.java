@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -48,6 +49,23 @@ public class GlobalExceptionHandler {
                 .toList();
         ApiError body = ApiError.of(
                 HttpStatus.BAD_REQUEST.value(), VALIDATION_ERROR_CODE, "Request validation failed", fieldErrors);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+    }
+
+    /**
+     * A malformed request body (unparsable JSON, or a value the target type
+     * can't accept, e.g. a string where {@code CreateQuoteRequest.installments}
+     * expects a number) - previously fell through to {@link #handleUnexpected}
+     * as an opaque 500 (tracked in {@code deferred-work.md} since Story 1.1,
+     * "no handler for a malformed JSON request body"). Story 1.5 is the
+     * second controller with a request body and the first whose fields are
+     * typed as numbers a client can plausibly send as the wrong JSON type, so
+     * fixing it here - once, generically - rather than per-endpoint.
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiError> handleMalformedRequestBody(HttpMessageNotReadableException ex) {
+        ApiError body =
+                ApiError.of(HttpStatus.BAD_REQUEST.value(), VALIDATION_ERROR_CODE, "Malformed request body");
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
     }
 

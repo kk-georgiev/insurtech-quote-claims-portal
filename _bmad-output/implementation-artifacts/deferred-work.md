@@ -4,7 +4,7 @@ Append-only. Entries collected from bmad-build review loopbacks. Do not modify e
 
 - source_spec: `_bmad-output/implementation-artifacts/spec-1-1-project-scaffolding-runnable-backend-and-frontend-skeleton.md`
   summary: GlobalExceptionHandler has no handlers for common REST failure modes (malformed JSON body, wrong HTTP verb, unsupported media type) beyond the generic 500 fallback.
-  evidence: No business endpoints exist yet this story (only framework-provided Actuator health), so nothing currently exercises these paths; add the specific handlers as the stories that introduce real controllers land.
+  evidence: PARTIALLY RESOLVED in Story 1.5 - added a `HttpMessageNotReadableException` handler (malformed JSON body / wrong-typed field) once `POST /api/v1/quotes` became the second controller with a request body and the first with number-typed fields a client can plausibly mistype. Wrong HTTP verb and unsupported media type are still open - no story has exercised those paths yet.
 
 - source_spec: `_bmad-output/implementation-artifacts/spec-1-1-project-scaffolding-runnable-backend-and-frontend-skeleton.md`
   summary: No root-level README ties `backend/README.md` and `frontend/README.md` together into one "get the whole stack running" entry point.

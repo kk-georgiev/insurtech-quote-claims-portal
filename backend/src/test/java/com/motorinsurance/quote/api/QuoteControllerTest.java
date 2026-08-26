@@ -6,6 +6,8 @@ import com.motorinsurance.auth.application.JwtService;
 import com.motorinsurance.auth.domain.Role;
 import java.io.IOException;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -23,11 +25,11 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 /**
- * Full-stack HTTP proof for {@code POST /api/v1/quotes} (Story 1.5) - the
- * first real consumer of Story 1.4's shared JWT gate, following the same
- * {@code RestClient} + random-port pattern as
- * {@code auth.config.JwtAuthenticationFilterTest}. A real Postgres
- * (Testcontainers) backs it, same rationale as {@link
+ * Full-stack HTTP proof for {@code POST /api/v1/quotes} (Story 1.5) and
+ * {@code GET /api/v1/quotes/{id}} (Story 1.6) - the first real consumer of
+ * Story 1.4's shared JWT gate, following the same {@code RestClient} +
+ * random-port pattern as {@code auth.config.JwtAuthenticationFilterTest}. A
+ * real Postgres (Testcontainers) backs it, same rationale as {@link
  * com.motorinsurance.pricing.application.PricingServiceTest}.
  */
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
@@ -66,7 +68,7 @@ class QuoteControllerTest {
 
     @Test
     void clientRole_validInput_returnsFullBreakdown() {
-        String clientToken = jwtService.issueToken(UUID.randomUUID(), Role.CLIENT);
+        String clientToken = jwtService.issueToken(registerClient(), Role.CLIENT);
 
         ResponseEntity<String> response = postJson(validRequestBody(), clientToken);
 
@@ -132,8 +134,87 @@ class QuoteControllerTest {
         assertThat(response.getBody()).contains("\"code\":\"SHARED_VALIDATION_ERROR\"");
     }
 
+    @Test
+    void clientRole_calculateThenRetrieveById_returnsTheSamePersistedQuote() {
+        String clientToken = jwtService.issueToken(registerClient(), Role.CLIENT);
+
+        ResponseEntity<String> createResponse = postJson(validRequestBody(), clientToken);
+        assertThat(createResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        UUID quoteId = extractId(createResponse.getBody());
+
+        ResponseEntity<String> getResponse = getWithBearer(QUOTES_PATH + "/" + quoteId, clientToken);
+
+        assertThat(getResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(getResponse.getBody()).contains("\"id\":\"" + quoteId + "\"");
+        assertThat(getResponse.getBody()).contains("\"totalPremium\":179.12");
+    }
+
+    @Test
+    void clientRole_retrieveAnotherCustomersQuote_returnsNotFoundNotForbidden() {
+        String ownerToken = jwtService.issueToken(registerClient(), Role.CLIENT);
+        String otherClientToken = jwtService.issueToken(registerClient(), Role.CLIENT);
+
+        ResponseEntity<String> createResponse = postJson(validRequestBody(), ownerToken);
+        UUID quoteId = extractId(createResponse.getBody());
+
+        // 404, not 403: the response must not confirm the id belongs to
+        // someone else (see QuoteRepository/QuoteNotFoundException javadoc).
+        ResponseEntity<String> getResponse = getWithBearer(QUOTES_PATH + "/" + quoteId, otherClientToken);
+
+        assertThat(getResponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(getResponse.getBody()).contains("\"code\":\"QUOTE_NOT_FOUND\"");
+    }
+
+    @Test
+    void clientRole_retrieveNonexistentQuoteId_returnsNotFound() {
+        String clientToken = jwtService.issueToken(UUID.randomUUID(), Role.CLIENT);
+
+        ResponseEntity<String> response = getWithBearer(QUOTES_PATH + "/" + UUID.randomUUID(), clientToken);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(response.getBody()).contains("\"code\":\"QUOTE_NOT_FOUND\"");
+    }
+
+    @Test
+    void noToken_onGetById_isRejectedUnauthenticated() {
+        ResponseEntity<String> response = getWithBearer(QUOTES_PATH + "/" + UUID.randomUUID(), null);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        assertThat(response.getBody()).contains("\"code\":\"AUTH_UNAUTHENTICATED\"");
+    }
+
     private String validRequestBody() {
         return "{\"driverAge\":20,\"regionCode\":\"KH\",\"engineCc\":1500,\"installments\":2}";
+    }
+
+    /**
+     * Registers a real client via the actual HTTP endpoint (rather than an
+     * arbitrary {@code UUID.randomUUID()}) and returns their id, then a test
+     * mints a token for it directly via {@link JwtService} - one real HTTP
+     * round trip instead of two (register + login). Required since
+     * {@code quotes.customer_id} has a foreign key to {@code users}
+     * (V4__create_quotes_table.sql): a forged token for a nonexistent user,
+     * fine for the auth-gate-only tests in {@code JwtAuthenticationFilterTest},
+     * would fail here with a constraint violation the moment a quote is
+     * actually persisted.
+     */
+    private UUID registerClient() {
+        String email = "quote-test-" + UUID.randomUUID() + "@example.com";
+        String body = "{\"email\":\"%s\",\"password\":\"password123\"}".formatted(email);
+        ResponseEntity<String> response = client().post()
+                .uri("/api/v1/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(body)
+                .exchange(this::toEntity);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        return extractId(response.getBody());
+    }
+
+    private static UUID extractId(String responseBody) {
+        Matcher matcher = Pattern.compile("\"id\":\"([0-9a-fA-F-]{36})\"").matcher(responseBody);
+        assertThat(matcher.find()).as("response body should contain an \"id\" field: %s", responseBody)
+                .isTrue();
+        return UUID.fromString(matcher.group(1));
     }
 
     private ResponseEntity<String> postJson(String jsonBody, String bearerToken) {
@@ -143,6 +224,14 @@ class QuoteControllerTest {
             spec = spec.header(HttpHeaders.AUTHORIZATION, "Bearer " + bearerToken);
         }
         return spec.body(jsonBody).exchange(this::toEntity);
+    }
+
+    private ResponseEntity<String> getWithBearer(String path, String bearerToken) {
+        RestClient.RequestHeadersSpec<?> spec = client().get().uri(path);
+        if (bearerToken != null) {
+            spec = spec.header(HttpHeaders.AUTHORIZATION, "Bearer " + bearerToken);
+        }
+        return spec.exchange(this::toEntity);
     }
 
     private ResponseEntity<String> toEntity(

@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpRequest;
 import org.springframework.http.HttpStatus;
@@ -28,6 +29,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestClient;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 /**
  * Proves the shared JWT authentication gate added by Story 1.4
@@ -56,13 +60,26 @@ import org.springframework.web.client.RestClient;
  * classpath scanning here only walked the former, so a test-only component
  * living under {@code src/test/java} was never a candidate - {@code @Import}
  * registers it explicitly and sidesteps that entirely.
+ *
+ * <p>Backed by a Testcontainers Postgres (review-loop finding, Story 1.5:
+ * this test used to require a manually-running {@code docker compose up
+ * postgres} - the only test class left with that requirement once {@code
+ * pricing}/{@code quote}'s tests self-provisioned theirs) - same pattern as
+ * {@code pricing.application.PricingServiceTest}. {@code JwtServiceTest}
+ * needs no such change - it's a plain unit test with no Spring context or
+ * database at all.
  */
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
+@Testcontainers
 @Import(JwtAuthenticationFilterTest.TestProtectedController.class)
 class JwtAuthenticationFilterTest {
 
     private static final String PROTECTED_PATH = "/api/v1/_test/protected";
     private static final String CLIENT_ONLY_PATH = "/api/v1/_test/client-only";
+
+    @Container
+    @ServiceConnection
+    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:18");
 
     @LocalServerPort
     private int port;

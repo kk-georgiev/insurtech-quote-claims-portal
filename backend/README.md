@@ -1,8 +1,9 @@
 # Backend
 
 Spring Boot 4.1.1 / Java 21 / Maven. Modular monolith, package-by-feature
-(`com.motorinsurance.{module}.{api,application,domain,persistence}`). This
-milestone only the `shared` module exists (AD-1/AD-6) - no business logic yet.
+(`com.motorinsurance.{module}.{api,application,domain,persistence}`).
+Modules so far (AD-1/AD-6): `shared`, `auth` (Stories 1.2-1.4), `pricing`
+and `quote` (Story 1.5).
 
 ## Prerequisites
 
@@ -41,9 +42,23 @@ milestone only the `shared` module exists (AD-1/AD-6) - no business logic yet.
    # {"status":"UP"}
    ```
 
-On startup, Flyway runs `src/main/resources/db/migration/V1__baseline.sql`
-against the database. If Postgres is unreachable, the app fails fast with a
-clear error in the logs instead of starting in a broken state.
+On startup, Flyway runs every migration under
+`src/main/resources/db/migration/` against the database. If Postgres is
+unreachable, the app fails fast with a clear error in the logs instead of
+starting in a broken state.
+
+## Run tests
+
+```bash
+mvn test
+```
+
+Needs Docker running: every test class touching a database (`auth`,
+`pricing`, `quote`) uses Testcontainers to spin up a throwaway Postgres
+automatically (real Flyway migrations, real constraints - no H2
+approximation) - no need for `docker compose up postgres` to already be
+running first. `JwtServiceTest` is the one exception: a plain unit test
+with no Spring context or database at all.
 
 ## Project layout
 
@@ -53,10 +68,13 @@ src/main/java/com/motorinsurance/
   shared/
     api/      # ApiError envelope (AD-7) + GlobalExceptionHandler
     config/   # base Spring config (e.g. dev CORS for the Vite dev server)
+  auth/
+    api/, application/, domain/, persistence/   # registration, login, JWT
+  pricing/
+    domain/, persistence/, application/   # tariff data + PricingService (AD-2 sole entry point)
+  quote/
+    api/, application/   # POST /api/v1/quotes - calculation only, no persistence yet (Story 1.6)
 src/main/resources/
   application.yml
   db/migration/   # Flyway migrations, V{n}__description.sql
 ```
-
-`auth`, `quote`, and `pricing` module packages do not exist yet - each is
-created in the story that first needs it (AD-6).

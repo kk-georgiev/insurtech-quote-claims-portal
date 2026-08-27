@@ -29,20 +29,20 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 08-23-2026 17:25
-last_updated: 08-26-2026 16:00
+last_updated: 08-26-2026 18:00
 project: Motor Insurance Quote & Claims Portal
 project_key: NOKEY
 tracking_system: file-system
 story_location: _bmad-output/implementation-artifacts
 development_status:
-  epic-1: in-progress
+  epic-1: done
   1-1-project-scaffolding-runnable-backend-and-frontend-skeleton: done
   1-2-client-self-registration: done
   1-3-login-issuing-a-role-bearing-jwt: done
   1-4-backend-enforced-access-to-the-quote-endpoints: done
   1-5-quote-calculation-with-transparent-breakdown: done
-  1-6-quote-persistence-and-retrieval: backlog
-  epic-1-retrospective: optional
+  1-6-quote-persistence-and-retrieval: done
+  epic-1-retrospective: done
 
   epic-2: backlog
   2-1-seeded-staff-demo-accounts: backlog
@@ -61,3 +61,80 @@ development_status:
   4-2-one-command-full-stack-startup: backlog
   4-3-local-dev-workflow-preserved-alongside-docker: backlog
   epic-4-retrospective: optional
+action_items:
+  - id: "epic-1-retro-item-1-add-auth-module-test-coverage-registrati"
+    epic: 1
+    action: "Add auth module test coverage: RegistrationServiceTest, AuthenticationServiceTest,
+      duplicate-email 409 test, unknown-email-login-path test, and a test that decodes
+      a token from a real /login call"
+    owner: "Konstantin"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-1-retro-2026-08-26.md"
+  - id: "epic-1-retro-item-2-add-a-fielderror-to-emailalreadyregister"
+    epic: 1
+    action: "Add a FieldError to EmailAlreadyRegisteredException for the email field,
+      matching the convention Story 1.5 established"
+    owner: "Konstantin"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-1-retro-2026-08-26.md"
+  - id: "epic-1-retro-item-3-extract-a-shared-emails-normalize-string"
+    epic: 1
+    action: "Extract a shared Emails.normalize(String) helper (trim + toLowerCase(Locale.ROOT))
+      used by both RegistrationService and AuthenticationService"
+    owner: "Konstantin"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-1-retro-2026-08-26.md"
+  - id: "epic-1-retro-item-4-reconcile-story-1-2-nfr-4-wording-passwo"
+    epic: 1
+    action: "Reconcile Story 1.2 NFR-4 wording - password rules cannot be DB-enforced
+      given hash-only storage"
+    owner: "Konstantin"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-1-retro-2026-08-26.md"
+  - id: "epic-1-retro-item-5-add-dataintegrityviolationexception-hand"
+    epic: 1
+    action: "Add DataIntegrityViolationException handling in QuoteService.calculate
+      mapped to a clean 401/404, flagged for Epic 2 account lifecycle work"
+    owner: "Konstantin"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-1-retro-2026-08-26.md"
+  - id: "epic-1-retro-item-6-record-a-design-note-for-epic-2-planning"
+    epic: 1
+    action: "Record a design note for Epic 2 planning on JWT role/claim staleness
+      (no revocation, 8h window)"
+    owner: "Konstantin"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-1-retro-2026-08-26.md"
+  - id: "epic-1-retro-item-7-add-responsestatus-httpstatus-created-to"
+    epic: 1
+    action: "Add @ResponseStatus(HttpStatus.CREATED) to QuoteController.calculate"
+    owner: "Konstantin"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-1-retro-2026-08-26.md"
+  - id: "epic-1-retro-item-8-decide-whether-to-keep-globalexceptionha"
+    epic: 1
+    action: "Decide whether to keep GlobalExceptionHandler.handleConstraintViolation
+      as forward-looking or remove it until a caller exists"
+    owner: "Konstantin"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-1-retro-2026-08-26.md"
+  - id: "epic-1-retro-item-9-add-a-test-for-authorization-bearer-empt"
+    epic: 1
+    action: "Add a test for Authorization: Bearer  (empty token) to JwtAuthenticationFilterTest"
+    owner: "Konstantin"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-1-retro-2026-08-26.md"
+  - id: "epic-1-retro-item-10-bundle-a-jwt-secret-fail-fast-guard-with"
+    epic: 1
+    action: "Bundle a JWT-secret fail-fast guard with the existing Postgres-credentials
+      deferred item once a real deployment target/profile strategy is defined"
+    owner: "unassigned"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-1-retro-2026-08-26.md"
+  - id: "epic-1-retro-item-11-add-a-one-line-note-recording-that-staff"
+    epic: 1
+    action: "Add a one-line note recording that staff-role lockout on the Quote module
+      in Epic 1 is deliberate, not an oversight"
+    owner: "Konstantin"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-1-retro-2026-08-26.md"

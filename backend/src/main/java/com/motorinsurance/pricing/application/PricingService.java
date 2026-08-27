@@ -106,6 +106,7 @@ public class PricingService {
         return new PricingResult(
                 zoneId,
                 zone.getZoneName(),
+                normalizedRegionCode,
                 basePremium,
                 ageSurcharge.getSurcharge(),
                 oneTimePremium,

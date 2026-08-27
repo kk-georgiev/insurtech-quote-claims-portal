@@ -73,7 +73,7 @@ src/main/java/com/motorinsurance/
   pricing/
     domain/, persistence/, application/   # tariff data + PricingService (AD-2 sole entry point)
   quote/
-    api/, application/   # POST /api/v1/quotes - calculation only, no persistence yet (Story 1.6)
+    api/, application/, domain/, persistence/   # POST /api/v1/quotes (calculates + persists), GET /api/v1/quotes/{id} (owner-scoped)
 src/main/resources/
   application.yml
   db/migration/   # Flyway migrations, V{n}__description.sql

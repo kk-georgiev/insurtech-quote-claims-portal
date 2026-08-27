@@ -11,6 +11,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 import tools.jackson.databind.exc.MismatchedInputException;
 
@@ -85,6 +86,25 @@ public class GlobalExceptionHandler {
         // walking the full path for a deeper property.
         String field = cause.getPath().get(0).getPropertyName();
         return field == null ? List.of() : List.of(new ApiError.FieldError(field, cause.getOriginalMessage()));
+    }
+
+    /**
+     * A path/query parameter that doesn't convert to its declared type -
+     * e.g. {@code GET /api/v1/quotes/not-a-uuid} against {@code
+     * QuoteController.getById}'s {@code @PathVariable UUID id}. Previously
+     * fell through to {@link #handleUnexpected} as an opaque 500 - the same
+     * class of gap already fixed once for malformed request bodies, not yet
+     * extended to path variables until Story 1.6 introduced the first one
+     * (review-loop finding, Story 1.6).
+     */
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiError> handleMethodArgumentTypeMismatch(MethodArgumentTypeMismatchException ex) {
+        ApiError body = ApiError.of(
+                HttpStatus.BAD_REQUEST.value(),
+                VALIDATION_ERROR_CODE,
+                "Malformed request parameter",
+                List.of(new ApiError.FieldError(ex.getName(), "Malformed value")));
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
     }
 
     @ExceptionHandler(ConstraintViolationException.class)

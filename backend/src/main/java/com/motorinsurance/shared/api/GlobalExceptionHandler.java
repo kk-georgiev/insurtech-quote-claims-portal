@@ -107,6 +107,19 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
     }
 
+    /**
+     * Kept deliberately as forward-looking infrastructure (Epic 1 retro
+     * action item 8). {@code ConstraintViolationException} is raised by
+     * method-level Bean Validation on a {@code @Validated} bean with
+     * constrained parameters - no controller has one today, so this handler
+     * is currently unreachable and no test exercises it. It is retained
+     * rather than removed because the very next module that puts
+     * {@code @Min}/{@code @NotNull} directly on a service or controller
+     * method parameter (rather than on a {@code @RequestBody} DTO, which
+     * routes through {@link #handleMethodArgumentNotValid} instead) needs
+     * exactly this to keep such failures inside the uniform {@link ApiError}
+     * envelope instead of falling through to {@link #handleUnexpected}'s 500.
+     */
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ApiError> handleConstraintViolation(ConstraintViolationException ex) {
         List<ApiError.FieldError> fieldErrors = ex.getConstraintViolations().stream()

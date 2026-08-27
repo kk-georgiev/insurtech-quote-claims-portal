@@ -101,3 +101,26 @@ Append-only. Entries collected from bmad-build review loopbacks. Do not modify e
 - source_spec: `_bmad-output/implementation-artifacts/spec-1-6-quote-persistence-and-retrieval.md`
   summary: No documented retention/PII stance for `driverAge`/`regionCode`/`engineCc` now that Story 1.6 makes them durable indefinitely (Story 1.5 only calculated them transiently).
   evidence: Review-loop finding (blind-hunter). A data-governance/compliance question (how long is a quote retained, does this data need special handling) rather than a code defect — worth a decision once the project has an actual retention policy to point to.
+
+## Deferred from: code review of story-1-6 (2026-08-27, second run)
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-1-6-quote-persistence-and-retrieval.md`
+  summary: `PricingService.calculate` normalizes `regionCode` with default-locale `trim().toUpperCase()`, which is now load-bearing for the persisted `quotes.region_code` value.
+  evidence: Review-loop finding (blind-hunter, 2nd run). `Locale.ROOT` is the correct call (Turkish-locale `i`→`İ`, `ß`→`SS` length expansion against the `VARCHAR(5)` column). Pre-existing from Story 1.5, not introduced by 1.6.
+  status: RESOLVED 2026-08-27 — fixed alongside epic-1 retro action item 3 (auth got the shared `auth.domain.Emails.normalize` helper using `Locale.ROOT`; `PricingService` got the same `Locale.ROOT` argument on its own `toUpperCase`). A single shared normalizer across both modules was not extracted — email and region-code canonicalization are different rules (lower- vs upper-case, different provenance) and `pricing` importing an `auth`-owned helper would invert AD-2's dependency direction.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-1-6-quote-persistence-and-retrieval.md`
+  summary: `Quote` (assigned `@Id`, no `@Version`, not `Persistable`) causes `SimpleJpaRepository.save()` to call `merge()`, issuing a SELECT before every INSERT on `calculate`.
+  evidence: Review-loop finding (blind-hunter, 2nd run). Codebase-wide — `auth.domain.User` has the identical shape and the identical behavior. Performance-only, negligible at current data volumes. Candidate for a shared base-entity / `Persistable` mix-in fix applied across all assigned-id entities at once, not a per-story change.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-1-6-quote-persistence-and-retrieval.md`
+  summary: `idx_quotes_customer_id` is not used by the story's only query (`findByIdAndCustomerId` resolves via the PK index); the V4 migration comment claiming it "backs the ownership-scoped lookup" overstates its role.
+  evidence: Review-loop finding (blind-hunter, 2nd run). The index is harmless and anticipates a future "list my quotes" feature — which would actually want `(customer_id, created_at DESC)`. Revisit (index shape + comment wording) when/if that endpoint is specced.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-1-6-quote-persistence-and-retrieval.md`
+  summary: The new `@ExceptionHandler(MethodArgumentTypeMismatchException.class)` in `GlobalExceptionHandler` is application-wide — every controller's typed `@PathVariable`/`@RequestParam` mismatch now returns 400 instead of the previous 500.
+  evidence: Review-loop finding (blind-hunter + edge-case-hunter, 2nd run). The 400 is the correct response, so the widening is an improvement, but: (a) no test covers a query-param mismatch or a non-quote controller; (b) the message (`"Malformed request parameter"` / `"Malformed value"`) names no expected type and does not go through the AD-7/AD-8 i18n path the class javadoc describes; (c) `ex.getName()` is passed into `ApiError.FieldError` with no null guard. Polish + coverage, deferred as non-blocking.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-1-6-quote-persistence-and-retrieval.md`
+  summary: `quotes.created_at` has no DB `DEFAULT now()` and is populated solely from the app clock (`Instant.now()` in the `Quote` constructor), with no injectable `Clock`.
+  evidence: Review-loop finding (blind-hunter, 2nd run). Codebase-wide — `auth.domain.User` is identical. Consequences: the timestamp is not controllable in tests, is subject to multi-instance clock skew, and any future insert path that forgets to set it trips the `NOT NULL`. Best addressed as a cross-cutting convention (injectable `Clock` and/or DB defaults for all `created_at` columns).

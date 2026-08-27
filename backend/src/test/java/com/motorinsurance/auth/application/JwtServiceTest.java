@@ -56,6 +56,19 @@ class JwtServiceTest {
     }
 
     @Test
+    void parseToken_blankToken_throwsIllegalArgument() {
+        // The "Authorization: Bearer " (empty token) case, at the unit level:
+        // JJWT rejects a null/empty/whitespace token string with
+        // IllegalArgumentException - one of the two types
+        // JwtAuthenticationFilter catches, so it collapses to the uniform 401
+        // rather than propagating unhandled (Epic 1 retro action item 9).
+        assertThatThrownBy(() -> jwtService.parseToken(""))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> jwtService.parseToken("   "))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
     void parseToken_missingSubjectClaim_throws() {
         String token = Jwts.builder()
                 .claim("role", Role.CLIENT.name())

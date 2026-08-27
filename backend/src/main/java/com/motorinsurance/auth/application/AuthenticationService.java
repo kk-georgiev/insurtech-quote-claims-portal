@@ -1,5 +1,6 @@
 package com.motorinsurance.auth.application;
 
+import com.motorinsurance.auth.domain.Emails;
 import com.motorinsurance.auth.domain.User;
 import com.motorinsurance.auth.persistence.UserRepository;
 import java.util.Optional;
@@ -48,8 +49,8 @@ public class AuthenticationService {
         // Must match RegistrationService's normalization exactly, or a user
         // who registered as "User@Example.com" (stored lowercased) could
         // never log back in with a differently-cased attempt against this
-        // case-sensitive lookup.
-        String normalizedEmail = email.trim().toLowerCase();
+        // case-sensitive lookup - hence the shared Emails.normalize helper.
+        String normalizedEmail = Emails.normalize(email);
         Optional<User> user = userRepository.findByEmail(normalizedEmail);
 
         // matches(...) always runs, dummy hash or real one - see

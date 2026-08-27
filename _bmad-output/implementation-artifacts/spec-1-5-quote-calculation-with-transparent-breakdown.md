@@ -56,6 +56,8 @@ backfilled: true
 
 </frozen-after-approval>
 
+> **Superseded 2026-08-27** (Epic 1 retro action item 7): the "valid input" row's `200` was correct when this story shipped (calculate-only, no persistence). Story 1.6 made `POST /api/v1/quotes` persist the quote, and its status was renegotiated to `201 Created` to match `POST /api/v1/auth/register` — see `spec-1-6-quote-persistence-and-retrieval.md`'s I/O matrix. The breakdown values in that row are unchanged.
+
 ## Code Map
 
 - `backend/src/main/resources/db/migration/V3__create_pricing_tables.sql` -- NEW: `tariff_zone`, `region_zone_map`, `tariff_rate`, `age_surcharge`, `installment_plan` + seed data

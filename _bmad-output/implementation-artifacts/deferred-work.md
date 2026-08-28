@@ -192,6 +192,12 @@ Append-only. Entries collected from bmad-build review loopbacks. Do not modify e
   summary: The first frontend test toolchain ships with no coverage story — no `@vitest/coverage-v8`, no `test:coverage` script, no `coverage/` entry in `.gitignore`, no thresholds.
   evidence: Story 2.2's scope was the routing behaviour and the toolchain to pin it, not a coverage regime. Worth a deliberate testing-strategy decision (which provider, what thresholds, enforce in CI or advisory-only) before Stories 2.3, 2.4, and Epic 3 add substantially more frontend code and tests.
 
+## Deferred from: PR template review (2026-08-28)
+
+- source_spec: none
+  summary: `.github/PULL_REQUEST_TEMPLATE.md` has no reminder of the optional release-tag step (`git tag -a v0.2.0-epic2 ...`) that `CONTRIBUTING.md` §3a lists for a `dev → main` promotion.
+  evidence: Review-loop finding (blind-hunter). Tagging happens after merge, by whoever merges the release PR — not something the PR author self-checks before opening it, so it doesn't fit the template's pre-submission checklist shape. Worth a one-line callout in §3a's own text instead, if this keeps getting missed in practice.
+
 ## Deferred from: Story 1.7 review (2026-08-28)
 
 - source_spec: `_bmad-output/implementation-artifacts/spec-1-7-client-quote-flow-submit-and-see-the-breakdown.md`

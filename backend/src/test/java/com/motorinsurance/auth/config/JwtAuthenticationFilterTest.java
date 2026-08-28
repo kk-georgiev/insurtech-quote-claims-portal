@@ -111,6 +111,24 @@ class JwtAuthenticationFilterTest {
     }
 
     @Test
+    void emptyBearerToken_onProtectedEndpoint_isRejectedUnauthenticated() {
+        // "Authorization: Bearer " with nothing after the prefix: the filter
+        // still enters its Bearer branch (header.startsWith("Bearer ")), so
+        // parseToken("") runs and JJWT throws IllegalArgumentException for the
+        // blank input - a different underlying type than every other negative
+        // case here (which throw JwtException). Epic 1 retro action item 9:
+        // proves JwtAuthenticationFilter's catch clause covers that type too
+        // and it collapses to the same uniform 401, not an unhandled 500.
+        ResponseEntity<String> response = client().get()
+                .uri(PROTECTED_PATH)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer ")
+                .exchange(this::toEntity);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        assertThat(response.getBody()).contains("\"code\":\"AUTH_UNAUTHENTICATED\"");
+    }
+
+    @Test
     void expiredToken_onProtectedEndpoint_isRejectedUnauthenticated() {
         // Forged with the same shape a real token has, but an exp already in
         // the past - JwtService#parseToken rejects it as expired, same as

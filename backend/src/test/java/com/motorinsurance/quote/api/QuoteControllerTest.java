@@ -72,10 +72,28 @@ class QuoteControllerTest {
 
         ResponseEntity<String> response = postJson(validRequestBody(), clientToken);
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        // Every field the response carries, pinned to the PRD addendum's
+        // worked example (KH / age 20 / 1500cc / 2 installments) - the same
+        // values PricingServiceTest.calculate_knownInputs_returnsExactExpectedBreakdown
+        // asserts on PricingResult. The create<->retrieve equality check in
+        // clientRole_calculateThenRetrieveById is symmetric (both bodies flow
+        // through the same toResponse), so a transposition present on both
+        // paths - e.g. basePremium<->ageSurcharge - only fails here.
+        assertThat(response.getBody()).contains("\"driverAge\":20");
+        assertThat(response.getBody()).contains("\"regionCode\":\"KH\"");
+        assertThat(response.getBody()).contains("\"engineCc\":1500");
+        assertThat(response.getBody()).contains("\"zoneId\":1");
         assertThat(response.getBody()).contains("\"zoneName\":\"Zone 1\"");
+        assertThat(response.getBody()).contains("\"basePremium\":141.12");
+        assertThat(response.getBody()).contains("\"ageSurcharge\":36.00");
+        assertThat(response.getBody()).contains("\"oneTimePremium\":177.12");
+        assertThat(response.getBody()).contains("\"installments\":2");
+        assertThat(response.getBody()).contains("\"installmentFee\":2.00");
         assertThat(response.getBody()).contains("\"totalPremium\":179.12");
         assertThat(response.getBody()).contains("\"installmentAmount\":89.56");
+        assertThat(response.getBody()).contains("\"currency\":\"EUR\"");
+        assertThat(response.getBody()).containsPattern("\"createdAt\":\"[^\"]+\"");
     }
 
     @Test
@@ -85,7 +103,7 @@ class QuoteControllerTest {
 
         ResponseEntity<String> response = postJson(body, clientToken);
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         assertThat(response.getBody()).contains("\"totalPremium\":179.12");
         // Review-loop finding, Story 1.6: the persisted/returned regionCode
         // must be the canonical form actually priced against, not whatever
@@ -175,7 +193,7 @@ class QuoteControllerTest {
         String clientToken = jwtService.issueToken(registerClient(), Role.CLIENT);
 
         ResponseEntity<String> createResponse = postJson(validRequestBody(), clientToken);
-        assertThat(createResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(createResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         UUID quoteId = extractId(createResponse.getBody());
 
         ResponseEntity<String> getResponse = getWithBearer(QUOTES_PATH + "/" + quoteId, clientToken);
@@ -195,6 +213,12 @@ class QuoteControllerTest {
         assertThat(getResponse.getBody()).contains("\"regionCode\":\"KH\"");
         assertThat(getResponse.getBody()).contains("\"engineCc\":1500");
         assertThat(getResponse.getBody()).contains("\"totalPremium\":179.12");
+        assertThat(getResponse.getBody()).containsPattern("\"createdAt\":\"[^\"]+\"");
+        // createdAt must be the persisted instant, not a value regenerated per
+        // call: a second retrieval must render byte-identically to the first
+        // (a toResponse that passed Instant.now() would drift between calls).
+        ResponseEntity<String> getAgain = getWithBearer(QUOTES_PATH + "/" + quoteId, clientToken);
+        assertThat(getAgain.getBody()).isEqualTo(getResponse.getBody());
     }
 
     @Test

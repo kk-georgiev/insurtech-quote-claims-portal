@@ -12,6 +12,7 @@ import com.motorinsurance.pricing.persistence.TariffRateRepository;
 import com.motorinsurance.pricing.persistence.TariffZoneRepository;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Locale;
 import org.springframework.stereotype.Service;
 
 /**
@@ -63,8 +64,10 @@ public class PricingService {
         // uppercase; normalizing here means a lowercase but otherwise-valid
         // plate prefix isn't wrongly rejected as unknown (review-loop
         // finding, Story 1.5) - same rationale as auth's email normalization
-        // (RegistrationService).
-        String normalizedRegionCode = regionCode.trim().toUpperCase();
+        // (auth.domain.Emails). Locale.ROOT for the same reason it does:
+        // the normalized value is persisted (quotes.region_code) and must
+        // not depend on the server's default locale.
+        String normalizedRegionCode = regionCode.trim().toUpperCase(Locale.ROOT);
         RegionZoneMap zoneMap = regionZoneMapRepository
                 .findById(normalizedRegionCode)
                 .orElseThrow(() -> new UnknownRegionCodeException(normalizedRegionCode));

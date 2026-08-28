@@ -43,7 +43,7 @@ public class QuoteService {
                 result.basePremium(),
                 result.ageSurcharge(),
                 result.oneTimePremium(),
-                result.installments(),
+                request.installments(),
                 result.installmentFee(),
                 result.totalPremium(),
                 result.installmentAmount(),
@@ -53,6 +53,7 @@ public class QuoteService {
         return toResponse(saved);
     }
 
+    @Transactional(readOnly = true)
     public QuoteResponse getById(UUID id, UUID customerId) {
         Quote quote = quoteRepository
                 .findByIdAndCustomerId(id, customerId)

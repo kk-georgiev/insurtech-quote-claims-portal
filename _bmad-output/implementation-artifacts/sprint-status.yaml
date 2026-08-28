@@ -29,7 +29,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 08-23-2026 17:25
-last_updated: 08-26-2026 18:00
+last_updated: 08-27-2026 21:20
 project: Motor Insurance Quote & Claims Portal
 project_key: NOKEY
 tracking_system: file-system
@@ -68,21 +68,21 @@ action_items:
       duplicate-email 409 test, unknown-email-login-path test, and a test that decodes
       a token from a real /login call"
     owner: "Konstantin"
-    status: open
+    status: done
     ref: "_bmad-output/implementation-artifacts/epic-1-retro-2026-08-26.md"
   - id: "epic-1-retro-item-2-add-a-fielderror-to-emailalreadyregister"
     epic: 1
     action: "Add a FieldError to EmailAlreadyRegisteredException for the email field,
       matching the convention Story 1.5 established"
     owner: "Konstantin"
-    status: open
+    status: done
     ref: "_bmad-output/implementation-artifacts/epic-1-retro-2026-08-26.md"
   - id: "epic-1-retro-item-3-extract-a-shared-emails-normalize-string"
     epic: 1
     action: "Extract a shared Emails.normalize(String) helper (trim + toLowerCase(Locale.ROOT))
       used by both RegistrationService and AuthenticationService"
     owner: "Konstantin"
-    status: open
+    status: done
     ref: "_bmad-output/implementation-artifacts/epic-1-retro-2026-08-26.md"
   - id: "epic-1-retro-item-4-reconcile-story-1-2-nfr-4-wording-passwo"
     epic: 1
@@ -109,20 +109,20 @@ action_items:
     epic: 1
     action: "Add @ResponseStatus(HttpStatus.CREATED) to QuoteController.calculate"
     owner: "Konstantin"
-    status: open
+    status: done
     ref: "_bmad-output/implementation-artifacts/epic-1-retro-2026-08-26.md"
   - id: "epic-1-retro-item-8-decide-whether-to-keep-globalexceptionha"
     epic: 1
     action: "Decide whether to keep GlobalExceptionHandler.handleConstraintViolation
       as forward-looking or remove it until a caller exists"
     owner: "Konstantin"
-    status: open
+    status: done
     ref: "_bmad-output/implementation-artifacts/epic-1-retro-2026-08-26.md"
   - id: "epic-1-retro-item-9-add-a-test-for-authorization-bearer-empt"
     epic: 1
     action: "Add a test for Authorization: Bearer  (empty token) to JwtAuthenticationFilterTest"
     owner: "Konstantin"
-    status: open
+    status: done
     ref: "_bmad-output/implementation-artifacts/epic-1-retro-2026-08-26.md"
   - id: "epic-1-retro-item-10-bundle-a-jwt-secret-fail-fast-guard-with"
     epic: 1

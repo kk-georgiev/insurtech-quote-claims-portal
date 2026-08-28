@@ -1,5 +1,6 @@
 package com.motorinsurance.auth.application;
 
+import com.motorinsurance.auth.domain.Emails;
 import com.motorinsurance.auth.domain.Role;
 import com.motorinsurance.auth.domain.User;
 import com.motorinsurance.auth.persistence.UserRepository;
@@ -30,14 +31,12 @@ public class RegistrationService {
         // Normalize before both the lookup and the persisted value: emails
         // are case-insensitive in practice (mobile keyboards auto-capitalize,
         // people type carelessly), but `users.email` is a plain case-sensitive
-        // UNIQUE column. Without this, "User@Example.com" and
-        // "user@example.com" would register as two distinct accounts, and
-        // login's case-sensitive lookup (AuthenticationService) would fail
-        // to match a differently-cased login attempt against either one.
+        // UNIQUE column. AuthenticationService's login lookup must apply the
+        // identical transformation - hence the shared Emails.normalize helper.
         // A separate final variable (not a reassigned parameter) because the
         // lambda below captures it - reassigning `email` itself would no
         // longer be effectively final and fail to compile.
-        final String normalizedEmail = email.trim().toLowerCase();
+        final String normalizedEmail = Emails.normalize(email);
 
         // Fast path for the common case - avoids a hash+insert round trip
         // when the email is obviously already taken.

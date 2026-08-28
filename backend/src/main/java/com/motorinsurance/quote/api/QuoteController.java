@@ -3,6 +3,7 @@ package com.motorinsurance.quote.api;
 import com.motorinsurance.quote.application.QuoteService;
 import jakarta.validation.Valid;
 import java.util.UUID;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -25,6 +27,12 @@ import org.springframework.web.bind.annotation.RestController;
  * (the user id) directly, not a username/{@code UserDetails}, so it's cast
  * straight to {@link UUID} here rather than resolved through a repository
  * lookup this module has no business making into {@code auth}'s data (AD-2).
+ *
+ * <p>{@code calculate} returns {@code 201 Created}: since Story 1.6 it
+ * persists a new quote as part of the call, so it is a resource-creating
+ * endpoint like {@code POST /api/v1/auth/register} (Epic 1 retro action item
+ * 7 - the two resource-creating endpoints previously disagreed, 200 vs 201;
+ * Story 1.6's I/O matrix was renegotiated to 201 to match, 2026-08-27).
  */
 @RestController
 @RequestMapping("/api/v1/quotes")
@@ -37,6 +45,7 @@ public class QuoteController {
     }
 
     @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasRole('CLIENT')")
     public QuoteResponse calculate(@Valid @RequestBody CreateQuoteRequest request, Authentication authentication) {
         return quoteService.calculate(request, currentUserId(authentication));
@@ -44,7 +53,7 @@ public class QuoteController {
 
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('CLIENT')")
-    public QuoteResponse getById(@PathVariable UUID id, Authentication authentication) {
+    public QuoteResponse getById(@PathVariable("id") UUID id, Authentication authentication) {
         return quoteService.getById(id, currentUserId(authentication));
     }
 

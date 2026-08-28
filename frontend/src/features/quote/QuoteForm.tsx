@@ -93,6 +93,7 @@ export function QuoteForm() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (phase === 'submitting') return;
     setPhase('submitting');
     setFormError(null);
     setFieldErrors({});
@@ -153,8 +154,14 @@ export function QuoteForm() {
             value={driverAge}
             onChange={(event) => setDriverAge(event.target.value)}
             disabled={submitting}
+            aria-invalid={fieldErrors.driverAge ? true : undefined}
+            aria-describedby={fieldErrors.driverAge ? 'quote-driverAge-error' : undefined}
           />
-          {fieldErrors.driverAge && <p role="alert">{fieldErrors.driverAge}</p>}
+          {fieldErrors.driverAge && (
+            <p role="alert" id="quote-driverAge-error">
+              {fieldErrors.driverAge}
+            </p>
+          )}
         </div>
         <div>
           <label htmlFor="quote-regionCode">Region code</label>
@@ -166,8 +173,14 @@ export function QuoteForm() {
             value={regionCode}
             onChange={(event) => setRegionCode(event.target.value)}
             disabled={submitting}
+            aria-invalid={fieldErrors.regionCode ? true : undefined}
+            aria-describedby={fieldErrors.regionCode ? 'quote-regionCode-error' : undefined}
           />
-          {fieldErrors.regionCode && <p role="alert">{fieldErrors.regionCode}</p>}
+          {fieldErrors.regionCode && (
+            <p role="alert" id="quote-regionCode-error">
+              {fieldErrors.regionCode}
+            </p>
+          )}
         </div>
         <div>
           <label htmlFor="quote-engineCc">Engine size (cc)</label>
@@ -183,8 +196,14 @@ export function QuoteForm() {
             value={engineCc}
             onChange={(event) => setEngineCc(event.target.value)}
             disabled={submitting}
+            aria-invalid={fieldErrors.engineCc ? true : undefined}
+            aria-describedby={fieldErrors.engineCc ? 'quote-engineCc-error' : undefined}
           />
-          {fieldErrors.engineCc && <p role="alert">{fieldErrors.engineCc}</p>}
+          {fieldErrors.engineCc && (
+            <p role="alert" id="quote-engineCc-error">
+              {fieldErrors.engineCc}
+            </p>
+          )}
         </div>
         <div>
           <label htmlFor="quote-installments">Number of installments</label>
@@ -198,8 +217,14 @@ export function QuoteForm() {
             value={installments}
             onChange={(event) => setInstallments(event.target.value)}
             disabled={submitting}
+            aria-invalid={fieldErrors.installments ? true : undefined}
+            aria-describedby={fieldErrors.installments ? 'quote-installments-error' : undefined}
           />
-          {fieldErrors.installments && <p role="alert">{fieldErrors.installments}</p>}
+          {fieldErrors.installments && (
+            <p role="alert" id="quote-installments-error">
+              {fieldErrors.installments}
+            </p>
+          )}
         </div>
         {formError && (
           <p role="alert" data-testid="quote-error">

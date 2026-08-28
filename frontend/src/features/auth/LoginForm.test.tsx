@@ -1,6 +1,6 @@
 import { StrictMode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { routes } from '../../app/router';
@@ -138,5 +138,108 @@ describe('LoginForm role-based post-login routing', () => {
     expect(router.state.location.pathname).toBe('/login');
     expect(getToken()).toBeNull();
     expect(loginButton()).toBeEnabled();
+  });
+
+  it('renders field-level errors from a bean-validation failure next to each offending input', async () => {
+    mockedApiFetch.mockRejectedValue(
+      new ApiRequestError('Request failed with status 400', 400, 'SHARED_VALIDATION_ERROR', [
+        { field: 'email', message: 'must be a well-formed email address' },
+      ]),
+    );
+
+    const { user } = renderLogin();
+    // Before submitting, neither field carries error-describing aria
+    // attributes — no error has been set yet.
+    expect(emailField()).not.toHaveAttribute('aria-invalid');
+    expect(emailField()).not.toHaveAttribute('aria-describedby');
+    expect(passwordField()).not.toHaveAttribute('aria-invalid');
+    expect(passwordField()).not.toHaveAttribute('aria-describedby');
+
+    await fillAndSubmit(user);
+
+    expect(await screen.findByText('must be a well-formed email address')).toBeInTheDocument();
+    expect(screen.queryByTestId('login-error')).not.toBeInTheDocument();
+    expect(loginButton()).toBeEnabled();
+
+    expect(emailField()).toHaveAttribute('aria-invalid', 'true');
+    expect(emailField()).toHaveAttribute('aria-describedby', 'login-email-error');
+    expect(screen.getByText('must be a well-formed email address').id).toBe('login-email-error');
+    // password had no field error - neither attribute is present.
+    expect(passwordField()).not.toHaveAttribute('aria-invalid');
+    expect(passwordField()).not.toHaveAttribute('aria-describedby');
+  });
+
+  it('sends only one request when the user submits twice before the response resolves', async () => {
+    let resolveFetch: (value: { token: string }) => void;
+    mockedApiFetch.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveFetch = resolve;
+        }),
+    );
+
+    const { user } = renderLogin();
+    await user.type(emailField(), EMAIL);
+    await user.type(passwordField(), PASSWORD);
+    // Two rapid clicks on the same element before the first request
+    // settles - only one call should go out (spec: double-submit guard is
+    // a synchronous phase check, not reliant on `disabled` having
+    // committed to the DOM yet). Re-querying by accessible name for the
+    // second click would fail once the label switches to "Logging in…".
+    const button = loginButton();
+    await user.click(button);
+    await user.click(button);
+
+    expect(mockedApiFetch).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      resolveFetch!({ token: makeToken('AGENT') });
+    });
+  });
+
+  it('allows a second submission once the first request has settled', async () => {
+    mockedApiFetch.mockRejectedValueOnce(
+      new ApiRequestError('Request failed with status 401', 401, 'AUTH_INVALID_CREDENTIALS'),
+    );
+    mockedApiFetch.mockResolvedValueOnce({ token: makeToken('AGENT') });
+
+    const { user } = renderLogin();
+    await fillAndSubmit(user);
+    expect(await screen.findByTestId('login-error')).toHaveTextContent(INVALID_CREDENTIALS);
+    expect(loginButton()).toBeEnabled();
+
+    // The guard only blocks a submit while the previous one is still
+    // pending - once the first request has settled (here, with a
+    // failure), a genuine second submission must go through.
+    await user.click(loginButton());
+
+    expect(mockedApiFetch).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not save the token after unmounting mid-submit', async () => {
+    let resolveFetch: (value: { token: string }) => void;
+    mockedApiFetch.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveFetch = resolve;
+        }),
+    );
+
+    const { user } = renderLogin();
+    await user.type(emailField(), EMAIL);
+    await user.type(passwordField(), PASSWORD);
+    await user.click(loginButton());
+
+    cleanup();
+    resolveFetch!({ token: makeToken('AGENT') });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    // The response would decode to a valid AGENT token, so if the
+    // `cancelledRef` guard were missing, `saveToken` would fire here and
+    // `getToken()` would return it. It doesn't - proving the guarded side
+    // effect never ran post-unmount (React 18 no longer warns on a
+    // setState-after-unmount, so that assertion proved nothing; this one
+    // proves the guard actually did something).
+    expect(getToken()).toBeNull();
   });
 });

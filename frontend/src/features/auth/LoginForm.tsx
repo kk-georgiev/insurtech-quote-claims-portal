@@ -66,6 +66,7 @@ export function LoginForm() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (phase === 'submitting') return;
     setPhase('submitting');
     setFormError(null);
     setFieldErrors({});
@@ -132,8 +133,14 @@ export function LoginForm() {
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             disabled={submitting}
+            aria-invalid={fieldErrors.email ? true : undefined}
+            aria-describedby={fieldErrors.email ? 'login-email-error' : undefined}
           />
-          {fieldErrors.email && <p role="alert">{fieldErrors.email}</p>}
+          {fieldErrors.email && (
+            <p role="alert" id="login-email-error">
+              {fieldErrors.email}
+            </p>
+          )}
         </div>
         <div>
           <label htmlFor="login-password">Password</label>
@@ -146,8 +153,14 @@ export function LoginForm() {
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             disabled={submitting}
+            aria-invalid={fieldErrors.password ? true : undefined}
+            aria-describedby={fieldErrors.password ? 'login-password-error' : undefined}
           />
-          {fieldErrors.password && <p role="alert">{fieldErrors.password}</p>}
+          {fieldErrors.password && (
+            <p role="alert" id="login-password-error">
+              {fieldErrors.password}
+            </p>
+          )}
         </div>
         {formError && (
           <p role="alert" data-testid="login-error">

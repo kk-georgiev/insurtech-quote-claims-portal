@@ -177,7 +177,7 @@ Append-only. Entries collected from bmad-build review loopbacks. Do not modify e
 
 - source_spec: `_bmad-output/implementation-artifacts/spec-2-2-role-based-post-login-routing.md`
   summary: After Story 2.2 a logged-in CLIENT lands on a bare `features/shells/client/ClientShell.tsx` stub instead of a quote flow, because Epic 1's quote-flow frontend was never built — only the backend `POST /api/v1/quotes` endpoint exists.
-  evidence: Story 2.2 deliberately ships the client shell as a bare route target at `/` (Story 2.3 adds real shell content and chrome; the client shell's *actual* home is Epic 1's quote form/result view). This extends the pre-existing gap already recorded above in this file's `spec-1-5-quote-calculation-with-transparent-breakdown.md` entry ("No end-to-end frontend exists for quote calculation") — no quote-flow frontend story exists anywhere in `epics.md`. Turning this into an `epics.md` story is a PM decision, not Story 2.2's to make.
+  evidence: Story 2.2 deliberately ships the client shell as a bare route target at `/` (Story 2.3 adds real shell content and chrome; the client shell's *actual* home is Epic 1's quote form/result view). This extends the pre-existing gap already recorded above in this file's `spec-1-5-quote-calculation-with-transparent-breakdown.md` entry ("No end-to-end frontend exists for quote calculation") — no quote-flow frontend story exists anywhere in `epics.md`. Turning this into an `epics.md` story is a PM decision, not Story 2.2's to make. RESOLVED 2026-08-28 by Story 1.7 (`spec-1-7-client-quote-flow-submit-and-see-the-breakdown.md`, merged as #21): `ClientShell` now renders `QuoteForm`, so a logged-in CLIENT lands on the real quote flow. The root Story 1.5 entry above records the same underlying gap and is closed by the same change.
 
 - source_spec: `_bmad-output/implementation-artifacts/spec-2-2-role-based-post-login-routing.md`
   summary: The new frontend Vitest suite (`frontend/`, `npm test`) has no CI runner — like the backend `mvn test` suite (see the Story 2.1 entry above), it only executes when someone invokes it by hand.
@@ -247,3 +247,13 @@ Append-only. Entries collected from bmad-build review loopbacks. Do not modify e
 - source_spec: none
   summary: No required-field indicator (e.g. `*`) exists even though every current input across `LoginForm`/`RegisterForm`/`QuoteForm` is `required`.
   evidence: Review-loop finding (blind-hunter). Low value today (everything happens to be required, so nothing is being distinguished in practice) and a pure-CSS solution would need a fragile `label:has(+ div input:required)`-style selector; revisit if/when a genuinely optional field appears.
+
+## Deferred from: Story 2.3 (2026-08-28)
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-2-3-placeholder-screens-for-agent-liquidator-and-administrator.md`
+  summary: No per-route `document.title` — `/agent`, `/liquidator` and `/administrator` all keep the single `index.html` title, so browser tabs, history entries and bookmarks are indistinguishable across the role areas.
+  evidence: Review-loop finding (blind-hunter). Sharp for a story whose entire deliverable is *labeling*: the screens are now distinct on-page but identical in the tab strip. Not fixed here because title management is cross-cutting — it belongs to every route (auth screens, `/health`, the client shell), not just the three staff shells, and adding an effect to components the spec defines as "static and non-interactive" would contradict this story's own contract. Wants one deliberate decision on where route titles live (a `<title>` per route element, a router-level effect, or a small `useDocumentTitle` hook) applied across the whole table.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-2-3-placeholder-screens-for-agent-liquidator-and-administrator.md`
+  summary: "Staff role" (`Exclude<Role, 'CLIENT'>`) is a domain concept currently invented inside `frontend/src/features/shells/shells.test.tsx` rather than exported from `app/roleHome.ts`.
+  evidence: Review-loop finding (blind-hunter). `roleHome.ts` declares itself "the frontend's single source of truth for which roles exist", and Story 2.4's route guard needs exactly the same staff/client distinction to decide who may reach which route. Not done here because Story 2.3's frozen spec forbids touching `roleHome.ts` or `router.tsx`. Story 2.4 should export `StaffRole` + `STAFF_ROLES` from `roleHome.ts` and have the test import them instead of re-deriving the filter.

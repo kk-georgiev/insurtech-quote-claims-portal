@@ -69,9 +69,11 @@ login screen) like any other account:
 Role-based post-login routing landed in Story 2.2: after login each role is
 taken to its own route — `/agent`, `/liquidator`, `/administrator`, and the
 client at `/`. The landing URL and shell are how you confirm the account
-authenticated as the role you expected. Those shells are bare placeholders
-for now (real content is Story 2.3) and there are no route guards yet
-(typing another role's URL still renders its stub — Story 2.4).
+authenticated as the role you expected. Story 2.3 gave each staff route a
+static, role-labeled placeholder screen ("Agent workspace" and a coming-soon
+line); the client shell at `/` hosts Story 1.7's quote flow. There are no
+route guards yet (typing another role's URL still renders that role's screen
+— Story 2.4).
 
 To get a **CLIENT** account, register one through the app (or
 `POST /api/v1/auth/register`).

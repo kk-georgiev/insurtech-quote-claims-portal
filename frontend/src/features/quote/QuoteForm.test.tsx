@@ -66,6 +66,17 @@ async function fillAndSubmit(
 const VALID_INPUT = { driverAge: '30', regionCode: 'SOF', engineCc: '1600', installments: '2' };
 
 describe('QuoteForm', () => {
+  it('renders the driverAge/engineCc sanity ceilings as native max attributes', () => {
+    // spec-quote-input-bounds.md: mirrors CreateQuoteRequest's @Max(100)/
+    // @Max(8000) as native hints (additive only - noValidate still means
+    // these don't block submission; see the bean-validation tests below for
+    // the actual enforcement path).
+    renderForm();
+
+    expect(driverAgeField()).toHaveAttribute('max', '100');
+    expect(engineCcField()).toHaveAttribute('max', '8000');
+  });
+
   it('submits the authenticated request and renders the full breakdown on success', async () => {
     mockedApiFetch.mockResolvedValue(SAMPLE_QUOTE);
 
@@ -143,6 +154,32 @@ describe('QuoteForm', () => {
     expect(await screen.findByText('must be greater than or equal to 18')).toBeInTheDocument();
     expect(screen.getByText('must be greater than or equal to 800')).toBeInTheDocument();
     expect(screen.getByText('must not be blank')).toBeInTheDocument();
+    expect(screen.queryByTestId('quote-error')).not.toBeInTheDocument();
+    expect(submitButton()).toBeEnabled();
+  });
+
+  it('renders field-level errors from an over-ceiling (@Max) bean-validation failure next to each offending input', async () => {
+    // spec-quote-input-bounds.md: the new @Max(100)/@Max(8000) ceilings
+    // produce the same SHARED_VALIDATION_ERROR shape as the existing @Min
+    // case above - confirms the fieldErrors rendering path also covers the
+    // over-ceiling direction, not just under-floor.
+    mockedApiFetch.mockRejectedValue(
+      new ApiRequestError('Request failed with status 400', 400, 'SHARED_VALIDATION_ERROR', [
+        { field: 'driverAge', message: 'must be less than or equal to 100' },
+        { field: 'engineCc', message: 'must be less than or equal to 8000' },
+      ]),
+    );
+
+    const { user } = renderForm();
+    // driverAge>100, engineCc>8000 - regionCode/installments left valid.
+    await user.type(driverAgeField(), '101');
+    await user.type(regionCodeField(), 'SOF');
+    await user.type(engineCcField(), '8001');
+    await user.type(installmentsField(), '2');
+    await user.click(submitButton());
+
+    expect(await screen.findByText('must be less than or equal to 100')).toBeInTheDocument();
+    expect(screen.getByText('must be less than or equal to 8000')).toBeInTheDocument();
     expect(screen.queryByTestId('quote-error')).not.toBeInTheDocument();
     expect(submitButton()).toBeEnabled();
   });

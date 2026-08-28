@@ -197,3 +197,29 @@ Append-only. Entries collected from bmad-build review loopbacks. Do not modify e
 - source_spec: none
   summary: `.github/PULL_REQUEST_TEMPLATE.md` has no reminder of the optional release-tag step (`git tag -a v0.2.0-epic2 ...`) that `CONTRIBUTING.md` §3a lists for a `dev → main` promotion.
   evidence: Review-loop finding (blind-hunter). Tagging happens after merge, by whoever merges the release PR — not something the PR author self-checks before opening it, so it doesn't fit the template's pre-submission checklist shape. Worth a one-line callout in §3a's own text instead, if this keeps getting missed in practice.
+
+## Deferred from: Story 1.7 review (2026-08-28)
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-1-7-client-quote-flow-submit-and-see-the-breakdown.md`
+  summary: `QuoteForm`'s `installments` field is a free-typed `<input type="number">` (`min=1 max=4`), even though the backend only ever accepts `{1, 2, 4}` — `3` is in the HTML range but always server-rejects.
+  evidence: Review-loop finding (blind-hunter). A `<select>` restricted to the three real values would prevent the round trip entirely, but the frozen I/O Matrix's "Unsupported installments" row is specifically demonstrated today by typing `3` into this input — restricting the control would make that row's current test unreachable via the UI and needs a coordinated spec/test change, not a standalone patch.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-1-7-client-quote-flow-submit-and-see-the-breakdown.md`
+  summary: The form's `<form noValidate>` disables the browser's enforcement of the visible `required`/`min`/`max` attributes; a blank numeric field becomes `Number('') === 0` and is sent as a real value.
+  evidence: Review-loop finding (blind-hunter). Not a correctness bug — every such case (driverAge=0, engineCc=0, installments=0, blank regionCode) already round-trips to the exact bean-validation field error the frozen I/O Matrix expects, verified by an existing passing test. Purely an avoidable extra network round trip; client-side pre-validation would need to exactly mirror the backend's constraints to be worth adding.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-1-7-client-quote-flow-submit-and-see-the-breakdown.md`
+  summary: No test exercises `QuoteForm`'s `cancelledRef` unmount guard (a response resolving after the component unmounts should not call any state setter).
+  evidence: Review-loop finding (blind-hunter). The mechanism is documented and mirrors `LoginForm.tsx`'s identical, equally-untested guard — a pre-existing coverage gap in the pattern this story copied, not something newly introduced here specifically.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-1-7-client-quote-flow-submit-and-see-the-breakdown.md`
+  summary: Field-level error `<p role="alert">` elements in `QuoteForm.tsx` have no `id`, and their `<input>`s carry no `aria-describedby`/`aria-invalid` pointing at them — a screen-reader user tabbing back into an already-errored field gets no re-announcement.
+  evidence: Review-loop finding (blind-hunter + verification-gap, both independently). Mirrors an identical, pre-existing gap in `LoginForm.tsx`/`RegisterForm.tsx` — worth a single a11y pass across all three forms together rather than a one-off fix here.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-1-7-client-quote-flow-submit-and-see-the-breakdown.md`
+  summary: The numeric inputs (`driverAge`, `engineCc`, `installments`) set no `step`, so a value like `25.5` can be typed and, combined with `noValidate`, is sent as-is — the backend's `Integer`-typed DTO fields would then fail JSON deserialization rather than a clean bean-validation field error.
+  evidence: Review-loop finding (blind-hunter). Not covered by the frozen I/O Matrix's "Bean-validation failure" row (that row covers valid-typed values outside range, not type-mismatched JSON). Fixing properly needs either stricter client-side parsing or confirming/improving the backend's malformed-body error path — a small design decision, not a one-line patch.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-1-7-client-quote-flow-submit-and-see-the-breakdown.md`
+  summary: `QuoteForm` has no guard against a rapid double-submit (e.g. double Enter) firing `handleSubmit` twice before the `disabled` attribute re-renders, potentially sending two concurrent `POST /api/v1/quotes` requests.
+  evidence: Review-loop finding (edge-case-hunter). Mirrors `LoginForm.tsx`'s identical structure and identical latent gap — pre-existing pattern this story copied, not newly introduced. Worth a shared fix (e.g. a `phase === 'submitting'` guard at the top of `handleSubmit`) applied to all three forms together.

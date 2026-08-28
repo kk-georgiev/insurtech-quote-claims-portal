@@ -37,6 +37,9 @@ describe('route table', () => {
     renderAt('/');
     expect(await screen.findByTestId('client-shell')).toBeInTheDocument();
     expect(screen.queryByTestId('health-status')).toBeNull();
+    // Guards against `<QuoteForm />` being dropped from `ClientShell` -
+    // asserting the wrapper testid alone wouldn't catch that regression.
+    expect(screen.getByRole('heading', { name: 'Get a quote' })).toBeInTheDocument();
   });
 
   it('serves the backend health round-trip at /health', async () => {

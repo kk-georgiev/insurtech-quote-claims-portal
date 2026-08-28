@@ -3,8 +3,9 @@
 Vite 8 + React 19 + TypeScript 6.x SPA. Routing is owned by React Router 8
 (AD-10). Routes so far: the client shell at `/`, the three staff shells
 (`/agent`, `/liquidator`, `/administrator`), the auth screens (`/login`,
-`/register`), and the backend health round-trip at `/health`. The shells
-are bare placeholders (real content is Story 2.3) with no route guards yet
+`/register`), and the backend health round-trip at `/health`. The three
+staff shells are static, role-labeled placeholder screens (Story 2.3); the
+client shell hosts Story 1.7's quote flow. There are no route guards yet
 (Story 2.4).
 
 ## Prerequisites
@@ -62,7 +63,7 @@ src/
   api/       # typed fetch wrapper (client.ts), JWT storage/decode (authToken.ts)
   features/
     auth/    # LoginForm, RegisterForm
-    shells/  # bare per-role navigation shells (client, agent, liquidator, administrator)
+    shells/  # per-role navigation shells (see above)
   test/      # Vitest setup (jsdom matchers, RTL cleanup)
 ```
 

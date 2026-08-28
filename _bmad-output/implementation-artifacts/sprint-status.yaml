@@ -29,7 +29,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 08-23-2026 17:25
-last_updated: 08-28-2026 16:41
+last_updated: 08-28-2026 17:54
 project: Motor Insurance Quote & Claims Portal
 project_key: NOKEY
 tracking_system: file-system
@@ -48,7 +48,7 @@ development_status:
   epic-2: in-progress
   2-1-seeded-staff-demo-accounts: review
   2-2-role-based-post-login-routing: review
-  2-3-placeholder-screens-for-agent-liquidator-and-administrator: backlog
+  2-3-placeholder-screens-for-agent-liquidator-and-administrator: review
   2-4-frontend-route-guards-per-role: backlog
   epic-2-retrospective: optional
 

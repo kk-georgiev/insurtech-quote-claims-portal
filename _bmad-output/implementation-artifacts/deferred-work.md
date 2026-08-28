@@ -223,3 +223,21 @@ Append-only. Entries collected from bmad-build review loopbacks. Do not modify e
 - source_spec: `_bmad-output/implementation-artifacts/spec-1-7-client-quote-flow-submit-and-see-the-breakdown.md`
   summary: `QuoteForm` has no guard against a rapid double-submit (e.g. double Enter) firing `handleSubmit` twice before the `disabled` attribute re-renders, potentially sending two concurrent `POST /api/v1/quotes` requests.
   evidence: Review-loop finding (edge-case-hunter). Mirrors `LoginForm.tsx`'s identical structure and identical latent gap — pre-existing pattern this story copied, not newly introduced. Worth a shared fix (e.g. a `phase === 'submitting'` guard at the top of `handleSubmit`) applied to all three forms together.
+
+## Deferred from: minimal styling review (2026-08-28)
+
+- source_spec: none
+  summary: `index.css` gives error text (`role="alert"`) a distinct red color, but nothing changes the associated `<input>`'s border/background when it's currently invalid — an erroring field looks identical to a valid one unless the red text below it is noticed.
+  evidence: Review-loop finding (blind-hunter). Fixable with a `:has()` selector (e.g. `div:has([role="alert"]) input`, well-supported in evergreen browsers) or an `aria-invalid` attribute the components would need to start setting — either way a small design decision (how prominent, which mechanism) beyond this pass's "target what's already there" scope.
+
+- source_spec: none
+  summary: `index.css` styles forms/buttons via bare element selectors (`form div`, `button`) with no class-based scoping or escape hatch — any future non-field `div` inside a form, or a secondary/tertiary button (e.g. a header logout button), will silently inherit this styling.
+  evidence: Review-loop finding (blind-hunter). A deliberate trade-off for this pass (zero JSX/className changes, matching the "minimal, no framework" scope) — resolving it properly means introducing component-scoped classes across every form, a bigger, more invasive change than "add a stylesheet."
+
+- source_spec: none
+  summary: No "skip to content" link exists — `RootLayout`'s nav (Register/Login/Health) sits before `<main>` with no bypass, so keyboard/screen-reader users tab through it on every single page before reaching the actual screen.
+  evidence: Review-loop finding (blind-hunter). Real a11y gap, but fixing it needs a new JSX element in `RootLayout.tsx`, which this pass deliberately avoided (CSS-only diff). Worth doing alongside a broader a11y pass (see the `aria-describedby` finding already deferred from Story 1.7's review).
+
+- source_spec: none
+  summary: No required-field indicator (e.g. `*`) exists even though every current input across `LoginForm`/`RegisterForm`/`QuoteForm` is `required`.
+  evidence: Review-loop finding (blind-hunter). Low value today (everything happens to be required, so nothing is being distinguished in practice) and a pure-CSS solution would need a fragile `label:has(+ div input:required)`-style selector; revisit if/when a genuinely optional field appears.

@@ -1,15 +1,19 @@
 # Frontend
 
 Vite 8 + React 19 + TypeScript 6.x SPA. Routing is owned by React Router 8
-(AD-10); only a single near-empty route exists this milestone (a backend
-health check), matching Story 1.1's scope.
+(AD-10). Routes so far: the client shell at `/`, the three staff shells
+(`/agent`, `/liquidator`, `/administrator`), the auth screens (`/login`,
+`/register`), and the backend health round-trip at `/health`. The shells
+are bare placeholders (real content is Story 2.3) with no route guards yet
+(Story 2.4).
 
 ## Prerequisites
 
 - Node.js 20+
 - Docker + Docker Compose (for local Postgres) and a running backend
-  (see `../backend/README.md`), so the health round-trip has something to
-  reach
+  (see `../backend/README.md`), so the `/health` round-trip and the login
+  flow have something to reach. Not needed to run the test suite (`npm
+  test`) — it mocks the network.
 
 ## Run
 
@@ -32,18 +36,35 @@ health check), matching Story 1.1's scope.
    npm run dev
    ```
 
-3. Open the printed URL (default `http://localhost:5173`). The page calls
-   the backend's `/actuator/health` endpoint at `VITE_API_URL` on load and
-   shows "reachable" or "unreachable" - it never crashes if the backend is
-   down.
+3. Open the printed URL (default `http://localhost:5173`). It lands on the
+   client shell (`/`). The `/health` screen (header nav link) calls the
+   backend's `/actuator/health` endpoint at `VITE_API_URL` and shows
+   "reachable" or "unreachable" - it never crashes if the backend is down.
+
+## Run tests
+
+```bash
+cd frontend
+npm test          # run the Vitest suite once
+npm run test:watch # re-run on change
+```
+
+Vitest + React Testing Library + jsdom. `apiFetch` is mocked, so no backend,
+Docker, or `.env` is required. Story 2.2 added this first frontend suite
+(`roleHome`/`isRole` units and the login-routing / route-table tests).
 
 ## Project layout
 
 ```text
 src/
-  app/    # router setup (router.tsx), root layout, health check screen
-  api/    # typed fetch wrapper (client.ts) - reads VITE_API_URL, never hardcoded
+  app/       # route table (router.tsx), App (router instance), RootLayout,
+             #   roleHome (Role union + isRole guard + roleHome map), HealthStatus
+  api/       # typed fetch wrapper (client.ts), JWT storage/decode (authToken.ts)
+  features/
+    auth/    # LoginForm, RegisterForm
+    shells/  # bare per-role navigation shells (client, agent, liquidator, administrator)
+  test/      # Vitest setup (jsdom matchers, RTL cleanup)
 ```
 
-`features/` (auth, quote, role-based shells) and `i18n/` do not exist yet -
-each is added in the story that first needs it.
+`features/quote` and `i18n/` do not exist yet - each is added in the story
+that first needs it.

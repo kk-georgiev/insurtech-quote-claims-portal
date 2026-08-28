@@ -142,7 +142,7 @@ Append-only. Entries collected from bmad-build review loopbacks. Do not modify e
   evidence: Review-loop finding (blind-hunter + edge-case-hunter, 1st run). `application.yml` sets `spring.flyway.locations: classpath:db/migration` with no profile split, and the project has no active profile at all. The README's "any real deployment must delete or rotate these accounts" is an unenforced honour-system note. The correct fix (a separate `classpath:db/demo` location enabled only under a `local`/`demo` profile) requires a profile strategy this project has not yet defined — the same blocker as open epic-1 retro action item 10 (JWT-secret fail-fast guard + Postgres-credentials deferred item, both awaiting "a real deployment target/profile strategy"). Bundle all three when that strategy lands. Not a Milestone 1 demo risk: the only databases in play are a local Docker volume and throwaway Testcontainers instances.
 
 - source_spec: `_bmad-output/implementation-artifacts/spec-2-1-seeded-staff-demo-accounts.md`
-  summary: No CI runs the backend test suite, so the 74 tests — including Story 2.1's new coverage — only execute when someone runs `mvn test` locally with a Docker daemon up.
+  summary: No CI runs the backend test suite, so the backend suite (76 tests as of Story 2.1) only executes when someone runs `mvn test` locally with a Docker daemon up.
   evidence: Review-loop finding (verification-gap, 1st run). `.github/` contains only Java-upgrade tooling artifacts and no `workflows/` directory; `CONTRIBUTING.md:161` still lists "`.github/workflows/` — CI за build + тестове" as an unchecked TODO. Pre-existing and repo-wide, surfaced incidentally by this story rather than caused by it — but every story that adds Testcontainers-backed tests raises the cost of the gap.
   status: RESOLVED 2026-08-28 — `.github/workflows/ci.yml` added (see `spec-ci-pipeline.md`), running the full backend suite (now 76 tests) and the frontend typecheck/build on every PR and push to `main`/`dev`.
 
@@ -171,3 +171,21 @@ Append-only. Entries collected from bmad-build review loopbacks. Do not modify e
 - source_spec: `_bmad-output/implementation-artifacts/spec-ci-pipeline.md`
   summary: No dependency/security scanning (`npm audit`, OWASP dependency-check, Dependabot config) exists anywhere under `.github/`.
   evidence: Review-loop finding (blind-hunter). Real, but a separate concern with its own tooling choice and noise-tuning; out of scope for a first CI pipeline that only needed to wire up the build/test commands that already exist.
+
+## Deferred from: Story 2.2 (2026-08-28)
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-2-2-role-based-post-login-routing.md`
+  summary: After Story 2.2 a logged-in CLIENT lands on a bare `features/shells/client/ClientShell.tsx` stub instead of a quote flow, because Epic 1's quote-flow frontend was never built — only the backend `POST /api/v1/quotes` endpoint exists.
+  evidence: Story 2.2 deliberately ships the client shell as a bare route target at `/` (Story 2.3 adds real shell content and chrome; the client shell's *actual* home is Epic 1's quote form/result view). This extends the pre-existing gap already recorded above in this file's `spec-1-5-quote-calculation-with-transparent-breakdown.md` entry ("No end-to-end frontend exists for quote calculation") — no quote-flow frontend story exists anywhere in `epics.md`. Turning this into an `epics.md` story is a PM decision, not Story 2.2's to make.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-2-2-role-based-post-login-routing.md`
+  summary: The new frontend Vitest suite (`frontend/`, `npm test`) has no CI runner — like the backend `mvn test` suite (see the Story 2.1 entry above), it only executes when someone invokes it by hand.
+  evidence: Same root gap as the Story 2.1 verification-gap finding: `.github/` has no `workflows/` directory and `CONTRIBUTING.md` still lists CI as an unchecked TODO. Story 2.2 ships the first frontend test toolchain, so the gap now covers two independent suites (JVM + Node) that both rely on the honour system. Bundle a `frontend` job into the same CI workflow whenever the backend one is set up.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-2-2-role-based-post-login-routing.md`
+  summary: `frontend/src/app/router.tsx` has no `errorElement` and no catch-all `*` route — the table grew from 2 routes to 7, and a mistyped/unknown path now drops the user on React Router's raw default error screen.
+  evidence: Not in Story 2.2's I/O matrix (which only covers the four role routes, the auth screens, and direct staff-URL visits). Wants a `NotFound` screen (Story 2.3-style copy) plus an `errorElement` on the `RootLayout` route so route errors render in-shell. A deliberate error-UX decision for Story 2.3 or a PM call, not a one-liner to bolt on here.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-2-2-role-based-post-login-routing.md`
+  summary: The first frontend test toolchain ships with no coverage story — no `@vitest/coverage-v8`, no `test:coverage` script, no `coverage/` entry in `.gitignore`, no thresholds.
+  evidence: Story 2.2's scope was the routing behaviour and the toolchain to pin it, not a coverage regime. Worth a deliberate testing-strategy decision (which provider, what thresholds, enforce in CI or advisory-only) before Stories 2.3, 2.4, and Epic 3 add substantially more frontend code and tests.

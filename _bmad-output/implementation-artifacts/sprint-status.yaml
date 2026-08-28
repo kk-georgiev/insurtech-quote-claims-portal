@@ -89,7 +89,7 @@ action_items:
     action: "Reconcile Story 1.2 NFR-4 wording - password rules cannot be DB-enforced
       given hash-only storage"
     owner: "Konstantin"
-    status: open
+    status: done
     ref: "_bmad-output/implementation-artifacts/epic-1-retro-2026-08-26.md"
   - id: "epic-1-retro-item-5-add-dataintegrityviolationexception-hand"
     epic: 1
@@ -103,7 +103,7 @@ action_items:
     action: "Record a design note for Epic 2 planning on JWT role/claim staleness
       (no revocation, 8h window)"
     owner: "Konstantin"
-    status: open
+    status: done
     ref: "_bmad-output/implementation-artifacts/epic-1-retro-2026-08-26.md"
   - id: "epic-1-retro-item-7-add-responsestatus-httpstatus-created-to"
     epic: 1
@@ -136,5 +136,5 @@ action_items:
     action: "Add a one-line note recording that staff-role lockout on the Quote module
       in Epic 1 is deliberate, not an oversight"
     owner: "Konstantin"
-    status: open
+    status: done
     ref: "_bmad-output/implementation-artifacts/epic-1-retro-2026-08-26.md"

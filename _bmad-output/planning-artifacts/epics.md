@@ -37,7 +37,7 @@ FR-15: Backend API responses (including errors) use stable, language-independent
 NFR-1 (Money precision): Every monetary value is represented and calculated with exact decimal precision end-to-end; floating-point is never used for money.
 NFR-2 (Security baseline): No password, token secret, or credential appears in source control, logs, or committed config — `.env`-style files only, with `.env.example` documenting required variables.
 NFR-3 (Password hashing): Passwords — self-registered and seeded — are hashed, never stored or logged in plain text, including in the seed migration itself.
-NFR-4 (Data integrity): Validation rules are enforced at both the API layer and the database layer (constraints).
+NFR-4 (Data integrity): Structural validation rules — required fields, uniqueness, and length/size caps — are enforced at both the API layer and the database layer (constraints). Rules with no DB-layer equivalent (password complexity, checked pre-hash and never persisted in raw form; email format, which the DB layer cannot mirror beyond `NOT NULL UNIQUE` + a length cap) are enforced at the API layer only.
 NFR-5 (Startup reliability, [ASSUMPTION]): The full Docker stack should become usable within a couple of minutes on a typical dev laptop on first run (image pulls aside), near-instantly on subsequent runs.
 NFR-6 (i18n maintainability): Adding a new screen or message later must not require backend changes purely to support translation.
 
@@ -135,7 +135,7 @@ So that I can access the portal as a CLIENT.
 **When** I submit registration with valid email+password
 **Then** a User is created with Role=CLIENT, password hashed, never plain text
 **And** given an already-registered email, when I try again, then I get a specific duplicate-email error (AD-7 envelope, e.g. `AUTH_EMAIL_TAKEN`)
-**And** given invalid input, when submitted, then field-level validation errors are enforced identically at API and DB layer (NFR-4)
+**And** given invalid input, when submitted, then field-level validation errors are enforced at both API and DB layer wherever a DB-layer equivalent exists — required fields, email uniqueness, length caps (NFR-4); password complexity and email format are API-layer only, since only the bcrypt hash is persisted
 
 ### Story 1.3: Login Issuing a Role-Bearing JWT
 

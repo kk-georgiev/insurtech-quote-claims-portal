@@ -46,8 +46,9 @@ npm install
 npm run dev
 ```
 
-Open the URL Vite prints (default `http://localhost:5173`) — the page calls
-the backend's health endpoint and shows whether it's reachable.
+Open the URL Vite prints (default `http://localhost:5173`). `/` shows the
+client shell; the backend health round-trip moved to `/health` (linked in
+the header nav), and `/login` / `/register` are the auth screens.
 
 ### Demo accounts
 
@@ -63,10 +64,12 @@ login screen) like any other account:
 | `liquidator@motorinsurance.demo` | `DemoPass123!` | LIQUIDATOR |
 | `administrator@motorinsurance.demo` | `DemoPass123!` | ADMINISTRATOR |
 
-Role-based routing lands in Stories 2.2–2.4, so for now every role is taken
-to the same post-login screen, which prints the role decoded from the token
-("You are logged in as AGENT") — that line is how you confirm the account
-authenticated as the role you expected.
+Role-based post-login routing landed in Story 2.2: after login each role is
+taken to its own route — `/agent`, `/liquidator`, `/administrator`, and the
+client at `/`. The landing URL and shell are how you confirm the account
+authenticated as the role you expected. Those shells are bare placeholders
+for now (real content is Story 2.3) and there are no route guards yet
+(typing another role's URL still renders its stub — Story 2.4).
 
 To get a **CLIENT** account, register one through the app (or
 `POST /api/v1/auth/register`).

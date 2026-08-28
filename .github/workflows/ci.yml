@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main, dev]
+  push:
+    branches: [main, dev]
+  workflow_dispatch: {}
+
+# Cancel a superseded run when new commits land on the same PR, so only the
+# latest push is ever waited on. Scoped to pull_request only: cancelling a
+# push run on main/dev would leave an intermediate commit permanently
+# unverified if a fast-follow push lands before it finishes.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Backend (Maven test)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      # Temurin matches the JDK vendor documented in spec-2-1 for local dev
+      # (Eclipse Adoptium). No Maven wrapper exists in this repo (spec-2-1),
+      # so `mvn` below is the runner's system Maven, driven by this JDK.
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      # Testcontainers-backed tests (PricingServiceTest, QuoteControllerTest,
+      # AuthControllerTest, SeededStaffAccountsTest, ...) need a Docker
+      # daemon; ubuntu-latest GitHub-hosted runners ship one preinstalled and
+      # running, so no extra setup step is required here.
+      - name: mvn clean test
+        run: mvn --batch-mode --no-transfer-progress clean test
+
+  frontend:
+    name: Frontend (typecheck + test + build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: npm ci
+        run: npm ci
+
+      # Separate from `build` for a clearer failure signal: a red typecheck
+      # step means a type error, a red build step means something else
+      # (bundling, asset resolution). `build` itself also runs `tsc -b`
+      # first (package.json), so this duplicates that check on purpose.
+      - name: npm run typecheck
+        run: npm run typecheck
+
+      # Story 2.2's Vitest + Testing Library suite (jsdom env, no real
+      # backend or browser needed — api/client.ts is mocked per-test).
+      # `test` runs `vitest run` (single pass, non-watch) per package.json.
+      - name: npm test
+        run: npm test
+
+      - name: npm run build
+        run: npm run build

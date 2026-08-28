@@ -224,6 +224,12 @@ Append-only. Entries collected from bmad-build review loopbacks. Do not modify e
   summary: `QuoteForm` has no guard against a rapid double-submit (e.g. double Enter) firing `handleSubmit` twice before the `disabled` attribute re-renders, potentially sending two concurrent `POST /api/v1/quotes` requests.
   evidence: Review-loop finding (edge-case-hunter). Mirrors `LoginForm.tsx`'s identical structure and identical latent gap — pre-existing pattern this story copied, not newly introduced. Worth a shared fix (e.g. a `phase === 'submitting'` guard at the top of `handleSubmit`) applied to all three forms together.
 
+## Deferred from: quote input bounds review (2026-08-28)
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-quote-input-bounds.md`
+  summary: `QuoteForm`'s `driverAge`/`engineCc` inputs give the user no visible hint of the new 100/8000 ceilings before they submit — `noValidate` suppresses the browser's native tooltip for `max`, so an over-ceiling value only surfaces as an error after a round trip to the server.
+  evidence: Review-loop finding (blind-hunter). Same root cause as the already-deferred `noValidate` UX round-trip finding from Story 1.7's own review — worth a single client-side pre-validation pass across all bounded fields together, not a one-off fix here.
+
 ## Deferred from: minimal styling review (2026-08-28)
 
 - source_spec: none

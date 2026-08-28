@@ -175,6 +175,108 @@ class QuoteControllerTest {
     }
 
     @Test
+    void clientRole_driverAgeAtCeiling_isAcceptedAndPriced() {
+        // driverAge=100 is the new @Max ceiling itself - still within the
+        // tariff's open-ended 86+ band, so this must still price (201), not
+        // be rejected. spec-quote-input-bounds.md I/O matrix.
+        String clientToken = jwtService.issueToken(registerClient(), Role.CLIENT);
+        String body = "{\"driverAge\":100,\"regionCode\":\"KH\",\"engineCc\":1500,\"installments\":2}";
+
+        ResponseEntity<String> response = postJson(body, clientToken);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        // Full breakdown, not just the echoed input - same rationale as
+        // clientRole_validInput_returnsFullBreakdown: KH/zone1/1301-2100cc
+        // base rate (141.12) plus the 86+ band's +10.00 age surcharge.
+        assertThat(response.getBody()).contains("\"driverAge\":100");
+        assertThat(response.getBody()).contains("\"regionCode\":\"KH\"");
+        assertThat(response.getBody()).contains("\"engineCc\":1500");
+        assertThat(response.getBody()).contains("\"zoneId\":1");
+        assertThat(response.getBody()).contains("\"zoneName\":\"Zone 1\"");
+        assertThat(response.getBody()).contains("\"basePremium\":141.12");
+        assertThat(response.getBody()).contains("\"ageSurcharge\":10.00");
+        assertThat(response.getBody()).contains("\"oneTimePremium\":151.12");
+        assertThat(response.getBody()).contains("\"installments\":2");
+        assertThat(response.getBody()).contains("\"installmentFee\":2.00");
+        assertThat(response.getBody()).contains("\"totalPremium\":153.12");
+        assertThat(response.getBody()).contains("\"installmentAmount\":76.56");
+        assertThat(response.getBody()).contains("\"currency\":\"EUR\"");
+    }
+
+    @Test
+    void clientRole_driverAgeOverCeiling_returnsFieldLevelValidationError() {
+        // Reproduces the originally-reported bug (driverAge=100000 silently
+        // priced) at a tighter boundary just above the new @Max(100) ceiling.
+        String clientToken = jwtService.issueToken(UUID.randomUUID(), Role.CLIENT);
+        String body = "{\"driverAge\":101,\"regionCode\":\"KH\",\"engineCc\":1500,\"installments\":2}";
+
+        ResponseEntity<String> response = postJson(body, clientToken);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody()).contains("\"code\":\"SHARED_VALIDATION_ERROR\"");
+        assertThat(response.getBody()).contains("\"field\":\"driverAge\"");
+    }
+
+    @Test
+    void clientRole_engineCcAtCeiling_isAcceptedAndPriced() {
+        // engineCc=8000 is the new @Max ceiling itself - still within the
+        // tariff's open-ended 2501+ band, so this must still price (201).
+        String clientToken = jwtService.issueToken(registerClient(), Role.CLIENT);
+        String body = "{\"driverAge\":30,\"regionCode\":\"KH\",\"engineCc\":8000,\"installments\":2}";
+
+        ResponseEntity<String> response = postJson(body, clientToken);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        // Full breakdown, not just the echoed input - same rationale as
+        // clientRole_validInput_returnsFullBreakdown: KH/zone1's open-ended
+        // 2501+ band (166.17) with no age surcharge (driverAge=30 is 25-85).
+        assertThat(response.getBody()).contains("\"driverAge\":30");
+        assertThat(response.getBody()).contains("\"regionCode\":\"KH\"");
+        assertThat(response.getBody()).contains("\"engineCc\":8000");
+        assertThat(response.getBody()).contains("\"zoneId\":1");
+        assertThat(response.getBody()).contains("\"zoneName\":\"Zone 1\"");
+        assertThat(response.getBody()).contains("\"basePremium\":166.17");
+        assertThat(response.getBody()).contains("\"ageSurcharge\":0.00");
+        assertThat(response.getBody()).contains("\"oneTimePremium\":166.17");
+        assertThat(response.getBody()).contains("\"installments\":2");
+        assertThat(response.getBody()).contains("\"installmentFee\":2.00");
+        assertThat(response.getBody()).contains("\"totalPremium\":168.17");
+        assertThat(response.getBody()).contains("\"installmentAmount\":84.09");
+        assertThat(response.getBody()).contains("\"currency\":\"EUR\"");
+    }
+
+    @Test
+    void clientRole_engineCcOverCeiling_returnsFieldLevelValidationError() {
+        // Reproduces the originally-reported bug (engineCc=10000000 silently
+        // priced) at a tighter boundary just above the new @Max(8000) ceiling.
+        String clientToken = jwtService.issueToken(UUID.randomUUID(), Role.CLIENT);
+        String body = "{\"driverAge\":30,\"regionCode\":\"KH\",\"engineCc\":8001,\"installments\":2}";
+
+        ResponseEntity<String> response = postJson(body, clientToken);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody()).contains("\"code\":\"SHARED_VALIDATION_ERROR\"");
+        assertThat(response.getBody()).contains("\"field\":\"engineCc\"");
+    }
+
+    @Test
+    void clientRole_originallyReportedBugValues_returnsFieldLevelValidationError() {
+        // Pins the exact regression manually found (spec Intent /
+        // "Previously-reported case" row of the I/O matrix): driverAge=100000
+        // and engineCc=10000000 both used to submit successfully and produce
+        // a priced quote. The boundary tests above (101/8001) cover the
+        // ceiling edge; this covers the literal reported values themselves.
+        String clientToken = jwtService.issueToken(UUID.randomUUID(), Role.CLIENT);
+        String body = "{\"driverAge\":100000,\"regionCode\":\"KH\",\"engineCc\":10000000,\"installments\":2}";
+
+        ResponseEntity<String> response = postJson(body, clientToken);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody()).contains("\"code\":\"SHARED_VALIDATION_ERROR\"");
+        assertThat(response.getBody()).contains("\"field\":\"driverAge\"");
+    }
+
+    @Test
     void clientRole_malformedRequestBody_isBadRequestNotServerError() {
         String clientToken = jwtService.issueToken(UUID.randomUUID(), Role.CLIENT);
         String malformed = "{\"driverAge\":\"not-a-number\",\"regionCode\":\"KH\",\"engineCc\":1000,\"installments\":1}";

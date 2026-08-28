@@ -124,3 +124,13 @@ Append-only. Entries collected from bmad-build review loopbacks. Do not modify e
 - source_spec: `_bmad-output/implementation-artifacts/spec-1-6-quote-persistence-and-retrieval.md`
   summary: `quotes.created_at` has no DB `DEFAULT now()` and is populated solely from the app clock (`Instant.now()` in the `Quote` constructor), with no injectable `Clock`.
   evidence: Review-loop finding (blind-hunter, 2nd run). Codebase-wide — `auth.domain.User` is identical. Consequences: the timestamp is not controllable in tests, is subject to multi-instance clock skew, and any future insert path that forgets to set it trips the `NOT NULL`. Best addressed as a cross-cutting convention (injectable `Clock` and/or DB defaults for all `created_at` columns).
+
+## Deferred from: Epic 1 retrospective (2026-08-26)
+
+- source_spec: `_bmad-output/implementation-artifacts/epic-1-retro-2026-08-26.md`
+  summary: No token revocation/logout mechanism exists — a role change or account deactivation for an existing user wouldn't take effect until their JWT expires (up to 8h).
+  evidence: Not a Milestone-1 defect (Story 1.4's spec explicitly names "no refresh token, login rate limiting, or lockout" as non-goals). Becomes a real design question once Epic 2 introduces administratively-managed staff roles — a demoted/deactivated staff account would keep acting under its old role/claims for up to 8h. Revisit when Epic 2 specs role management; likely resolution is either a shorter-lived token, a revocation list, or accepting the window as a documented trade-off.
+
+- source_spec: `_bmad-output/implementation-artifacts/epic-1-retro-2026-08-26.md`
+  summary: No documented decision recording that staff roles (AGENT/LIQUIDATOR/ADMINISTRATOR) are locked out of the Quote module in Epic 1.
+  evidence: Every quote endpoint hardcodes `hasRole('CLIENT')`; no staff path and no per-staff-role test exist. Given Epic 2 is explicitly titled "Every Role Gets Their Own Workspace" and Epic 1's own spec never mentions staff quote access, this is deliberate scope sequencing, not an oversight — recorded here so Epic 2's implementer doesn't have to rediscover it.

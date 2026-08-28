@@ -193,6 +193,19 @@ So that I can revisit it.
 **And** given a quote ID I own, when I request it, then I get the full original quote
 **And** given a quote ID belonging to another client, when I request it, then I'm rejected — never shown someone else's data
 
+### Story 1.7: Client Quote Flow — Submit and See the Breakdown
+
+As an authenticated client,
+I want to submit my driver and vehicle details and see the calculated premium breakdown on screen,
+So that I actually receive the quote Epic 1 promised (FR-8/FR-9), not just a backend response nobody can see.
+
+**Acceptance Criteria:**
+
+**Given** I am logged in as CLIENT and viewing my shell
+**When** I submit valid driver_age/region_code/engine_cc/installments
+**Then** I see the full breakdown from `POST /api/v1/quotes` (base premium, age surcharge, one-time premium, installment fee, total premium, installment amount) rendered on screen, not just a raw JSON response
+**And** given invalid or rejected input (unknown region code, unsupported installment count, out-of-range values), when submitted, then I see the field-level error message from the API's error envelope (AD-7), consistent with how `RegisterForm`/`LoginForm` already surface errors
+
 ## Epic 2: Every Role Gets Their Own Workspace
 
 Any of the four roles — including staff provisioned via seed data — logs in and lands on their own correctly role-guarded navigation shell, proving the role model is real, not cosmetic (realizes PRD UJ-2).

@@ -42,6 +42,7 @@ development_status:
   1-4-backend-enforced-access-to-the-quote-endpoints: done
   1-5-quote-calculation-with-transparent-breakdown: done
   1-6-quote-persistence-and-retrieval: done
+  1-7-client-quote-flow-submit-and-see-the-breakdown: done
   epic-1-retrospective: done
 
   epic-2: in-progress

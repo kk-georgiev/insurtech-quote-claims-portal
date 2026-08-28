@@ -1,13 +1,18 @@
+import { QuoteForm } from '../../quote/QuoteForm';
+
 /**
- * CLIENT navigation shell — bare route target for Story 2.2's role-based
- * post-login routing, mounted at `/`. Story 2.3 builds the real labeled
- * content and chrome; the client shell's actual home is Epic 1's quote flow
- * (a frontend that does not exist yet — see `deferred-work.md`).
+ * CLIENT navigation shell, mounted at `/`. Story 1.7 fills this in with the
+ * quote flow (FR-8/FR-9) - form and breakdown render in place here, no new
+ * route (spec Boundaries & Constraints). No route guard yet (Story 2.4's
+ * job) and no other shell chrome yet (Story 2.3, concurrent, owns
+ * `AgentShell`/`LiquidatorShell`/`AdministratorShell` and is out of scope
+ * here).
  */
 export function ClientShell() {
   return (
     <section data-testid="client-shell">
       <h2>Client</h2>
+      <QuoteForm />
     </section>
   );
 }

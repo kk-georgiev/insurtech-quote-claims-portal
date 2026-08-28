@@ -3,6 +3,8 @@
 // goes through this module; the backend origin always comes from
 // VITE_API_URL and is never hardcoded (AD-9/AD-10).
 
+import { getToken } from './authToken';
+
 const API_URL = import.meta.env.VITE_API_URL;
 
 if (!API_URL) {
@@ -41,6 +43,16 @@ export class ApiRequestError extends Error {
 
 export interface ApiFetchOptions extends Omit<RequestInit, 'body'> {
   body?: unknown;
+  /**
+   * When `true`, attaches `Authorization: Bearer <token>` using the token
+   * `authToken.ts`'s `getToken()` returns (Story 1.7 — the first
+   * authenticated call path in this codebase). If no token is stored, the
+   * header is simply omitted rather than sent as a literal `"Bearer null"` -
+   * the backend then rejects the request as unauthenticated (401), which
+   * callers handle the same way as any other failure (see `QuoteForm`),
+   * never as a special case here.
+   */
+  authenticated?: boolean;
 }
 
 /**
@@ -51,7 +63,15 @@ export async function apiFetch<TResponse>(
   path: string,
   options: ApiFetchOptions = {},
 ): Promise<TResponse> {
-  const { body, headers, ...rest } = options;
+  const { body, headers, authenticated, ...rest } = options;
+
+  const authHeaders: Record<string, string> = {};
+  if (authenticated) {
+    const token = getToken();
+    if (token) {
+      authHeaders.Authorization = `Bearer ${token}`;
+    }
+  }
 
   let response: Response;
   try {
@@ -59,6 +79,7 @@ export async function apiFetch<TResponse>(
       ...rest,
       headers: {
         ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
+        ...authHeaders,
         ...headers,
       },
       body: body !== undefined ? JSON.stringify(body) : undefined,

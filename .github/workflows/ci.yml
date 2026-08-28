@@ -47,7 +47,7 @@ jobs:
         run: mvn --batch-mode --no-transfer-progress clean test
 
   frontend:
-    name: Frontend (typecheck + build)
+    name: Frontend (typecheck + test + build)
     runs-on: ubuntu-latest
     timeout-minutes: 10
     defaults:
@@ -72,6 +72,12 @@ jobs:
       # first (package.json), so this duplicates that check on purpose.
       - name: npm run typecheck
         run: npm run typecheck
+
+      # Story 2.2's Vitest + Testing Library suite (jsdom env, no real
+      # backend or browser needed — api/client.ts is mocked per-test).
+      # `test` runs `vitest run` (single pass, non-watch) per package.json.
+      - name: npm test
+        run: npm test
 
       - name: npm run build
         run: npm run build

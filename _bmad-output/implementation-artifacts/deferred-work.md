@@ -163,6 +163,7 @@ Append-only. Entries collected from bmad-build review loopbacks. Do not modify e
 - source_spec: `_bmad-output/implementation-artifacts/spec-ci-pipeline.md`
   summary: The frontend job never runs tests — `frontend/package.json` has no `test` script, so CI only typechecks and builds; a frontend logic regression is caught solely by manual QA.
   evidence: Review-loop finding (blind-hunter). No frontend test framework (Vitest, React Testing Library, etc.) is installed yet. Adding one is a separate, non-trivial decision (framework choice, first test conventions) beyond wiring up CI for what already exists.
+  status: RESOLVED 2026-08-28 — Story 2.2 landed the Vitest/RTL toolchain in the same merge window; `ci.yml`'s frontend job now runs `npm test` between typecheck and build. See the Story 2.2 entry below.
 
 - source_spec: `_bmad-output/implementation-artifacts/spec-ci-pipeline.md`
   summary: `.github/PULL_REQUEST_TEMPLATE.md` still does not exist, even though it's the next item on `CONTRIBUTING.md` §6's checklist right after CI.
@@ -181,6 +182,7 @@ Append-only. Entries collected from bmad-build review loopbacks. Do not modify e
 - source_spec: `_bmad-output/implementation-artifacts/spec-2-2-role-based-post-login-routing.md`
   summary: The new frontend Vitest suite (`frontend/`, `npm test`) has no CI runner — like the backend `mvn test` suite (see the Story 2.1 entry above), it only executes when someone invokes it by hand.
   evidence: Same root gap as the Story 2.1 verification-gap finding: `.github/` has no `workflows/` directory and `CONTRIBUTING.md` still lists CI as an unchecked TODO. Story 2.2 ships the first frontend test toolchain, so the gap now covers two independent suites (JVM + Node) that both rely on the honour system. Bundle a `frontend` job into the same CI workflow whenever the backend one is set up.
+  status: RESOLVED 2026-08-28 — exactly this bundling, done in the same merge window. `ci.yml`'s frontend job runs `npm test` (`vitest run`) between typecheck and build.
 
 - source_spec: `_bmad-output/implementation-artifacts/spec-2-2-role-based-post-login-routing.md`
   summary: `frontend/src/app/router.tsx` has no `errorElement` and no catch-all `*` route — the table grew from 2 routes to 7, and a mistyped/unknown path now drops the user on React Router's raw default error screen.

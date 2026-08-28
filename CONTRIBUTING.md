@@ -163,7 +163,9 @@ docs/<кратко-описание>     ->  само документация
 - [ ] CI включен като required status check в ruleset-ите на `main`/`dev` —
       възможно едва след първото успешно run (GitHub трябва да "види" job
       имената, за да могат да се изберат в Settings → Rules).
-- [ ] `.github/PULL_REQUEST_TEMPLATE.md` — чеклист какво/как е тествано.
+- [x] `.github/PULL_REQUEST_TEMPLATE.md` — процес-checklist (branch/base branch,
+      merge стратегия, CI, self-review по §4, post-merge cleanup), не само
+      какво/как е тествано.
 - [ ] `CODEOWNERS` (по желание), ако искаме определени хора да ревюват
       определени модули.
 - [ ] `LICENSE`, ако repo-то стане публично извън тренинг контекста.

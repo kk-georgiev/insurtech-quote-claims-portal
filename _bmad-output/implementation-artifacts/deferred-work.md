@@ -192,6 +192,12 @@ Append-only. Entries collected from bmad-build review loopbacks. Do not modify e
   summary: The first frontend test toolchain ships with no coverage story — no `@vitest/coverage-v8`, no `test:coverage` script, no `coverage/` entry in `.gitignore`, no thresholds.
   evidence: Story 2.2's scope was the routing behaviour and the toolchain to pin it, not a coverage regime. Worth a deliberate testing-strategy decision (which provider, what thresholds, enforce in CI or advisory-only) before Stories 2.3, 2.4, and Epic 3 add substantially more frontend code and tests.
 
+## Deferred from: PR template review (2026-08-28)
+
+- source_spec: none
+  summary: `.github/PULL_REQUEST_TEMPLATE.md` has no reminder of the optional release-tag step (`git tag -a v0.2.0-epic2 ...`) that `CONTRIBUTING.md` §3a lists for a `dev → main` promotion.
+  evidence: Review-loop finding (blind-hunter). Tagging happens after merge, by whoever merges the release PR — not something the PR author self-checks before opening it, so it doesn't fit the template's pre-submission checklist shape. Worth a one-line callout in §3a's own text instead, if this keeps getting missed in practice.
+
 ## Deferred from: Story 1.7 review (2026-08-28)
 
 - source_spec: `_bmad-output/implementation-artifacts/spec-1-7-client-quote-flow-submit-and-see-the-breakdown.md`
@@ -223,3 +229,21 @@ Append-only. Entries collected from bmad-build review loopbacks. Do not modify e
 - source_spec: `_bmad-output/implementation-artifacts/spec-quote-input-bounds.md`
   summary: `QuoteForm`'s `driverAge`/`engineCc` inputs give the user no visible hint of the new 100/8000 ceilings before they submit — `noValidate` suppresses the browser's native tooltip for `max`, so an over-ceiling value only surfaces as an error after a round trip to the server.
   evidence: Review-loop finding (blind-hunter). Same root cause as the already-deferred `noValidate` UX round-trip finding from Story 1.7's own review — worth a single client-side pre-validation pass across all bounded fields together, not a one-off fix here.
+
+## Deferred from: minimal styling review (2026-08-28)
+
+- source_spec: none
+  summary: `index.css` gives error text (`role="alert"`) a distinct red color, but nothing changes the associated `<input>`'s border/background when it's currently invalid — an erroring field looks identical to a valid one unless the red text below it is noticed.
+  evidence: Review-loop finding (blind-hunter). Fixable with a `:has()` selector (e.g. `div:has([role="alert"]) input`, well-supported in evergreen browsers) or an `aria-invalid` attribute the components would need to start setting — either way a small design decision (how prominent, which mechanism) beyond this pass's "target what's already there" scope.
+
+- source_spec: none
+  summary: `index.css` styles forms/buttons via bare element selectors (`form div`, `button`) with no class-based scoping or escape hatch — any future non-field `div` inside a form, or a secondary/tertiary button (e.g. a header logout button), will silently inherit this styling.
+  evidence: Review-loop finding (blind-hunter). A deliberate trade-off for this pass (zero JSX/className changes, matching the "minimal, no framework" scope) — resolving it properly means introducing component-scoped classes across every form, a bigger, more invasive change than "add a stylesheet."
+
+- source_spec: none
+  summary: No "skip to content" link exists — `RootLayout`'s nav (Register/Login/Health) sits before `<main>` with no bypass, so keyboard/screen-reader users tab through it on every single page before reaching the actual screen.
+  evidence: Review-loop finding (blind-hunter). Real a11y gap, but fixing it needs a new JSX element in `RootLayout.tsx`, which this pass deliberately avoided (CSS-only diff). Worth doing alongside a broader a11y pass (see the `aria-describedby` finding already deferred from Story 1.7's review).
+
+- source_spec: none
+  summary: No required-field indicator (e.g. `*`) exists even though every current input across `LoginForm`/`RegisterForm`/`QuoteForm` is `required`.
+  evidence: Review-loop finding (blind-hunter). Low value today (everything happens to be required, so nothing is being distinguished in practice) and a pure-CSS solution would need a fragile `label:has(+ div input:required)`-style selector; revisit if/when a genuinely optional field appears.

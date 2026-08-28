@@ -134,3 +134,13 @@ Append-only. Entries collected from bmad-build review loopbacks. Do not modify e
 - source_spec: `_bmad-output/implementation-artifacts/epic-1-retro-2026-08-26.md`
   summary: No documented decision recording that staff roles (AGENT/LIQUIDATOR/ADMINISTRATOR) are locked out of the Quote module in Epic 1.
   evidence: Every quote endpoint hardcodes `hasRole('CLIENT')`; no staff path and no per-staff-role test exist. Given Epic 2 is explicitly titled "Every Role Gets Their Own Workspace" and Epic 1's own spec never mentions staff quote access, this is deliberate scope sequencing, not an oversight — recorded here so Epic 2's implementer doesn't have to rediscover it.
+
+## Deferred from: Story 2.1 review (2026-08-28)
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-2-1-seeded-staff-demo-accounts.md`
+  summary: `V5__seed_staff_accounts.sql` is ungated, so the three demo staff accounts — including an ADMINISTRATOR whose password is published in `README.md` — would be provisioned into any database the app is ever pointed at, including a real deployment.
+  evidence: Review-loop finding (blind-hunter + edge-case-hunter, 1st run). `application.yml` sets `spring.flyway.locations: classpath:db/migration` with no profile split, and the project has no active profile at all. The README's "any real deployment must delete or rotate these accounts" is an unenforced honour-system note. The correct fix (a separate `classpath:db/demo` location enabled only under a `local`/`demo` profile) requires a profile strategy this project has not yet defined — the same blocker as open epic-1 retro action item 10 (JWT-secret fail-fast guard + Postgres-credentials deferred item, both awaiting "a real deployment target/profile strategy"). Bundle all three when that strategy lands. Not a Milestone 1 demo risk: the only databases in play are a local Docker volume and throwaway Testcontainers instances.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-2-1-seeded-staff-demo-accounts.md`
+  summary: No CI runs the backend test suite, so the 74 tests — including Story 2.1's new coverage — only execute when someone runs `mvn test` locally with a Docker daemon up.
+  evidence: Review-loop finding (verification-gap, 1st run). `.github/` contains only Java-upgrade tooling artifacts and no `workflows/` directory; `CONTRIBUTING.md:161` still lists "`.github/workflows/` — CI за build + тестове" as an unchecked TODO. Pre-existing and repo-wide, surfaced incidentally by this story rather than caused by it — but every story that adds Testcontainers-backed tests raises the cost of the gap.

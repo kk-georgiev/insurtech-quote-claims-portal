@@ -147,6 +147,9 @@ export function QuoteForm() {
             name="driverAge"
             type="number"
             min={18}
+            // 100 mirrors the sanity ceiling on CreateQuoteRequest.driverAge -
+            // see that class's javadoc for why 100 was chosen.
+            max={100}
             required
             value={driverAge}
             onChange={(event) => setDriverAge(event.target.value)}
@@ -186,6 +189,9 @@ export function QuoteForm() {
             name="engineCc"
             type="number"
             min={800}
+            // 8000 mirrors the sanity ceiling on CreateQuoteRequest.engineCc -
+            // see that class's javadoc for why 8000 was chosen.
+            max={8000}
             required
             value={engineCc}
             onChange={(event) => setEngineCc(event.target.value)}

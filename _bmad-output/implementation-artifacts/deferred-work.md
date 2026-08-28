@@ -241,3 +241,25 @@ Append-only. Entries collected from bmad-build review loopbacks. Do not modify e
 - source_spec: none
   summary: No required-field indicator (e.g. `*`) exists even though every current input across `LoginForm`/`RegisterForm`/`QuoteForm` is `required`.
   evidence: Review-loop finding (blind-hunter). Low value today (everything happens to be required, so nothing is being distinguished in practice) and a pure-CSS solution would need a fragile `label:has(+ div input:required)`-style selector; revisit if/when a genuinely optional field appears.
+
+## Deferred from: form a11y and resubmit-guard hardening review (2026-08-28)
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-form-a11y-resubmit-hardening.md`
+  summary: The double-submit guard (`if (phase === 'submitting') return;`) reads `phase` from the `handleSubmit` closure rather than a ref, so it's correct for the tested scenario (two separately-awaited clicks) but not provably correct against any path where two invocations could land before an intervening `setPhase('submitting')` is flushed.
+  evidence: Review-loop finding (blind-hunter). The codebase already has a working ref idiom (`cancelledRef`) that would make this guard timing-independent; worth adopting if a less-tame double-submit path (e.g. a raw `fireEvent` sequence, or a future event-handling change) is ever found to slip through.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-form-a11y-resubmit-hardening.md`
+  summary: `fieldErrors` (and now `aria-invalid`) is never cleared per-field as the user edits an input — a field marked invalid by a failed submit stays `aria-invalid="true"` until the next full submit resolves, even after the user types a corrected value.
+  evidence: Review-loop finding (blind-hunter). Pre-existing gap (predates this chore), but wiring `aria-invalid` straight to `fieldErrors` makes it more consequential for screen-reader users than before. Fixing properly means deciding whether `onChange` should clear that field's error, which touches all three forms' state logic, not a one-line patch.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-form-a11y-resubmit-hardening.md`
+  summary: No focus management on submit failure — when field-level or form-level errors appear, focus doesn't move to the first invalid field or the error banner.
+  evidence: Review-loop finding (blind-hunter). Real a11y gap; a screen-reader/keyboard user has to discover the new error state manually. Needs a design decision (focus the first invalid field vs. the error banner) applied consistently across all three forms, beyond this chore's aria-wiring-only scope.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-form-a11y-resubmit-hardening.md`
+  summary: The `cancelledRef` boilerplate, the `FormPhase` state machine, and now the double-submit guard line are duplicated near-verbatim across `LoginForm.tsx`, `RegisterForm.tsx`, and `QuoteForm.tsx` (each file's comment points to "same intent/rationale as X.tsx" in a circular chain) — a third copy was added by this chore rather than extracting a shared hook.
+  evidence: Review-loop finding (blind-hunter). A genuine refactor opportunity (e.g. a `useSubmittableForm` hook), but disproportionate to this chore's scope and matches the codebase's existing convention of not sharing base classes/hooks across forms/tests yet (see `SeededStaffAccountsTest`'s javadoc: "no shared test base class" is a deliberate pattern here). Revisit if a fourth form is ever added.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-form-a11y-resubmit-hardening.md`
+  summary: No `aria-live` region announces the submit-button label change ("Log in" → "Logging in…", etc.) to screen-reader users; `disabled` alone isn't reliably announced.
+  evidence: Review-loop finding (blind-hunter). Real a11y enhancement, but a new pattern beyond the three findings this chore was scoped to bundle — worth its own follow-up alongside the focus-management gap above.

@@ -1,6 +1,6 @@
 import { StrictMode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QuoteForm } from './QuoteForm';
 import type { QuoteResponse } from './QuoteForm';
@@ -134,6 +134,13 @@ describe('QuoteForm', () => {
     );
 
     const { user } = renderForm();
+    // Before submitting, none of the fields carry error-describing aria
+    // attributes — no error has been set yet.
+    expect(driverAgeField()).not.toHaveAttribute('aria-invalid');
+    expect(driverAgeField()).not.toHaveAttribute('aria-describedby');
+    expect(installmentsField()).not.toHaveAttribute('aria-invalid');
+    expect(installmentsField()).not.toHaveAttribute('aria-describedby');
+
     // driverAge<18, engineCc<800, blank regionCode - installments left valid.
     await user.type(driverAgeField(), '16');
     await user.type(engineCcField(), '500');
@@ -145,6 +152,19 @@ describe('QuoteForm', () => {
     expect(screen.getByText('must not be blank')).toBeInTheDocument();
     expect(screen.queryByTestId('quote-error')).not.toBeInTheDocument();
     expect(submitButton()).toBeEnabled();
+
+    expect(driverAgeField()).toHaveAttribute('aria-invalid', 'true');
+    expect(driverAgeField()).toHaveAttribute('aria-describedby', 'quote-driverAge-error');
+    expect(screen.getByText('must be greater than or equal to 18').id).toBe('quote-driverAge-error');
+    expect(engineCcField()).toHaveAttribute('aria-invalid', 'true');
+    expect(engineCcField()).toHaveAttribute('aria-describedby', 'quote-engineCc-error');
+    expect(screen.getByText('must be greater than or equal to 800').id).toBe('quote-engineCc-error');
+    expect(regionCodeField()).toHaveAttribute('aria-invalid', 'true');
+    expect(regionCodeField()).toHaveAttribute('aria-describedby', 'quote-regionCode-error');
+    expect(screen.getByText('must not be blank').id).toBe('quote-regionCode-error');
+    // installments had no field error - neither attribute is present.
+    expect(installmentsField()).not.toHaveAttribute('aria-invalid');
+    expect(installmentsField()).not.toHaveAttribute('aria-describedby');
   });
 
   it('falls back to a generic form-level error on a 401 (no/expired token), and leaves the form editable', async () => {
@@ -209,5 +229,86 @@ describe('QuoteForm', () => {
       expect(screen.getByTestId('quote-result')).toBeInTheDocument();
     });
     expect(screen.queryByText('Unknown region code: XX')).not.toBeInTheDocument();
+  });
+
+  it('sends only one request when the user submits twice before the response resolves', async () => {
+    let resolveFetch: (value: QuoteResponse) => void;
+    mockedApiFetch.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveFetch = resolve;
+        }),
+    );
+
+    const { user } = renderForm();
+    await user.type(driverAgeField(), VALID_INPUT.driverAge);
+    await user.type(regionCodeField(), VALID_INPUT.regionCode);
+    await user.type(engineCcField(), VALID_INPUT.engineCc);
+    await user.type(installmentsField(), VALID_INPUT.installments);
+    // Two rapid clicks on the same element before the first request
+    // settles - only one call should go out (spec: double-submit guard is
+    // a synchronous phase check, not reliant on `disabled` having
+    // committed to the DOM yet). Re-querying by accessible name for the
+    // second click would fail once the label switches to "Calculating…".
+    const button = submitButton();
+    await user.click(button);
+    await user.click(button);
+
+    expect(mockedApiFetch).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      resolveFetch!(SAMPLE_QUOTE);
+    });
+  });
+
+  it('allows a second submission once the first request has settled', async () => {
+    mockedApiFetch.mockRejectedValueOnce(
+      new ApiRequestError('Request failed with status 400', 400, 'PRICING_UNKNOWN_REGION', [
+        { field: 'regionCode', message: 'Unknown region code: XX' },
+      ]),
+    );
+    mockedApiFetch.mockResolvedValueOnce(SAMPLE_QUOTE);
+
+    const { user } = renderForm();
+    await fillAndSubmit(user, { ...VALID_INPUT, regionCode: 'XX' });
+    expect(await screen.findByText('Unknown region code: XX')).toBeInTheDocument();
+    expect(submitButton()).toBeEnabled();
+
+    // The guard only blocks a submit while the previous one is still
+    // pending - once the first request has settled (here, with a
+    // failure), a genuine second submission must go through.
+    await user.click(submitButton());
+
+    expect(mockedApiFetch).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not throw when the request resolves after unmounting mid-submit', async () => {
+    let resolveFetch: (value: QuoteResponse) => void;
+    mockedApiFetch.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveFetch = resolve;
+        }),
+    );
+
+    const { user } = renderForm();
+    await fillAndSubmit(user, VALID_INPUT);
+
+    cleanup();
+
+    // Unlike LoginForm, this form has no external side effect (like
+    // `saveToken`) to spy on post-unmount - its only post-response side
+    // effects are internal React state updates, which React 18 already
+    // no-ops silently after unmount (no console warning exists to assert
+    // on). This is the more modest, honestly-scoped claim available: that
+    // resolving the pending request after unmount does not throw or
+    // produce an uncaught rejection, i.e. the `cancelledRef` guard's early
+    // return is reached cleanly instead of a setter blowing up.
+    await expect(
+      (async () => {
+        resolveFetch!(SAMPLE_QUOTE);
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      })(),
+    ).resolves.not.toThrow();
   });
 });

@@ -144,3 +144,30 @@ Append-only. Entries collected from bmad-build review loopbacks. Do not modify e
 - source_spec: `_bmad-output/implementation-artifacts/spec-2-1-seeded-staff-demo-accounts.md`
   summary: No CI runs the backend test suite, so the 74 tests — including Story 2.1's new coverage — only execute when someone runs `mvn test` locally with a Docker daemon up.
   evidence: Review-loop finding (verification-gap, 1st run). `.github/` contains only Java-upgrade tooling artifacts and no `workflows/` directory; `CONTRIBUTING.md:161` still lists "`.github/workflows/` — CI за build + тестове" as an unchecked TODO. Pre-existing and repo-wide, surfaced incidentally by this story rather than caused by it — but every story that adds Testcontainers-backed tests raises the cost of the gap.
+  status: RESOLVED 2026-08-28 — `.github/workflows/ci.yml` added (see `spec-ci-pipeline.md`), running the full backend suite (now 76 tests) and the frontend typecheck/build on every PR and push to `main`/`dev`.
+
+## Deferred from: CI pipeline review (2026-08-28)
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-ci-pipeline.md`
+  summary: On a failing CI run, no test-report artifacts (Surefire/JUnit XML) are uploaded and no annotation/summary step surfaces which test failed — only the raw console log.
+  evidence: Review-loop finding (blind-hunter). Adding structured reporting (e.g. a JUnit-report annotation action) is a real improvement but a distinct piece of work with its own choices (which action, retention policy); not needed for CI to exist and catch regressions in the first place.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-ci-pipeline.md`
+  summary: The Testcontainers `postgres:18` image is re-pulled from Docker Hub on every CI run with no layer/image caching, adding run time and exposure to Docker Hub's anonymous-pull rate limit on shared GitHub-hosted runner IPs.
+  evidence: Review-loop finding (blind-hunter). Inherent to using Testcontainers in CI at all, not something this workflow file introduces or can fix alone — would need a registry mirror or a self-hosted runner with a warm image cache. Revisit if CI runs start failing/slowing from rate-limiting in practice.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-ci-pipeline.md`
+  summary: The frontend has no lint/format tooling (no ESLint/Prettier in `package.json` or anywhere else) and therefore no lint step in CI.
+  evidence: Review-loop finding (blind-hunter). Pre-existing gap, not caused by adding CI — the workflow can only run scripts that exist. Installing and configuring lint tooling is its own task with its own rule-set decisions.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-ci-pipeline.md`
+  summary: The frontend job never runs tests — `frontend/package.json` has no `test` script, so CI only typechecks and builds; a frontend logic regression is caught solely by manual QA.
+  evidence: Review-loop finding (blind-hunter). No frontend test framework (Vitest, React Testing Library, etc.) is installed yet. Adding one is a separate, non-trivial decision (framework choice, first test conventions) beyond wiring up CI for what already exists.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-ci-pipeline.md`
+  summary: `.github/PULL_REQUEST_TEMPLATE.md` still does not exist, even though it's the next item on `CONTRIBUTING.md` §6's checklist right after CI.
+  evidence: Review-loop finding (blind-hunter). A distinct, independently shippable deliverable (its own checklist content to design) — kept out of this change's scope per the workflow's single-goal rule.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-ci-pipeline.md`
+  summary: No dependency/security scanning (`npm audit`, OWASP dependency-check, Dependabot config) exists anywhere under `.github/`.
+  evidence: Review-loop finding (blind-hunter). Real, but a separate concern with its own tooling choice and noise-tuning; out of scope for a first CI pipeline that only needed to wire up the build/test commands that already exist.

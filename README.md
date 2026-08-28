@@ -1,5 +1,7 @@
 # Motor Insurance Quote & Claims Portal
 
+[![CI](https://github.com/kk-georgiev/insurtech-quote-claims-portal/actions/workflows/ci.yml/badge.svg)](https://github.com/kk-georgiev/insurtech-quote-claims-portal/actions/workflows/ci.yml)
+
 A portal where a client gets an instant motor insurance quote and can file and
 track a claim. Built as a Sirma Academy trainee project.
 

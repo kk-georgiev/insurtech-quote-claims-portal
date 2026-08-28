@@ -2,21 +2,26 @@
 
 ## 1. Branching модел
 
-- `main` — винаги стабилен и работещ. Директни commit-и в `main` **не се
-  правят** след старта на кода (докато проектът беше само документация,
-  работихме директно в `main`).
+Два постоянни branch-а, различна роля:
 
-- За всяка задача — отделен branch от `main`:
+- `main` — винаги стабилен и **runnable**. Съдържа само завършени, тествани
+  release snapshot-и (обичайно на границата на epic/milestone). Никога не се
+  push-ва директно в `main` — влиза се само през PR от `dev` (виж §3a).
+- `dev` — integration branch. Тук се сливат завършените задачи между
+  release-ите. Default branch на repo-то — от него тръгва всеки нов branch и
+  към него отива всеки обикновен PR.
 
-  ```text
-  feature/<кратко-описание>  ->  нова функционалност
-  fix/<кратко-описание>      ->  бъгфикс
-  chore/<кратко-описание>    ->  конфигурация, зависимости, tooling
-  docs/<кратко-описание>     ->  само документация
-  ```
+За всяка задача — отделен branch **от `dev`** (не от `main`):
 
-  Примери: `feature/quote-engine`, `feature/claim-fnol-form`,
-  `fix/policy-double-issue`, `chore/setup-flyway`.
+```text
+feature/<кратко-описание>  ->  нова функционалност
+fix/<кратко-описание>      ->  бъгфикс
+chore/<кратко-описание>    ->  конфигурация, зависимости, tooling
+docs/<кратко-описание>     ->  само документация
+```
+
+Примери: `feature/quote-engine`, `feature/claim-fnol-form`,
+`fix/policy-double-issue`, `chore/setup-flyway`.
 
 - Branch имената са с малки букви и тирета, без интервали и без issue номера
   (освен ако не ползваме issue tracker с номерация — тогава може
@@ -24,11 +29,11 @@
 
 - Тъй като нямаме строго разделение на задачите и е възможно по един и същ
   branch да работят повече от един човек едновременно, update-вай branch-а
-  си от `main` с `merge`:
+  си от `dev` с `merge`:
 
   ```bash
   git fetch origin
-  git merge origin/main
+  git merge origin/dev
   ```
 
 - Force push (`--force` или `--force-with-lease`) **не се използва** в този
@@ -74,8 +79,9 @@
 
 ## 3. Pull Request процес
 
-- Всяка задача → branch → PR към `main`. Директен push в `main` е забранен
-  (branch protection се настройва в GitHub repo settings, виж §6).
+- Всяка задача → branch (от `dev`) → PR **към `dev`**. Директен push и в
+  `dev`, и в `main` е забранен (branch protection се настройва в GitHub
+  repo settings, виж §6).
 - PR описанието съдържа:
   - какво прави (1–3 изречения);
   - как е тествано (unit/integration/ръчно);
@@ -84,9 +90,30 @@
   merge-ва собствен PR без review, освен за тривиални docs промени по
   договорка.
 - CI (когато е налична — виж §6) трябва да е зелен преди merge.
-- Merge стратегия: **Squash and merge** — историята на `main` остава по един
+- Merge стратегия: **Squash and merge** — историята на `dev` остава по един
   чист commit на PR/задача, вместо десетки intermediate commit-и.
 - След merge — branch-ът се трие (локално и remote).
+
+### 3a. Промоция `dev` → `main` (release)
+
+Когато `dev` е в стабилно, тествано, runnable състояние — обичайно на
+границата на epic/milestone, не след всяка отделна задача:
+
+1. `git checkout main && git pull origin main`
+2. Отваряш PR **`dev` → `main`** през GitHub (не директен merge от
+   терминала — минава през същия protection rule).
+3. Review + минимум 1 approve, както при обикновен PR; всички тестове
+   зелени.
+4. Merge стратегия тук е **Merge commit**, не squash — искаме да остане
+   видимо коя комбинация от PR-ове е влязла в тази версия на `main`, за
+   разлика от feature→dev squash-мърджовете.
+5. (по избор) Маркирай точката с git tag, за да е ясно коя версия на `main`
+   съответства на кой epic/milestone:
+
+   ```bash
+   git tag -a v0.2.0-epic2 -m "Epic 2: role-based workspaces"
+   git push origin v0.2.0-epic2
+   ```
 
 ---
 
@@ -101,14 +128,14 @@
 
 ## 5. Разрешаване на конфликти
 
-- Конфликти се решават локално, чрез `merge` на актуален `main` в
+- Конфликти се решават локално, чрез `merge` на актуален `dev` в
   feature branch-а (виж §1) — не чрез `rebase`, защото по branch-овете
   може да работи повече от един човек и force push би презаписал чужда
   работа:
 
   ```bash
   git fetch origin
-  git merge origin/main
+  git merge origin/dev
   # реши конфликтите, после:
   git add <файлове>
   git commit
@@ -126,10 +153,13 @@
 
 ## 6. Repo hygiene
 
+- [ ] Default branch на GitHub → `dev`.
 - [ ] Branch protection на `main`: изисква PR + 1 approve, забранява force
-      push и директен push.
-- [ ] `.github/workflows/` — CI за build + тестове (Maven/Gradle backend,
-      npm/vite frontend) при всеки PR.
+      push и директен push (важи и за admin).
+- [ ] Branch protection на `dev`: изисква PR + 1 approve, забранява директен
+      push.
+- [ ] `.github/workflows/` — CI за build + тестове (Maven backend, npm/vite
+      frontend) при всеки PR, включено като required status check по-горе.
 - [ ] `.github/PULL_REQUEST_TEMPLATE.md` — чеклист какво/как е тествано.
 - [ ] `CODEOWNERS` (по желание), ако искаме определени хора да ревюват
       определени модули.

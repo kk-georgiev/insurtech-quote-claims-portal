@@ -74,4 +74,4 @@ Background on the original assignment and business context is in
 
 ## Contributing
 
-See [`docs/contributing.md`](docs/contributing.md).
+See [`CONTRIBUTING.md`](CONTRIBUTING.md).

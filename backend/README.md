@@ -47,6 +47,11 @@ On startup, Flyway runs every migration under
 unreachable, the app fails fast with a clear error in the logs instead of
 starting in a broken state.
 
+One of those migrations (`V5__seed_staff_accounts.sql`) seeds the AGENT,
+LIQUIDATOR and ADMINISTRATOR demo accounts, since self-registration only ever
+creates CLIENT users. Their credentials are documented in one place only —
+the root README's [Demo accounts](../README.md#demo-accounts) section.
+
 ## Run tests
 
 ```bash

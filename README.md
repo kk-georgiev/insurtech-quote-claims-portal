@@ -52,6 +52,15 @@ Open the URL Vite prints (default `http://localhost:5173`). `/` shows the
 client shell; the backend health round-trip moved to `/health` (linked in
 the header nav), and `/login` / `/register` are the auth screens.
 
+**One-command alternative:** once `.env` exists (step 1 above), `docker
+compose up` builds and starts postgres, backend, and frontend together —
+no local JDK/Maven/Node toolchain needed. Open
+`http://localhost:5173` (or `$FRONTEND_PORT` if you changed it). This is
+an alternative to steps 2-4, not a replacement for native dev during active
+development. Pulled new code? Re-run with `docker compose up --build` so
+the images pick up the changes. To stop everything, `docker compose down`
+(add `-v` to also drop the Postgres data volume).
+
 ### Demo accounts
 
 Self-registration only ever creates **CLIENT** accounts, so the three staff

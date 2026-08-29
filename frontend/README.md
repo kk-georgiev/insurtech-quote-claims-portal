@@ -79,6 +79,11 @@ cannot read the current one can still find theirs.
   flow have something to reach. Not needed to run the test suite (`npm
   test`) — it mocks the network.
 
+Prefer to run the whole stack in containers instead? See the root README's
+[One-command alternative](../README.md#getting-started) (`docker compose up`)
+— it builds and starts postgres, backend, and frontend together, no local
+JDK/Maven/Node toolchain needed.
+
 ## Run
 
 1. From the repo root, copy the environment template if you haven't already:

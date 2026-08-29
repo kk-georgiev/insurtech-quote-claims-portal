@@ -305,3 +305,33 @@ Append-only. Entries collected from bmad-build review loopbacks. Do not modify e
 - source_spec: `_bmad-output/implementation-artifacts/spec-2-3-placeholder-screens-for-agent-liquidator-and-administrator.md`
   summary: "Staff role" (`Exclude<Role, 'CLIENT'>`) is a domain concept currently invented inside `frontend/src/features/shells/shells.test.tsx` rather than exported from `app/roleHome.ts`.
   evidence: Review-loop finding (blind-hunter). `roleHome.ts` declares itself "the frontend's single source of truth for which roles exist", and Story 2.4's route guard needs exactly the same staff/client distinction to decide who may reach which route. Not done here because Story 2.3's frozen spec forbids touching `roleHome.ts` or `router.tsx`. Story 2.4 should export `StaffRole` + `STAFF_ROLES` from `roleHome.ts` and have the test import them instead of re-deriving the filter.
+
+## Deferred from: Story 4.1 review (2026-08-29)
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-4-1-backend-and-frontend-dockerfiles.md`
+  summary: No CI job builds or runs either Docker image (backend or frontend) — `.github/workflows/ci.yml`'s `backend`/`frontend` jobs only exercise the native Maven/Node toolchains, never `docker build` or a container smoke test.
+  evidence: Review-loop finding (verification-gap). A break introduced purely in `backend/Dockerfile` or `frontend/Dockerfile`/`nginx.conf` (e.g. a bad `COPY --from` path, a broken multi-stage reference) would merge to `dev`/`main` without any CI failure — only a manual `docker build`/`docker run` would catch it, which is exactly what this story's own "Verification" section relies on today. Not fixed here: the frozen spec explicitly forbids modifying `ci.yml` for this story. Natural to pick up once Story 4.2 wires these images into `docker-compose.yml` — a `docker compose build` (or a dedicated image-build+smoke-test job) in CI at that point would close this for both images at once.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-4-1-backend-and-frontend-dockerfiles.md`
+  summary: `frontend/nginx.conf` sets no HTTP security headers (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, CSP) and no caching/compression headers (long-lived `Cache-Control` for hashed `/assets/` files, `no-cache` for `index.html`, gzip/br) on the served SPA.
+  evidence: Review-loop finding (blind-hunter). Real production-hardening gaps, but out of scope for this story's frozen intent (a working containerized image, not a hardened one) and not mentioned anywhere in Epic 4's requirements or the architecture spine — this milestone's PRD explicitly excludes production-grade hardening. Worth revisiting together if/when this project takes on a real deployment-hardening pass beyond the Milestone 1 skeleton.
+
+## Deferred from: Story 4.2 review (2026-08-29)
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-4-2-one-command-full-stack-startup.md`
+  summary: `docker-compose.yml`'s `frontend` service uses the short-form `depends_on: - backend` (start-order only) instead of a health-gated `condition: service_healthy`, unlike `backend`'s own health-gated dependency on `postgres`; `frontend` also has no `healthcheck` of its own.
+  evidence: Review-loop finding (blind-hunter + edge-case-hunter, both independently). Matches the spec's own frozen task wording verbatim (`depends_on: backend`), so not a deviation — but the practical effect is that nginx can start, and a very early browser request could hit a backend still inside its `start_period`, before the backend's own healthcheck reports healthy. Low real-world impact given the "couple of minutes" first-run tolerance in this story's AC and `restart: unless-stopped` elsewhere, but worth a `condition: service_healthy` upgrade (plus an nginx healthcheck) if this compose file is ever relied on for a stricter startup guarantee.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-4-2-one-command-full-stack-startup.md`
+  summary: `docker-compose.yml`'s `frontend.build.args.VITE_API_URL` default (`http://localhost:8080`) isn't derived from `${BACKEND_PORT}`, so overriding `BACKEND_PORT` in `.env` without also updating `VITE_API_URL` silently builds a frontend image pointing at the wrong backend origin.
+  evidence: Review-loop finding (edge-case-hunter). `.env.example` already carries an explicit comment warning the two must be kept in sync, so this isn't undocumented — but nothing enforces or validates it, and the failure mode (every API call from the browser fails) gives no direct clue back to this mismatch. Worth a validation step or a documented single-var convention if this compose setup sees more than default-port usage in practice.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-4-2-one-command-full-stack-startup.md`
+  summary: No CI job runs `docker compose up` (or otherwise builds/exercises the wired-together `backend`+`frontend`+`postgres` stack) — a wiring regression in `docker-compose.yml` (wrong env var name, wrong internal port, wrong build arg) would merge to `dev`/`main` undetected.
+  evidence: Review-loop finding (verification-gap). Same root gap already logged after Story 4.1 (`deferred-work.md`, "Story 4.1 review" section) anticipated this closing "once Story 4.2 wires these images into `docker-compose.yml`" — it didn't, because this story's own frozen spec explicitly forbids touching `ci.yml`, same as 4.1's. Now that the full stack is actually wired, a `docker compose up --build -d` + health-check-polling CI job (mirroring this story's own manual "Verification" steps) would close both this and the 4.1 entry at once.
+
+## Deferred from: Story 4.3 review (2026-08-29)
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-4-3-local-dev-workflow-preserved-alongside-docker.md`
+  summary: The one-line Docker cross-reference this story added to `backend/README.md`/`frontend/README.md` is one-directional — the root README's "Getting started" section doesn't link back to either module README for a reader who wants the native-dev path's full detail.
+  evidence: Review-loop finding (blind-hunter). Minor discoverability gap, not required by this story's frozen scope (which only specified the forward pointer from each module README). Worth a symmetric link back if the root README's Getting Started section is revisited.

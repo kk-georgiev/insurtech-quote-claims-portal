@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { apiFetch, ApiRequestError } from '../../api/client';
-import type { ApiFieldError } from '../../api/client';
+import { resolveFieldErrors, resolveFormError } from '../../i18n/errorMessages';
 
 interface RegisterResponse {
   id: string;
@@ -12,20 +12,7 @@ interface RegisterResponse {
 
 type FormPhase = 'editing' | 'submitting' | 'success';
 
-// AD-7: `code` is the only thing the frontend uses to select user-facing
-// text - never the backend's dev/log-facing `message`. The screen copy moved
-// into the i18n catalogs in Story 3.2a; these code-driven messages are
-// Story 3.2b's, which will delete these constants. Plain English until then.
-const EMAIL_TAKEN_MESSAGE = 'This email is already registered.';
-const GENERIC_ERROR_MESSAGE = 'Something went wrong. Please try again.';
 
-function toFieldErrorMap(errors: ApiFieldError[]): Record<string, string> {
-  const map: Record<string, string> = {};
-  for (const error of errors) {
-    map[error.field] = error.message;
-  }
-  return map;
-}
 
 /**
  * Client self-registration screen (Story 1.2). Always registers as CLIENT -
@@ -82,15 +69,15 @@ export function RegisterForm() {
 
       if (error instanceof ApiRequestError) {
         if (error.code === 'AUTH_EMAIL_TAKEN') {
-          setFormError(EMAIL_TAKEN_MESSAGE);
+          setFormError(resolveFormError(error, t));
           return;
         }
         if (error.fieldErrors && error.fieldErrors.length > 0) {
-          setFieldErrors(toFieldErrorMap(error.fieldErrors));
+          setFieldErrors(resolveFieldErrors(error.fieldErrors, 'auth.register', error.code, t));
           return;
         }
       }
-      setFormError(GENERIC_ERROR_MESSAGE);
+      setFormError(resolveFormError(error, t));
     }
   }
 

@@ -3,9 +3,9 @@ import type { FormEvent } from 'react';
 import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { apiFetch, ApiRequestError } from '../../api/client';
-import type { ApiFieldError } from '../../api/client';
 import { saveToken, decodeToken } from '../../api/authToken';
 import { isRole, roleHome } from '../../app/roleHome';
+import { resolveFieldErrors, resolveFormError } from '../../i18n/errorMessages';
 
 interface LoginResponse {
   token: string;
@@ -13,23 +13,7 @@ interface LoginResponse {
 
 type FormPhase = 'editing' | 'submitting';
 
-// AD-7: `code` is the only thing the frontend uses to select user-facing
-// text - never the backend's dev/log-facing `message`. The screen copy moved
-// into the i18n catalogs in Story 3.2a, but these code-driven messages did
-// not: mapping backend codes to catalog entries is Story 3.2b, which will
-// delete these constants. Until then they stay plain English strings. Wrong password and
-// unknown email both map to AUTH_INVALID_CREDENTIALS and share this exact
-// message (spec Boundaries & Constraints) - nothing here distinguishes them.
-const INVALID_CREDENTIALS_MESSAGE = 'Incorrect email or password.';
-const GENERIC_ERROR_MESSAGE = 'Something went wrong. Please try again.';
 
-function toFieldErrorMap(errors: ApiFieldError[]): Record<string, string> {
-  const map: Record<string, string> = {};
-  for (const error of errors) {
-    map[error.field] = error.message;
-  }
-  return map;
-}
 
 /**
  * Login screen (Story 1.3, routing added Story 2.2). On success: decode the
@@ -88,7 +72,10 @@ export function LoginForm() {
       const decoded = decodeToken(response.token);
       if (!decoded || !isRole(decoded.role)) {
         setPhase('editing');
-        setFormError(GENERIC_ERROR_MESSAGE);
+        // Not a backend error - the request succeeded and the token came back
+        // unusable - so there is no `code` to resolve. Same generic copy the
+        // resolver falls back to, taken straight from the catalog.
+        setFormError(t('errors.generic'));
         return;
       }
 
@@ -108,15 +95,15 @@ export function LoginForm() {
 
       if (error instanceof ApiRequestError) {
         if (error.code === 'AUTH_INVALID_CREDENTIALS') {
-          setFormError(INVALID_CREDENTIALS_MESSAGE);
+          setFormError(resolveFormError(error, t));
           return;
         }
         if (error.fieldErrors && error.fieldErrors.length > 0) {
-          setFieldErrors(toFieldErrorMap(error.fieldErrors));
+          setFieldErrors(resolveFieldErrors(error.fieldErrors, 'auth.login', error.code, t));
           return;
         }
       }
-      setFormError(GENERIC_ERROR_MESSAGE);
+      setFormError(resolveFormError(error, t));
     }
   }
 

@@ -2,7 +2,7 @@
 title: 'Story 3.2b: Error and Validation Message Translation'
 type: 'feature'
 created: '2026-08-29'
-status: 'draft'
+status: 'in-review'
 review_loop_iteration: 0
 context: []
 ---
@@ -64,15 +64,15 @@ context: []
 ## Tasks & Acceptance
 
 **Execution:**
-- [ ] `frontend/src/i18n/bg.json`, `en.json` -- add the code, field-error, generic, and zone keys -- everything below depends on them.
-- [ ] `frontend/src/i18n/errorMessages.ts` -- **new**; the one resolver both feature areas use -- prevents three divergent `switch` statements.
-- [ ] `frontend/src/i18n/errorMessages.test.ts` -- **new**; cover all ten codes, unknown code, absent code, and non-`ApiRequestError` throwable -- the I/O matrix's core rows.
-- [ ] `frontend/src/features/auth/LoginForm.tsx`, `RegisterForm.tsx` -- delete the message constants, route through the resolver, translate field errors -- removes the first backend prose from the DOM.
-- [ ] `frontend/src/features/quote/QuoteForm.tsx` -- same, plus settle top-level-code vs `fieldErrors` precedence for the two `PRICING_*` cases.
-- [ ] `frontend/src/features/quote/QuoteResult.tsx` -- zone label from `zoneId` -- removes the last English string from a successful quote.
-- [ ] `frontend/src/features/**/*.test.tsx` -- re-point existing error assertions at the catalog; add a case proving a visible error re-renders on language switch.
-- [ ] `_bmad-output/implementation-artifacts/deferred-work.md` -- mark the two entries above RESOLVED with the commit -- they were explicitly waiting on this story.
-- [ ] `README.md`, `frontend/README.md` -- record that translation coverage is complete and that a new backend code requires a catalog entry in the same change.
+- [x] `frontend/src/i18n/bg.json`, `en.json` -- add the code, field-error, generic, and zone keys -- everything below depends on them.
+- [x] `frontend/src/i18n/errorMessages.ts` -- **new**; the one resolver both feature areas use -- prevents three divergent `switch` statements.
+- [x] `frontend/src/i18n/errorMessages.test.ts` -- **new**; cover all ten codes, unknown code, absent code, and non-`ApiRequestError` throwable -- the I/O matrix's core rows.
+- [x] `frontend/src/features/auth/LoginForm.tsx`, `RegisterForm.tsx` -- delete the message constants, route through the resolver, translate field errors -- removes the first backend prose from the DOM.
+- [x] `frontend/src/features/quote/QuoteForm.tsx` -- same, plus settle top-level-code vs `fieldErrors` precedence for the two `PRICING_*` cases.
+- [x] `frontend/src/features/quote/QuoteResult.tsx` -- zone label from `zoneId` -- removes the last English string from a successful quote.
+- [x] `frontend/src/features/**/*.test.tsx` -- re-point existing error assertions at the catalog; add a case proving a visible error re-renders on language switch.
+- [x] `_bmad-output/implementation-artifacts/deferred-work.md` -- mark the two entries above RESOLVED with the commit -- they were explicitly waiting on this story.
+- [x] `README.md`, `frontend/README.md` -- record that translation coverage is complete and that a new backend code requires a catalog entry in the same change.
 
 **Acceptance Criteria:**
 - Given any backend error response, when it is displayed, then the message comes from the catalog keyed by `code` — and the raw backend `message` is never rendered.

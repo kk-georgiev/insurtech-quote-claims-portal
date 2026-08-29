@@ -19,8 +19,8 @@ vi.mock('../../api/client', async (importOriginal) => {
 
 const mockedApiFetch = vi.mocked(apiFetch);
 
-const GENERIC_ERROR = 'Something went wrong. Please try again.';
-const INVALID_CREDENTIALS = 'Incorrect email or password.';
+const GENERIC_ERROR = bg.errors.generic;
+const INVALID_CREDENTIALS = bg.errors.codes.AUTH_INVALID_CREDENTIALS;
 const EMAIL = 'someone@example.com';
 const PASSWORD = 'DemoPass123!';
 
@@ -158,13 +158,13 @@ describe('LoginForm role-based post-login routing', () => {
 
     await fillAndSubmit(user);
 
-    expect(await screen.findByText('must be a well-formed email address')).toBeInTheDocument();
+    expect(await screen.findByText(bg.auth.login.fieldErrors.email)).toBeInTheDocument();
     expect(screen.queryByTestId('login-error')).not.toBeInTheDocument();
     expect(loginButton()).toBeEnabled();
 
     expect(emailField()).toHaveAttribute('aria-invalid', 'true');
     expect(emailField()).toHaveAttribute('aria-describedby', 'login-email-error');
-    expect(screen.getByText('must be a well-formed email address').id).toBe('login-email-error');
+    expect(screen.getByText(bg.auth.login.fieldErrors.email).id).toBe('login-email-error');
     // password had no field error - neither attribute is present.
     expect(passwordField()).not.toHaveAttribute('aria-invalid');
     expect(passwordField()).not.toHaveAttribute('aria-describedby');

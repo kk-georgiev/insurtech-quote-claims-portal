@@ -18,7 +18,7 @@ vi.mock('../../api/client', async (importOriginal) => {
 
 const mockedApiFetch = vi.mocked(apiFetch);
 
-const GENERIC_ERROR = 'Something went wrong. Please try again.';
+const GENERIC_ERROR = bg.errors.generic;
 
 const SAMPLE_QUOTE: QuoteResponse = {
   id: '11111111-1111-1111-1111-111111111111',
@@ -85,7 +85,11 @@ describe('QuoteForm', () => {
     await fillAndSubmit(user, VALID_INPUT);
 
     expect(await screen.findByTestId('quote-result')).toBeInTheDocument();
-    expect(screen.getByTestId('quote-zoneName')).toHaveTextContent('Sofia');
+    // Story 3.2b: the zone is labelled from `zoneId` via the catalog. The
+    // backend's English `zoneName` ('Sofia' in this fixture) is still on the
+    // wire and must never reach the screen.
+    expect(screen.getByTestId('quote-zoneName')).toHaveTextContent(bg.quote.result.zones['1']);
+    expect(screen.getByTestId('quote-result')).not.toHaveTextContent(SAMPLE_QUOTE.zoneName);
     expect(screen.getByTestId('quote-basePremium')).toHaveTextContent('300');
     expect(screen.getByTestId('quote-ageSurcharge')).toHaveTextContent('0');
     expect(screen.getByTestId('quote-oneTimePremium')).toHaveTextContent('300');
@@ -115,7 +119,7 @@ describe('QuoteForm', () => {
     const { user } = renderForm();
     await fillAndSubmit(user, { ...VALID_INPUT, regionCode: 'XX' });
 
-    expect(await screen.findByText('Unknown region code: XX')).toBeInTheDocument();
+    expect(await screen.findByText(bg.errors.codes.PRICING_UNKNOWN_REGION)).toBeInTheDocument();
     expect(screen.queryByTestId('quote-error')).not.toBeInTheDocument();
     expect(screen.queryByTestId('quote-result')).not.toBeInTheDocument();
     expect(submitButton()).toBeEnabled();
@@ -131,7 +135,7 @@ describe('QuoteForm', () => {
     const { user } = renderForm();
     await fillAndSubmit(user, { ...VALID_INPUT, installments: '3' });
 
-    expect(await screen.findByText('Unsupported installment count: 3')).toBeInTheDocument();
+    expect(await screen.findByText(bg.errors.codes.PRICING_UNSUPPORTED_INSTALLMENTS)).toBeInTheDocument();
     expect(screen.queryByTestId('quote-error')).not.toBeInTheDocument();
     expect(submitButton()).toBeEnabled();
   });
@@ -159,21 +163,21 @@ describe('QuoteForm', () => {
     await user.type(installmentsField(), '2');
     await user.click(submitButton());
 
-    expect(await screen.findByText('must be greater than or equal to 18')).toBeInTheDocument();
-    expect(screen.getByText('must be greater than or equal to 800')).toBeInTheDocument();
-    expect(screen.getByText('must not be blank')).toBeInTheDocument();
+    expect(await screen.findByText(bg.quote.form.fieldErrors.driverAge)).toBeInTheDocument();
+    expect(screen.getByText(bg.quote.form.fieldErrors.engineCc)).toBeInTheDocument();
+    expect(screen.getByText(bg.quote.form.fieldErrors.regionCode)).toBeInTheDocument();
     expect(screen.queryByTestId('quote-error')).not.toBeInTheDocument();
     expect(submitButton()).toBeEnabled();
 
     expect(driverAgeField()).toHaveAttribute('aria-invalid', 'true');
     expect(driverAgeField()).toHaveAttribute('aria-describedby', 'quote-driverAge-error');
-    expect(screen.getByText('must be greater than or equal to 18').id).toBe('quote-driverAge-error');
+    expect(screen.getByText(bg.quote.form.fieldErrors.driverAge).id).toBe('quote-driverAge-error');
     expect(engineCcField()).toHaveAttribute('aria-invalid', 'true');
     expect(engineCcField()).toHaveAttribute('aria-describedby', 'quote-engineCc-error');
-    expect(screen.getByText('must be greater than or equal to 800').id).toBe('quote-engineCc-error');
+    expect(screen.getByText(bg.quote.form.fieldErrors.engineCc).id).toBe('quote-engineCc-error');
     expect(regionCodeField()).toHaveAttribute('aria-invalid', 'true');
     expect(regionCodeField()).toHaveAttribute('aria-describedby', 'quote-regionCode-error');
-    expect(screen.getByText('must not be blank').id).toBe('quote-regionCode-error');
+    expect(screen.getByText(bg.quote.form.fieldErrors.regionCode).id).toBe('quote-regionCode-error');
     // installments had no field error - neither attribute is present.
     expect(installmentsField()).not.toHaveAttribute('aria-invalid');
     expect(installmentsField()).not.toHaveAttribute('aria-describedby');
@@ -199,8 +203,8 @@ describe('QuoteForm', () => {
     await user.type(installmentsField(), '2');
     await user.click(submitButton());
 
-    expect(await screen.findByText('must be less than or equal to 100')).toBeInTheDocument();
-    expect(screen.getByText('must be less than or equal to 8000')).toBeInTheDocument();
+    expect(await screen.findByText(bg.quote.form.fieldErrors.driverAge)).toBeInTheDocument();
+    expect(screen.getByText(bg.quote.form.fieldErrors.engineCc)).toBeInTheDocument();
     expect(screen.queryByTestId('quote-error')).not.toBeInTheDocument();
     expect(submitButton()).toBeEnabled();
   });
@@ -231,7 +235,12 @@ describe('QuoteForm', () => {
     expect(submitButton()).toBeEnabled();
   });
 
-  it('falls back to a generic form-level error when fieldErrors names a field this form does not render', async () => {
+  // Before Story 3.2b this showed the one hardcoded generic string. Now the
+  // envelope's `code` is resolved first, so the user gets the more specific
+  // "check the details you entered" instead. The guard's purpose is unchanged
+  // — the user still always sees a form-level message rather than a submit
+  // that silently did nothing — and the message is strictly more useful.
+  it("resolves the envelope's code form-level when fieldErrors names a field this form does not render", async () => {
     mockedApiFetch.mockRejectedValue(
       new ApiRequestError('Request failed with status 400', 400, 'SHARED_VALIDATION_ERROR', [
         { field: 'someUnrenderedField', message: 'this will never be shown inline' },
@@ -241,7 +250,10 @@ describe('QuoteForm', () => {
     const { user } = renderForm();
     await fillAndSubmit(user, VALID_INPUT);
 
-    expect(await screen.findByTestId('quote-error')).toHaveTextContent(GENERIC_ERROR);
+    expect(await screen.findByTestId('quote-error')).toHaveTextContent(
+      bg.errors.codes.SHARED_VALIDATION_ERROR,
+    );
+    // The backend's prose never reaches the DOM, inline or otherwise.
     expect(screen.queryByText('this will never be shown inline')).not.toBeInTheDocument();
     expect(screen.queryByTestId('quote-result')).not.toBeInTheDocument();
     expect(submitButton()).toBeEnabled();
@@ -256,7 +268,7 @@ describe('QuoteForm', () => {
 
     const { user } = renderForm();
     await fillAndSubmit(user, { ...VALID_INPUT, regionCode: 'XX' });
-    expect(await screen.findByText('Unknown region code: XX')).toBeInTheDocument();
+    expect(await screen.findByText(bg.errors.codes.PRICING_UNKNOWN_REGION)).toBeInTheDocument();
 
     mockedApiFetch.mockResolvedValueOnce(SAMPLE_QUOTE);
     await user.clear(regionCodeField());
@@ -266,7 +278,7 @@ describe('QuoteForm', () => {
     await waitFor(() => {
       expect(screen.getByTestId('quote-result')).toBeInTheDocument();
     });
-    expect(screen.queryByText('Unknown region code: XX')).not.toBeInTheDocument();
+    expect(screen.queryByText(bg.errors.codes.PRICING_UNKNOWN_REGION)).not.toBeInTheDocument();
   });
 
   it('sends only one request when the user submits twice before the response resolves', async () => {
@@ -309,7 +321,7 @@ describe('QuoteForm', () => {
 
     const { user } = renderForm();
     await fillAndSubmit(user, { ...VALID_INPUT, regionCode: 'XX' });
-    expect(await screen.findByText('Unknown region code: XX')).toBeInTheDocument();
+    expect(await screen.findByText(bg.errors.codes.PRICING_UNKNOWN_REGION)).toBeInTheDocument();
     expect(submitButton()).toBeEnabled();
 
     // The guard only blocks a submit while the previous one is still

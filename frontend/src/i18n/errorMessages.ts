@@ -1,0 +1,88 @@
+// The single place the frontend turns a backend failure into words a user
+// reads (Story 3.2b). Every form routes through here rather than re-deriving
+// its own `switch`, so a new backend code needs one catalog entry and no
+// component change.
+//
+// AD-7's contract, enforced here: the backend's `code` is the *only* thing
+// that selects copy. `ApiRequestError.message` and `ApiFieldError.message`
+// are developer/log-facing and are never rendered - not as a fallback, not
+// in a corner case. They stay reachable on the error object for logging.
+
+import { ApiRequestError, type ApiFieldError } from '../api/client';
+
+/**
+ * Minimal structural shape of `useTranslation()`'s `t`. Deliberately narrower
+ * than i18next's `TFunction` so this module (and its tests) do not depend on
+ * i18next's generic machinery.
+ */
+export type Translate = (key: string, options?: Record<string, unknown>) => string;
+
+/**
+ * Catalog namespace holding a form's per-field messages. Per *form*, not per
+ * field name, because the same field name carries different constraints on
+ * different endpoints - `password` is 8-100 characters on register but only
+ * capped at 100 on login, and a shared message could not honestly describe
+ * both.
+ */
+export type FieldErrorNamespace = 'auth.login' | 'auth.register' | 'quote.form';
+
+/**
+ * Codes that describe one specific field rather than the request as a whole.
+ * When the envelope carries one of these, its message is more specific than
+ * the field's own catch-all and wins - the precedence rule the spec fixes
+ * once, here, rather than per form.
+ */
+const FIELD_SPECIFIC_CODES = new Set([
+  'PRICING_UNKNOWN_REGION',
+  'PRICING_UNSUPPORTED_INSTALLMENTS',
+]);
+
+/**
+ * The form-level message for any thrown value: a translated entry for a known
+ * backend `code`, otherwise the generic fallback.
+ *
+ * An unrecognized code, a missing code, and a non-`ApiRequestError` (network
+ * failure, unexpected throw) all degrade to the same generic message. A new
+ * backend code therefore ships safely even before its catalog entry lands -
+ * it reads as a generic failure rather than rendering a raw key or a blank.
+ */
+export function resolveFormError(error: unknown, t: Translate): string {
+  if (error instanceof ApiRequestError && error.code) {
+    const message = t(`errors.codes.${error.code}`, { defaultValue: '' });
+    if (message) return message;
+  }
+  return t('errors.generic');
+}
+
+/**
+ * Per-field messages keyed by field name, translated from the field name plus
+ * the envelope's `code` - never from the backend's prose.
+ *
+ * Because the backend sends no per-rule code, one message must cover a
+ * field's whole constraint set. The catalog entries are written that way on
+ * purpose; see the spec's Design Notes.
+ */
+export function resolveFieldErrors(
+  fieldErrors: ApiFieldError[] | undefined,
+  namespace: FieldErrorNamespace,
+  code: string | undefined,
+  t: Translate,
+): Record<string, string> {
+  const map: Record<string, string> = {};
+  if (!fieldErrors) return map;
+
+  for (const fieldError of fieldErrors) {
+    if (code && FIELD_SPECIFIC_CODES.has(code)) {
+      const specific = t(`errors.codes.${code}`, { defaultValue: '' });
+      if (specific) {
+        map[fieldError.field] = specific;
+        continue;
+      }
+    }
+    // A field the catalog does not know still gets words, never a raw key.
+    map[fieldError.field] = t(`${namespace}.fieldErrors.${fieldError.field}`, {
+      defaultValue: t('errors.generic'),
+    });
+  }
+  return map;
+}

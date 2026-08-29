@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { apiFetch, ApiRequestError } from '../../api/client';
-import type { ApiFieldError } from '../../api/client';
 import { QuoteResult } from './QuoteResult';
+import { resolveFieldErrors, resolveFormError } from '../../i18n/errorMessages';
 
 /** Mirrors the backend's `CreateQuoteRequest` (READ-ONLY, quote/api). */
 interface CreateQuoteRequest {
@@ -34,16 +34,6 @@ export interface QuoteResponse {
 
 type FormPhase = 'editing' | 'submitting';
 
-// AD-7: `code` is the only thing the frontend uses to select user-facing
-// text - never the backend's dev/log-facing `message`. The screen copy moved
-// into the i18n catalogs in Story 3.2a; this code-driven message is Story
-// 3.2b's, which will delete this constant. Plain English until then. Every failure this form
-// can hit either arrives as `fieldErrors` (bean validation,
-// `PRICING_UNKNOWN_REGION`, `PRICING_UNSUPPORTED_INSTALLMENTS` - all shaped
-// the same way, no code-specific branching needed) or falls back to this one
-// generic message (no/expired token, network error, unexpected failure) -
-// same fallback pattern as `LoginForm`.
-const GENERIC_ERROR_MESSAGE = 'Something went wrong. Please try again.';
 
 // The only fields this form actually renders an inline error next to. If a
 // `fieldErrors` response names anything outside this set, the error would be
@@ -51,13 +41,6 @@ const GENERIC_ERROR_MESSAGE = 'Something went wrong. Please try again.';
 // always sees something instead of a submit that silently did nothing.
 const KNOWN_FIELDS = new Set(['driverAge', 'regionCode', 'engineCc', 'installments']);
 
-function toFieldErrorMap(errors: ApiFieldError[]): Record<string, string> {
-  const map: Record<string, string> = {};
-  for (const error of errors) {
-    map[error.field] = error.message;
-  }
-  return map;
-}
 
 /**
  * Quote request form (Story 1.7, FR-8/FR-9). Submits `driverAge`,
@@ -126,14 +109,14 @@ export function QuoteForm() {
       setPhase('editing');
 
       if (error instanceof ApiRequestError && error.fieldErrors && error.fieldErrors.length > 0) {
-        const map = toFieldErrorMap(error.fieldErrors);
+        const map = resolveFieldErrors(error.fieldErrors, 'quote.form', error.code, t);
         setFieldErrors(map);
         if (!Object.keys(map).some((field) => KNOWN_FIELDS.has(field))) {
-          setFormError(GENERIC_ERROR_MESSAGE);
+          setFormError(resolveFormError(error, t));
         }
         return;
       }
-      setFormError(GENERIC_ERROR_MESSAGE);
+      setFormError(resolveFormError(error, t));
     }
   }
 

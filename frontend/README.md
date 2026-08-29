@@ -36,12 +36,27 @@ the screen copy under `auth.*`, `quote.*`, `shells.*`, and `app.health.*` —
 both auth forms, the quote form and breakdown, the health screen, and all
 four role shells.
 
-Still English, and owned by **Story 3.2b**: backend error-`code` messages
-(the `INVALID_CREDENTIALS_MESSAGE` / `EMAIL_TAKEN_MESSAGE` /
-`GENERIC_ERROR_MESSAGE` constants in the forms), field-level validation text
-rendered from `ApiFieldError.message`, and the tariff zone label, which
-still renders the backend's English `zoneName` instead of a `zoneId`-keyed
-catalog entry.
+**Story 3.2b** finished the job with the failure paths, under `errors.*`
+and per-form `fieldErrors` blocks. Every user-facing message now comes from
+the catalogs; translation coverage for this milestone is complete.
+
+All failure copy is resolved in one place, `src/i18n/errorMessages.ts`:
+
+- **Form-level** messages come from the envelope's `code`
+  (`errors.codes.<CODE>`); an unknown or absent code, and any non-API throw,
+  fall back to `errors.generic`. A new backend code therefore ships safely
+  before its entry lands — it reads as a generic failure, never a raw key.
+- **Field-level** messages come from the field *name*, namespaced per form
+  (`auth.login.fieldErrors.*`, `auth.register.fieldErrors.*`,
+  `quote.form.fieldErrors.*`) — per form because the same field carries
+  different constraints on different endpoints. Since the backend sends no
+  per-rule code, each message describes that field's whole constraint set.
+- A code that describes one specific field (`PRICING_UNKNOWN_REGION`,
+  `PRICING_UNSUPPORTED_INSTALLMENTS`) **wins** over that field's catch-all.
+- `ApiRequestError.message` and `ApiFieldError.message` are developer-facing
+  and are never rendered — not even as a fallback (AD-7).
+- The tariff zone is labelled from `zoneId` (`quote.result.zones.*`); the
+  backend's English `zoneName` is on the wire but never shown.
 
 Two rules when adding copy:
 

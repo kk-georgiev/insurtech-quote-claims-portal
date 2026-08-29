@@ -1,0 +1,20 @@
+# Mirrors the backend-relevant entries in the root .gitignore - keeps the
+# build context small and avoids leaking local build artifacts/IDE files
+# into the image layer cache.
+
+target/
+*.class
+*.log
+*.jar
+*.war
+
+.git/
+.gitignore
+
+.idea/
+*.iml
+.vscode/
+
+.env
+.env.*
+!.env.example

@@ -83,6 +83,15 @@ Exact string inventory — ~38 keys. Every line number is from `dev` at the time
 
 ## Spec Change Log
 
+**2026-08-29 — approved deviation: `shells.test.tsx` keeps hardcoded Bulgarian expectations.**
+Triggered by the adversarial review, which flagged the `COPY` table as violating the frozen rule "never by hardcoding the new Bulgarian string" (Boundaries → Always). Human-approved as a standing exception: that suite is the cross-contamination oracle, and reading its expectations from `bg.json` would compare the component's own source of truth against itself, letting a wrong or cross-wired translation satisfy a wrong-but-consistent expectation. Known-bad state avoided: the suite going quiet on exactly the defect it exists to catch. **KEEP:** every other suite still reads from the catalog — this exception is scoped to `shells.test.tsx` alone, and the rationale is documented at the `COPY` declaration.
+
+**2026-08-29 — scope addition: browser document title.**
+`index.html`'s `<title>` was outside the nine-component inventory and initially left in English. Human-approved to include: `index.html` now ships the Bulgarian default and `i18n/index.ts` syncs `document.title` on every language change, alongside the existing `<html lang>` sync. This is a small behavioural addition rather than a pure copy swap, hence recorded here.
+
+**2026-08-29 — copy corrections beyond a literal translation.**
+Two changes the "no wording change beyond translation" rule would otherwise forbid, both human-approved after being surfaced rather than silently applied: (1) the registration-success body had been factually wrong since Story 1.3 ("once the login screen is available") and is corrected in **both** catalogs; (2) visible Bulgarian uses of `Ликвидатор` become the insurance-domain term `Ликвидатор на щети`. The `LIQUIDATOR` role, route, identifiers, and all English copy are deliberately unchanged.
+
 ## Verification
 
 **Commands:**

@@ -13,9 +13,9 @@ interface RegisterResponse {
 type FormPhase = 'editing' | 'submitting' | 'success';
 
 // AD-7: `code` is the only thing the frontend uses to select user-facing
-// text - never the backend's dev/log-facing `message`. This story has no
-// i18n catalog yet (out of scope - see spec Design Notes), so the mapped
-// copy lives here as a plain string for now.
+// text - never the backend's dev/log-facing `message`. The screen copy moved
+// into the i18n catalogs in Story 3.2a; these code-driven messages are
+// Story 3.2b's, which will delete these constants. Plain English until then.
 const EMAIL_TAKEN_MESSAGE = 'This email is already registered.';
 const GENERIC_ERROR_MESSAGE = 'Something went wrong. Please try again.';
 

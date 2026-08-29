@@ -47,6 +47,7 @@ describe('LanguageToggle', () => {
     expect(await screen.findByRole('heading', { name: bg.app.title })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: bg.app.nav.register })).toBeInTheDocument();
     expect(document.documentElement.lang).toBe('bg');
+    expect(document.title).toBe(bg.app.title);
   });
 
   it('switches the chrome to English immediately and updates <html lang>', async () => {
@@ -60,6 +61,9 @@ describe('LanguageToggle', () => {
     expect(screen.getByRole('link', { name: en.app.nav.login })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: en.app.nav.health })).toBeInTheDocument();
     expect(document.documentElement.lang).toBe('en');
+    // The browser tab follows too - it has no owning component, so the sync
+    // lives on the i18next instance alongside the `<html lang>` one.
+    expect(document.title).toBe(en.app.title);
   });
 
   it('switches back to Bulgarian', async () => {
@@ -122,6 +126,11 @@ describe('LanguageToggle', () => {
     const freshI18n = (await import('../i18n')).default;
 
     expect(freshI18n.resolvedLanguage).toBe('en');
+    // Shows the tab title follows the *restored* language. Like the
+    // `<html lang>` assertion this test deliberately omits, it is satisfied
+    // by whichever module's listener fires, so it evidences the restore, not
+    // the fresh module's own registration.
+    expect(document.title).toBe(en.app.title);
   });
 
   it('marks the active language as pressed for assistive technology', async () => {

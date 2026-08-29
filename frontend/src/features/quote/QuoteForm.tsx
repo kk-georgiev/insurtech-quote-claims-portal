@@ -35,9 +35,9 @@ export interface QuoteResponse {
 type FormPhase = 'editing' | 'submitting';
 
 // AD-7: `code` is the only thing the frontend uses to select user-facing
-// text - never the backend's dev/log-facing `message`. This story has no
-// i18n catalog yet (out of scope, same as LoginForm/RegisterForm), so the
-// mapped copy lives here as a plain string for now. Every failure this form
+// text - never the backend's dev/log-facing `message`. The screen copy moved
+// into the i18n catalogs in Story 3.2a; this code-driven message is Story
+// 3.2b's, which will delete this constant. Plain English until then. Every failure this form
 // can hit either arrives as `fieldErrors` (bean validation,
 // `PRICING_UNKNOWN_REGION`, `PRICING_UNSUPPORTED_INSTALLMENTS` - all shaped
 // the same way, no code-specific branching needed) or falls back to this one

@@ -23,19 +23,31 @@ import bg from '../../i18n/bg.json';
 // "which roles are staff" (`roleHome.ts`) — this suite no longer re-derives
 // them locally.
 
-// Stated verbatim — NOT read from the i18n catalog, and not derived from the
-// role name. Reading it from `bg.json` would compare the component's own
-// source of truth against itself, letting a wrong translation satisfy a
-// wrong-but-consistent expectation. That is the reasoning Story 2.3 wrote
-// here for the English copy; Story 3.2a changes only the language.
+// APPROVED EXCEPTION to Story 3.2a's "re-point test queries at the catalog"
+// rule (human-approved 2026-08-29; recorded in the spec's Change Log).
+//
+// Everywhere else in this codebase a test asserting copy reads the expected
+// string from `bg.json`, because there the copy is incidental and the
+// behaviour is the point. Here the copy *is* the point: this suite exists to
+// prove each staff screen shows its own label and none of another role's.
+// Reading the expectation from `bg.json` would compare the component's own
+// source of truth against itself — a wrong or cross-wired translation would
+// satisfy a wrong-but-consistent expectation and this suite would go quiet
+// on exactly the defect it was written to catch.
+//
+// So these stay an independent oracle, stated verbatim and never derived
+// from the role name. That is the reasoning Story 2.3 wrote here for the
+// English copy; Story 3.2a changes only the language. The cost is that a
+// deliberate copy change must be made in two places — that is the intended
+// friction, not an oversight.
 const COPY: Record<StaffRole, { heading: string; line: string }> = {
   AGENT: {
     heading: 'Работно място на агента',
     line: 'Очаквайте скоро — инструментите за агенти не са част от този етап.',
   },
   LIQUIDATOR: {
-    heading: 'Работно място на ликвидатора',
-    line: 'Очаквайте скоро — инструментите за ликвидатори не са част от този етап.',
+    heading: 'Работно място на ликвидатора на щети',
+    line: 'Очаквайте скоро — инструментите за ликвидатори на щети не са част от този етап.',
   },
   ADMINISTRATOR: {
     heading: 'Работно място на администратора',

@@ -14,9 +14,10 @@ interface LoginResponse {
 type FormPhase = 'editing' | 'submitting';
 
 // AD-7: `code` is the only thing the frontend uses to select user-facing
-// text - never the backend's dev/log-facing `message`. This story has no
-// i18n catalog yet (out of scope, same as Story 1.2's RegisterForm), so the
-// mapped copy lives here as a plain string for now. Wrong password and
+// text - never the backend's dev/log-facing `message`. The screen copy moved
+// into the i18n catalogs in Story 3.2a, but these code-driven messages did
+// not: mapping backend codes to catalog entries is Story 3.2b, which will
+// delete these constants. Until then they stay plain English strings. Wrong password and
 // unknown email both map to AUTH_INVALID_CREDENTIALS and share this exact
 // message (spec Boundaries & Constraints) - nothing here distinguishes them.
 const INVALID_CREDENTIALS_MESSAGE = 'Incorrect email or password.';

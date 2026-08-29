@@ -29,7 +29,7 @@
     "register": {
       "heading": "Create an account",
       "success": "Registration successful",
-      "successBody": "Your account has been created. You will be able to log in once the login screen is available.",
+      "successBody": "Registration successful. You can now log in.",
       "email": "Email",
       "password": "Password",
       "submit": "Register",

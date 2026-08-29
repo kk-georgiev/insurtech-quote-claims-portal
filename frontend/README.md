@@ -30,11 +30,18 @@ in the right language with no loading state.
   **client-side only** — there is no server-side or per-account language
   preference this milestone.
 
-Story 3.1 translates only the app chrome this header owns (title, the three
-nav links, the toggle's own labels) under the `app.*` key namespace.
-Everything below it — the auth forms, quote flow, role shells, validation
-and error messages — is still English; **Story 3.2** owns those, under the
-`auth.*`, `quote.*`, and `shells.*` namespaces.
+Story 3.1 opened the `app.*` namespace for the chrome this header owns
+(title, the three nav links, the toggle's own labels). **Story 3.2a** added
+the screen copy under `auth.*`, `quote.*`, `shells.*`, and `app.health.*` —
+both auth forms, the quote form and breakdown, the health screen, and all
+four role shells.
+
+Still English, and owned by **Story 3.2b**: backend error-`code` messages
+(the `INVALID_CREDENTIALS_MESSAGE` / `EMAIL_TAKEN_MESSAGE` /
+`GENERIC_ERROR_MESSAGE` constants in the forms), field-level validation text
+rendered from `ApiFieldError.message`, and the tariff zone label, which
+still renders the backend's English `zoneName` instead of a `zoneId`-keyed
+catalog entry.
 
 Two rules when adding copy:
 

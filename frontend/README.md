@@ -10,14 +10,21 @@ client shell hosts Story 1.7's quote flow. There are no route guards yet
 
 ## Prerequisites
 
-- Node.js 20 (pinned via `.nvmrc` — run `nvm use` after `cd frontend`, or
-  point your version manager at it directly). CI runs on Node 20. Newer
-  Node (22+) typechecks/builds fine but breaks `npm test`: jsdom ships its
-  own `AbortController`/`AbortSignal` class, distinct from Node's, and
-  Node's built-in `fetch`/`Request` only recognize their own — any test
-  that triggers a real React Router `navigate()` throws a `TypeError`
+- Node.js 20 — pinned via `.nvmrc` (macOS/Linux: `nvm use` after `cd
+  frontend`) and via the `volta` field in `package.json` (`volta pin
+  node@20` already applied; Volta auto-switches on `cd` once installed, no
+  extra command needed). CI runs on Node 20. Newer Node (22+) typechecks/
+  builds fine but breaks `npm test`: jsdom ships its own
+  `AbortController`/`AbortSignal` class, distinct from Node's, and Node's
+  built-in `fetch`/`Request` only recognize their own — any test that
+  triggers a real React Router `navigate()` throws a `TypeError`
   (`RequestInit: Expected signal ... to be an instance of AbortSignal`).
   Stick to Node 20 locally to avoid it.
+  **Windows note:** `nvm`/`fnm` need Developer Mode *and* a fresh logon for
+  symlink creation to work, and on some machines the "Create symbolic
+  links" user right still isn't granted even then. **Volta** (`winget
+  install Volta.Volta`) avoids this entirely — no symlinks, works out of
+  the box — and is the recommended path on Windows.
 - Docker + Docker Compose (for local Postgres) and a running backend
   (see `../backend/README.md`), so the `/health` round-trip and the login
   flow have something to reach. Not needed to run the test suite (`npm

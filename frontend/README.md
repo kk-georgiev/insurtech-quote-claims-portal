@@ -5,8 +5,12 @@ Vite 8 + React 19 + TypeScript 6.x SPA. Routing is owned by React Router 8
 (`/agent`, `/liquidator`, `/administrator`), the auth screens (`/login`,
 `/register`), and the backend health round-trip at `/health`. The three
 staff shells are static, role-labeled placeholder screens (Story 2.3); the
-client shell hosts Story 1.7's quote flow. There are no route guards yet
-(Story 2.4).
+client shell hosts Story 1.7's quote flow. Each of the four shell routes is
+nested under a `RoleGuard` instance (Story 2.4): only that route's own role
+can render it, a logged-in visitor with a different role is redirected to
+their own shell instead, and everyone else (anonymous or invalid token) is
+redirected to `/login`. `/health`, `/register`, and `/login` are
+intentionally left unguarded — they are not role-restricted.
 
 ## Prerequisites
 
@@ -59,7 +63,8 @@ Docker, or `.env` is required. Story 2.2 added this first frontend suite
 ```text
 src/
   app/       # route table (router.tsx), App (router instance), RootLayout,
-             #   roleHome (Role union + isRole guard + roleHome map), HealthStatus
+             #   roleHome (Role union + isRole guard + roleHome map + getCurrentRole),
+             #   RoleGuard (per-role route wrapper), HealthStatus
   api/       # typed fetch wrapper (client.ts), JWT storage/decode (authToken.ts)
   features/
     auth/    # LoginForm, RegisterForm

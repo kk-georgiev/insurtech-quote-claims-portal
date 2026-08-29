@@ -3,8 +3,9 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { routes } from '../../app/router';
-import { ROLES, roleHome, type Role } from '../../app/roleHome';
+import { ROLES, STAFF_ROLES, roleHome, type StaffRole } from '../../app/roleHome';
 import { getToken } from '../../api/authToken';
+import { seedToken } from '../../test/seedToken';
 
 // Story 2.3: the three staff placeholder screens. This suite is driven by a
 // table rather than three hand-written cases so the cross-contamination
@@ -16,9 +17,10 @@ import { getToken } from '../../api/authToken';
 // flow — so it has no "<Role> workspace" heading or coming-soon line to
 // assert. It is still one of the names a staff screen must not display —
 // see the contamination test, which iterates the full `ROLES`.
-type StaffRole = Exclude<Role, 'CLIENT'>;
-
-const STAFF_ROLES = ROLES.filter((role): role is StaffRole => role !== 'CLIENT');
+//
+// `StaffRole`/`STAFF_ROLES` are Story 2.4's single source of truth for
+// "which roles are staff" (`roleHome.ts`) — this suite no longer re-derives
+// them locally.
 
 // Stated verbatim, mirroring the spec's Design Notes copy table — not
 // derived from the role name. Deriving it would let a wrong-but-consistent
@@ -46,7 +48,13 @@ const COPY: Record<StaffRole, { heading: string; line: string }> = {
 const INTERACTIVE_SELECTOR =
   'a[href], button, input, select, textarea, [role="button"], [role="link"], [tabindex]:not([tabindex="-1"])';
 
+// Story 2.4 gates every staff shell behind `RoleGuard`, so exercising these
+// screens now requires a matching token first. Uses the shared `seedToken`
+// helper (`frontend/src/test/seedToken.ts`) — the same fake-unsigned-JWT
+// technique as `router.test.tsx`, since `decodeToken` never verifies the
+// signature. `StaffRole` is a subtype of `Role`, so it's accepted directly.
 async function renderShellAt(role: StaffRole) {
+  seedToken(role);
   const router = createMemoryRouter(routes, { initialEntries: [roleHome(role)] });
   render(<RouterProvider router={router} />);
   const shell = await screen.findByTestId(`${role.toLowerCase()}-shell`);
@@ -114,14 +122,16 @@ describe('staff placeholder screens', () => {
     expect(shell.innerHTML).toBe(before);
   });
 
-  it.each(STAFF_ROLES)('%s: renders for an unauthenticated direct visit, with no redirect', async (role) => {
-    // Story 2.4 adds the route guard. Until then a logged-out visitor typing
-    // the URL sees the screen and stays on it — this pins that behaviour so
-    // the guard story has to flip it deliberately.
+  it.each(STAFF_ROLES)('%s: redirects an unauthenticated direct visit to /login', async (role) => {
+    // Story 2.4's route guard: a logged-out visitor typing the URL directly
+    // never sees the screen — they land on `/login` instead. This flips the
+    // "no redirect" behaviour Story 2.3 pinned before the guard existed.
     expect(getToken()).toBeNull();
 
-    const { router } = await renderShellAt(role);
+    const router = createMemoryRouter(routes, { initialEntries: [roleHome(role)] });
+    render(<RouterProvider router={router} />);
 
-    expect(router.state.location.pathname).toBe(roleHome(role));
+    expect(await screen.findByRole('heading', { name: 'Log in' })).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/login');
   });
 });

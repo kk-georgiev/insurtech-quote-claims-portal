@@ -6,8 +6,17 @@
 // (AD-4): this module decides where to *send* a user, not what they may
 // access. Backend endpoints enforce access independently (Story 1.4 / 2.4).
 
+import { decodeToken, getToken } from '../api/authToken';
+
 export const ROLES = ['CLIENT', 'AGENT', 'LIQUIDATOR', 'ADMINISTRATOR'] as const;
 export type Role = (typeof ROLES)[number];
+
+/** The three non-CLIENT roles — the staff placeholder shells (Story 2.3). */
+export type StaffRole = Exclude<Role, 'CLIENT'>;
+
+export const STAFF_ROLES: readonly StaffRole[] = ROLES.filter(
+  (role): role is StaffRole => role !== 'CLIENT',
+);
 
 /**
  * Runtime type guard for the `role` claim carried by a decoded JWT, whose
@@ -36,4 +45,22 @@ const ROLE_HOME: Record<Role, string> = {
  */
 export function roleHome(role: Role): string {
   return ROLE_HOME[role];
+}
+
+/**
+ * The current visitor's role, derived only from the stored JWT
+ * (`getToken` + `decodeToken`, `api/authToken.ts`) — never from props or
+ * global state (Story 2.4, AD-10). Returns `null` for "no valid role":
+ * no token saved, an unparseable/malformed token, or a token whose `role`
+ * claim isn't one of {@link ROLES}. Callers (`RoleGuard`) treat `null` as
+ * "not logged in" and route to `/login`, same as a decode failure.
+ */
+export function getCurrentRole(): Role | null {
+  const token = getToken();
+  if (!token) return null;
+
+  const decoded = decodeToken(token);
+  if (!decoded || !isRole(decoded.role)) return null;
+
+  return decoded.role;
 }

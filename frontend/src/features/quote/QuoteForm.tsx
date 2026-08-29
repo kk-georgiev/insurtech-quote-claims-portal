@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { apiFetch, ApiRequestError } from '../../api/client';
 import { QuoteResult } from './QuoteResult';
 import { resolveFieldErrors, resolveFormError } from '../../i18n/errorMessages';
+import type { FieldFailure, FormFailure } from '../../i18n/errorMessages';
 
 /** Mirrors the backend's `CreateQuoteRequest` (READ-ONLY, quote/api). */
 interface CreateQuoteRequest {
@@ -61,8 +62,8 @@ export function QuoteForm() {
   const [engineCc, setEngineCc] = useState('');
   const [installments, setInstallments] = useState('');
   const [phase, setPhase] = useState<FormPhase>('editing');
-  const [formError, setFormError] = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [formFailure, setFormFailure] = useState<FormFailure>(null);
+  const [fieldFailure, setFieldFailure] = useState<FieldFailure>(null);
   const [quote, setQuote] = useState<QuoteResponse | null>(null);
 
   // Unmount guard, same intent/rationale as LoginForm.tsx's cancelledRef:
@@ -81,8 +82,8 @@ export function QuoteForm() {
     event.preventDefault();
     if (phase === 'submitting') return;
     setPhase('submitting');
-    setFormError(null);
-    setFieldErrors({});
+    setFormFailure(null);
+    setFieldFailure(null);
     setQuote(null);
 
     const body: CreateQuoteRequest = {
@@ -109,16 +110,26 @@ export function QuoteForm() {
       setPhase('editing');
 
       if (error instanceof ApiRequestError && error.fieldErrors && error.fieldErrors.length > 0) {
-        const map = resolveFieldErrors(error.fieldErrors, 'quote.form', error.code, t);
-        setFieldErrors(map);
-        if (!Object.keys(map).some((field) => KNOWN_FIELDS.has(field))) {
-          setFormError(resolveFormError(error, t));
+        setFieldFailure({ fieldErrors: error.fieldErrors, code: error.code });
+        // Checked against the raw field names rather than a resolved map:
+        // the decision is about which fields the backend named, which is
+        // language-neutral, so it must not depend on translation.
+        if (!error.fieldErrors.some((fieldError) => KNOWN_FIELDS.has(fieldError.field))) {
+          setFormFailure({ source: error });
         }
         return;
       }
-      setFormError(resolveFormError(error, t));
+      setFormFailure({ source: error });
     }
   }
+
+  // Resolved during render, never stored resolved: an error already on
+  // screen must re-translate the instant the language changes, with no
+  // resubmit. `formFailure`/`fieldFailure` hold language-neutral sources.
+  const formError = formFailure ? resolveFormError(formFailure.source, t) : null;
+  const fieldErrors = fieldFailure
+    ? resolveFieldErrors(fieldFailure.fieldErrors, 'quote.form', fieldFailure.code, t)
+    : {};
 
   const submitting = phase === 'submitting';
 

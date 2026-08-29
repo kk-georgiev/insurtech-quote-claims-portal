@@ -140,8 +140,59 @@ describe('resolveFieldErrors', () => {
     expect(map.someUnrenderedField).not.toContain('raw backend prose');
   });
 
+  // Regression: the code-to-field precedence used to be a bare Set, so a
+  // field-specific code overwrote *every* field in the response. A validation
+  // failure naming several fields alongside PRICING_UNKNOWN_REGION would have
+  // told the user all of them were bad region codes.
+  it('applies a field-specific code only to the field it is about', () => {
+    const error = new ApiRequestError('dev', 400, 'PRICING_UNKNOWN_REGION', [
+      { field: 'regionCode', message: 'Unknown region code: XX' },
+      { field: 'driverAge', message: 'must be greater than or equal to 18' },
+      { field: 'engineCc', message: 'must not be null' },
+    ]);
+
+    const map = resolveFieldErrors(error.fieldErrors, 'quote.form', error.code, t);
+
+    expect(map.regionCode).toBe(bg.errors.codes.PRICING_UNKNOWN_REGION);
+    // The other two keep their own catch-alls, not the region message.
+    expect(map.driverAge).toBe(bg.quote.form.fieldErrors.driverAge);
+    expect(map.engineCc).toBe(bg.quote.form.fieldErrors.engineCc);
+  });
+
+  it('does not apply PRICING_UNSUPPORTED_INSTALLMENTS to a non-installments field', () => {
+    const error = new ApiRequestError('dev', 400, 'PRICING_UNSUPPORTED_INSTALLMENTS', [
+      { field: 'driverAge', message: 'must be greater than or equal to 18' },
+    ]);
+
+    const map = resolveFieldErrors(error.fieldErrors, 'quote.form', error.code, t);
+    expect(map.driverAge).toBe(bg.quote.form.fieldErrors.driverAge);
+  });
+
   it('returns an empty map when there are no field errors', () => {
     expect(resolveFieldErrors(undefined, 'quote.form', 'SHARED_VALIDATION_ERROR', t)).toEqual({});
     expect(resolveFieldErrors([], 'quote.form', undefined, t)).toEqual({});
+  });
+});
+
+describe('region code examples', () => {
+  // `region_zone_map` is seeded with ASCII codes (CA, CB, ...). Bulgarian
+  // copy previously used the Cyrillic lookalikes С/А/В, so a user copying the
+  // example verbatim would have been told their region code was unknown.
+  it.each([
+    ['field message', bg.quote.form.fieldErrors.regionCode],
+    ['code message', bg.errors.codes.PRICING_UNKNOWN_REGION],
+  ])('%s uses Latin CA/CB, not Cyrillic', (_label, message) => {
+    expect(message).toContain('CA');
+    expect(message).toContain('CB');
+    // U+0421 U+0410 / U+0421 U+0412 - the Cyrillic lookalikes.
+    expect(message).not.toContain('СА');
+    expect(message).not.toContain('СВ');
+    // Every ASCII-looking example really is ASCII.
+    expect(/[A-Z]{2}/.test(message)).toBe(true);
+  });
+
+  it('tells the reader the codes are Latin letters', () => {
+    expect(bg.quote.form.fieldErrors.regionCode).toContain('латински');
+    expect(bg.errors.codes.PRICING_UNKNOWN_REGION).toContain('латински');
   });
 });

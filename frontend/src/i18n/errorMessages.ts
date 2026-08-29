@@ -27,15 +27,39 @@ export type Translate = (key: string, options?: Record<string, unknown>) => stri
 export type FieldErrorNamespace = 'auth.login' | 'auth.register' | 'quote.form';
 
 /**
- * Codes that describe one specific field rather than the request as a whole.
- * When the envelope carries one of these, its message is more specific than
- * the field's own catch-all and wins - the precedence rule the spec fixes
- * once, here, rather than per form.
+ * What a form *remembers* about a failure, as opposed to what it shows.
+ *
+ * Forms hold one of these in state and call the resolvers during render, so
+ * an error already on screen re-translates the moment the language changes.
+ * Storing the resolved string instead would freeze it in whichever language
+ * was active when the request failed, and the user would have to resubmit to
+ * see it in the other one.
+ *
+ * `source` is the thrown value itself - an `ApiRequestError`, a network
+ * error, or `null` for a client-side failure with no error object. All of
+ * them are language-neutral, and {@link resolveFormError} already knows how
+ * to turn any of them into words.
  */
-const FIELD_SPECIFIC_CODES = new Set([
-  'PRICING_UNKNOWN_REGION',
-  'PRICING_UNSUPPORTED_INSTALLMENTS',
-]);
+export type FormFailure = { source: unknown } | null;
+
+/** The field-level counterpart of {@link FormFailure}. */
+export type FieldFailure = { fieldErrors: ApiFieldError[]; code?: string } | null;
+
+/**
+ * Codes that describe one specific field rather than the request as a whole,
+ * mapped to the field each one is about. When the envelope carries one of
+ * these, its message is more specific than that field's own catch-all and
+ * wins - the precedence rule the spec fixes once, here, rather than per form.
+ *
+ * Mapped to a field name rather than kept as a bare set on purpose: a
+ * response may carry several `fieldErrors` alongside one of these codes, and
+ * only the field the code is actually about should be overridden. Every other
+ * field keeps its own message.
+ */
+const FIELD_SPECIFIC_CODES: Record<string, string> = {
+  PRICING_UNKNOWN_REGION: 'regionCode',
+  PRICING_UNSUPPORTED_INSTALLMENTS: 'installments',
+};
 
 /**
  * The form-level message for any thrown value: a translated entry for a known
@@ -72,7 +96,7 @@ export function resolveFieldErrors(
   if (!fieldErrors) return map;
 
   for (const fieldError of fieldErrors) {
-    if (code && FIELD_SPECIFIC_CODES.has(code)) {
+    if (code && FIELD_SPECIFIC_CODES[code] === fieldError.field) {
       const specific = t(`errors.codes.${code}`, { defaultValue: '' });
       if (specific) {
         map[fieldError.field] = specific;

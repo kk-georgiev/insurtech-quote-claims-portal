@@ -6,6 +6,7 @@ import { apiFetch, ApiRequestError } from '../../api/client';
 import { saveToken, decodeToken } from '../../api/authToken';
 import { isRole, roleHome } from '../../app/roleHome';
 import { resolveFieldErrors, resolveFormError } from '../../i18n/errorMessages';
+import type { FieldFailure, FormFailure } from '../../i18n/errorMessages';
 
 interface LoginResponse {
   token: string;
@@ -37,8 +38,8 @@ export function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [phase, setPhase] = useState<FormPhase>('editing');
-  const [formError, setFormError] = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [formFailure, setFormFailure] = useState<FormFailure>(null);
+  const [fieldFailure, setFieldFailure] = useState<FieldFailure>(null);
 
   // Unmount guard, same intent/rationale as RegisterForm.tsx's cancelledRef:
   // the request can resolve after the user navigates away mid-submit, and
@@ -56,8 +57,8 @@ export function LoginForm() {
     event.preventDefault();
     if (phase === 'submitting') return;
     setPhase('submitting');
-    setFormError(null);
-    setFieldErrors({});
+    setFormFailure(null);
+    setFieldFailure(null);
 
     try {
       const response = await apiFetch<LoginResponse>('/api/v1/auth/login', {
@@ -75,7 +76,7 @@ export function LoginForm() {
         // Not a backend error - the request succeeded and the token came back
         // unusable - so there is no `code` to resolve. Same generic copy the
         // resolver falls back to, taken straight from the catalog.
-        setFormError(t('errors.generic'));
+        setFormFailure({ source: null });
         return;
       }
 
@@ -95,17 +96,25 @@ export function LoginForm() {
 
       if (error instanceof ApiRequestError) {
         if (error.code === 'AUTH_INVALID_CREDENTIALS') {
-          setFormError(resolveFormError(error, t));
+          setFormFailure({ source: error });
           return;
         }
         if (error.fieldErrors && error.fieldErrors.length > 0) {
-          setFieldErrors(resolveFieldErrors(error.fieldErrors, 'auth.login', error.code, t));
+          setFieldFailure({ fieldErrors: error.fieldErrors, code: error.code });
           return;
         }
       }
-      setFormError(resolveFormError(error, t));
+      setFormFailure({ source: error });
     }
   }
+
+  // Resolved during render, never stored resolved: an error already on
+  // screen must re-translate the instant the language changes, with no
+  // resubmit. `formFailure`/`fieldFailure` hold language-neutral sources.
+  const formError = formFailure ? resolveFormError(formFailure.source, t) : null;
+  const fieldErrors = fieldFailure
+    ? resolveFieldErrors(fieldFailure.fieldErrors, 'auth.login', fieldFailure.code, t)
+    : {};
 
   const submitting = phase === 'submitting';
 

@@ -329,3 +329,9 @@ Append-only. Entries collected from bmad-build review loopbacks. Do not modify e
 - source_spec: `_bmad-output/implementation-artifacts/spec-4-2-one-command-full-stack-startup.md`
   summary: No CI job runs `docker compose up` (or otherwise builds/exercises the wired-together `backend`+`frontend`+`postgres` stack) — a wiring regression in `docker-compose.yml` (wrong env var name, wrong internal port, wrong build arg) would merge to `dev`/`main` undetected.
   evidence: Review-loop finding (verification-gap). Same root gap already logged after Story 4.1 (`deferred-work.md`, "Story 4.1 review" section) anticipated this closing "once Story 4.2 wires these images into `docker-compose.yml`" — it didn't, because this story's own frozen spec explicitly forbids touching `ci.yml`, same as 4.1's. Now that the full stack is actually wired, a `docker compose up --build -d` + health-check-polling CI job (mirroring this story's own manual "Verification" steps) would close both this and the 4.1 entry at once.
+
+## Deferred from: Story 4.3 review (2026-08-29)
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-4-3-local-dev-workflow-preserved-alongside-docker.md`
+  summary: The one-line Docker cross-reference this story added to `backend/README.md`/`frontend/README.md` is one-directional — the root README's "Getting started" section doesn't link back to either module README for a reader who wants the native-dev path's full detail.
+  evidence: Review-loop finding (blind-hunter). Minor discoverability gap, not required by this story's frozen scope (which only specified the forward pointer from each module README). Worth a symmetric link back if the root README's Getting Started section is revisited.

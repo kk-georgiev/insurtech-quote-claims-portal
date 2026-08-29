@@ -82,6 +82,21 @@ intentionally left unguarded — they are not role-restricted.
 To get a **CLIENT** account, register one through the app (or
 `POST /api/v1/auth/register`).
 
+### Language
+
+The portal opens in **Bulgarian** by default, with an **English** toggle in
+the header that works on every screen — public routes and guarded shells,
+logged in or not. Switching is immediate and in place: no reload, no
+navigation, and nothing typed into a form is lost. The choice is remembered
+in the browser only (`localStorage`); there is no per-account language
+preference this milestone.
+
+Story 3.1 set up the i18n infrastructure and translated the app-wide header
+chrome. The feature screens — auth forms, quote flow, role shells, and all
+validation/error messages — are still English until **Story 3.2** completes
+translation coverage. See `frontend/README.md` for the key namespaces and
+the rules for adding new copy.
+
 > **These are demo credentials, not production credentials.** They exist so
 > the four-role behaviour can be shown on a local checkout, in the same
 > category as the placeholder values in `.env.example`. No migration, database

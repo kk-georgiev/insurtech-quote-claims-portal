@@ -12,18 +12,56 @@ their own shell instead, and everyone else (anonymous or invalid token) is
 redirected to `/login`. `/health`, `/register`, and `/login` are
 intentionally left unguarded — they are not role-restricted.
 
+## Language (i18n)
+
+Translation is 100% frontend-owned (AD-8) — the backend never emits
+user-facing prose. `react-i18next` is initialised in `src/i18n/`, from
+bundled `bg.json` / `en.json` catalogs, so the very first paint is already
+in the right language with no loading state.
+
+- **Bulgarian is the default** for a visitor with no stored preference, and
+  is also the `fallbackLng`: a Bulgarian visitor must never be shown an
+  English fallback string.
+- The **language toggle** lives in `RootLayout`'s header, so it is reachable
+  from every screen — public routes and guarded shells, logged in or not.
+  Switching re-renders in place: no reload, no navigation, no lost form
+  state. `<html lang>` follows the active language.
+- The choice persists in `localStorage` under `motorinsurance.ui.language`,
+  **client-side only** — there is no server-side or per-account language
+  preference this milestone.
+
+Story 3.1 translates only the app chrome this header owns (title, the three
+nav links, the toggle's own labels) under the `app.*` key namespace.
+Everything below it — the auth forms, quote flow, role shells, validation
+and error messages — is still English; **Story 3.2** owns those, under the
+`auth.*`, `quote.*`, and `shells.*` namespaces.
+
+Two rules when adding copy:
+
+1. **A key added to one catalog is added to the other in the same change.**
+   `LanguageToggle.test.tsx` fails `npm test` if the two key sets diverge.
+2. **A backend error `code` and its translation ship together** (AD-7) —
+   never a new code without its i18n entry.
+
+Language option labels (`Български`, `English`) are deliberately identical
+in both catalogs: each option is named in its own language so a visitor who
+cannot read the current one can still find theirs.
+
 ## Prerequisites
 
 - Node.js 20 — pinned via `.nvmrc` (macOS/Linux: `nvm use` after `cd
   frontend`) and via the `volta` field in `package.json` (`volta pin
   node@20` already applied; Volta auto-switches on `cd` once installed, no
-  extra command needed). CI runs on Node 20. Newer Node (22+) typechecks/
-  builds fine but breaks `npm test`: jsdom ships its own
+  extra command needed). CI runs on Node 20, which is the only version the
+  suite is guaranteed against. Some newer Node versions have broken
+  `npm test` while typechecking and building fine: jsdom ships its own
   `AbortController`/`AbortSignal` class, distinct from Node's, and Node's
-  built-in `fetch`/`Request` only recognize their own — any test that
+  built-in `fetch`/`Request` only recognize their own, so any test that
   triggers a real React Router `navigate()` throws a `TypeError`
   (`RequestInit: Expected signal ... to be an instance of AbortSignal`).
-  Stick to Node 20 locally to avoid it.
+  This was observed on Node 24; it does **not** reproduce on Node 22.14.0,
+  where the full suite passes (verified in Story 3.1). Node 20 remains the
+  safe default.
   **Windows note:** `nvm`/`fnm` need Developer Mode *and* a fresh logon for
   symlink creation to work, and on some machines the "Create symbolic
   links" user right still isn't granted even then. **Volta** (`winget
@@ -78,13 +116,13 @@ Docker, or `.env` is required. Story 2.2 added this first frontend suite
 src/
   app/       # route table (router.tsx), App (router instance), RootLayout,
              #   roleHome (Role union + isRole guard + roleHome map + getCurrentRole),
-             #   RoleGuard (per-role route wrapper), HealthStatus
+             #   RoleGuard (per-role route wrapper), LanguageToggle, HealthStatus
   api/       # typed fetch wrapper (client.ts), JWT storage/decode (authToken.ts)
+  i18n/      # react-i18next setup (index.ts), bg.json/en.json catalogs,
+             #   language.ts (supported set, guard, localStorage persistence)
   features/
     auth/    # LoginForm, RegisterForm
+    quote/   # QuoteForm, QuoteResult
     shells/  # per-role navigation shells (see above)
-  test/      # Vitest setup (jsdom matchers, RTL cleanup)
+  test/      # Vitest setup (jsdom matchers, RTL cleanup, i18n reset), seedToken
 ```
-
-`features/quote` and `i18n/` do not exist yet - each is added in the story
-that first needs it.

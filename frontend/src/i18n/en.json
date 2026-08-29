@@ -1,0 +1,15 @@
+{
+  "app": {
+    "title": "Motor Insurance Quote & Claims Portal",
+    "nav": {
+      "register": "Register",
+      "login": "Login",
+      "health": "Health"
+    },
+    "language": {
+      "label": "Language",
+      "bg": "Български",
+      "en": "English"
+    }
+  }
+}

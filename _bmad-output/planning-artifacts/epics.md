@@ -278,7 +278,7 @@ So that I can use the portal in my preferred language.
 **Given** a first-time, unauthenticated visit
 **When** the app loads
 **Then** it renders in Bulgarian by default
-**And** given I toggle the language, when I do, then all currently-visible text switches immediately without losing my place
+**And** given I toggle the language, when I do, then all text within this story's translated surface switches immediately — no reload, no navigation, no lost route state (full screen coverage is Story 3.2)
 **And** given I reload the page after toggling, when the app loads again, then my selected language persists (client-side only, per AD-8)
 
 ### Story 3.2: Full Translation Coverage of Milestone 1 Screens

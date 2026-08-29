@@ -53,6 +53,42 @@ header nav a:hover {
   text-decoration: underline;
 }
 
+/* Language toggle (LanguageToggle, Story 3.1). `aria-pressed` already tells
+   assistive tech which language is active; these rules give sighted users
+   the same information, which two identically-styled buttons do not. Quieter
+   and smaller than the base `button` rule below, because this is header
+   chrome rather than a primary action.
+
+   Hooked off the existing `data-testid` and `aria-pressed` attributes, like
+   the `[data-testid='quote-result']` and `[data-testid='register-success']`
+   rules further down — this file deliberately adds no classNames. */
+
+[data-testid='language-toggle'] {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+[data-testid='language-toggle'] button {
+  background: transparent;
+  border: 1px solid #475569;
+  color: #cbd5e1;
+  padding: 0.25rem 0.6rem;
+  font-size: 0.8rem;
+}
+
+[data-testid='language-toggle'] button:hover:not(:disabled) {
+  background: #334155;
+  color: #fff;
+}
+
+[data-testid='language-toggle'] button[aria-pressed='true'] {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #fff;
+  font-weight: 600;
+}
+
 /* Content container */
 
 main {

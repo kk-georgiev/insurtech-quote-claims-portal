@@ -1,24 +1,37 @@
 import { Link, Outlet } from 'react-router';
+import { useTranslation } from 'react-i18next';
+import { LanguageToggle } from './LanguageToggle';
 
 /**
- * Root layout. Near-empty this story (AD-10: router owns routing, routes
- * are near-empty this milestone) - grows role-based navigation shell etc.
- * in later stories. The `/register`, `/login`, and `/health` links are
- * plain, unstyled entry points (Stories 1.2/1.3/2.2) - without them the
- * routes were only reachable by typing the URL directly; a real nav is a
- * later story's job. `/health` was the index route (Story 1.1) until Story
- * 2.2 moved it here to free `/` for the client shell.
+ * Root layout. Near-empty this milestone (AD-10: router owns routing) - the
+ * `/register`, `/login`, and `/health` links are plain, unstyled entry points
+ * (Stories 1.2/1.3/2.2) without which those routes would only be reachable by
+ * typing the URL. `/health` was the index route (Story 1.1) until Story 2.2
+ * moved it here to free `/` for the client shell.
+ *
+ * Story 3.1 makes this header the app's only translated surface: the title
+ * and the three nav labels come from the `app.*` i18n namespace, and
+ * `LanguageToggle` sits alongside them so the language control is reachable
+ * from every screen. The nav is deliberately still *not* auth-aware and has
+ * no logout - that is a separate proposed story (Epic 2 retrospective item
+ * 5), kept out of Story 3.1 so this file changes for one reason only.
+ *
+ * Everything below `<Outlet />` - the auth forms, quote flow, and role shells
+ * - is still untranslated English; Story 3.2 owns that.
  */
 export function RootLayout() {
+  const { t } = useTranslation();
+
   return (
     <div>
       <header>
-        <h1>Motor Insurance Quote &amp; Claims Portal</h1>
+        <h1>{t('app.title')}</h1>
         <nav>
-          <Link to="/register">Register</Link>
-          <Link to="/login">Login</Link>
-          <Link to="/health">Health</Link>
+          <Link to="/register">{t('app.nav.register')}</Link>
+          <Link to="/login">{t('app.nav.login')}</Link>
+          <Link to="/health">{t('app.nav.health')}</Link>
         </nav>
+        <LanguageToggle />
       </header>
       <main>
         <Outlet />

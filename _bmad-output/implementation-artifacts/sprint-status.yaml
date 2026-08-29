@@ -29,7 +29,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 08-23-2026 17:25
-last_updated: 08-29-2026
+last_updated: 08-29-2026 17:22
 project: Motor Insurance Quote & Claims Portal
 project_key: NOKEY
 tracking_system: file-system
@@ -45,12 +45,12 @@ development_status:
   1-7-client-quote-flow-submit-and-see-the-breakdown: done
   epic-1-retrospective: done
 
-  epic-2: in-progress
-  2-1-seeded-staff-demo-accounts: review
-  2-2-role-based-post-login-routing: review
-  2-3-placeholder-screens-for-agent-liquidator-and-administrator: review
-  2-4-frontend-route-guards-per-role: review
-  epic-2-retrospective: optional
+  epic-2: done
+  2-1-seeded-staff-demo-accounts: done
+  2-2-role-based-post-login-routing: done
+  2-3-placeholder-screens-for-agent-liquidator-and-administrator: done
+  2-4-frontend-route-guards-per-role: done
+  epic-2-retrospective: done
 
   epic-3: backlog
   3-1-i18n-infrastructure-and-language-toggle: backlog
@@ -139,3 +139,40 @@ action_items:
     owner: "Konstantin"
     status: done
     ref: "_bmad-output/implementation-artifacts/epic-1-retro-2026-08-26.md"
+  - id: "epic-2-retro-item-12-add-a-contract-integration-test-tying-th"
+    epic: 2
+    action: "Add a contract/integration test tying the backend JWT role claim wire
+      format to the frontend isRole/getCurrentRole/roleHome pipeline"
+    owner: "unassigned"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-2-retro-2026-08-29.md"
+  - id: "epic-2-retro-item-13-guard-login-and-register-against-an-alre"
+    epic: 2
+    action: "Guard /login and /register against an already-authenticated visitor (redirect
+      to roleHome(currentRole)); add a test for the already-logged-in re-login identity-swap
+      path"
+    owner: "unassigned"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-2-retro-2026-08-29.md"
+  - id: "epic-2-retro-item-14-de-duplicate-token-role-validation-have"
+    epic: 2
+    action: "De-duplicate token/role validation: have LoginForm.tsx reuse roleHome.ts
+      getCurrentRole() instead of re-implementing decodeToken+isRole inline"
+    owner: "unassigned"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-2-retro-2026-08-29.md"
+  - id: "epic-2-retro-item-15-doc-cleanup-refresh-stale-no-guard-until"
+    epic: 2
+    action: "Doc cleanup: refresh stale no-guard-until-2.4 comments on the 3 staff
+      shells and shells.test.tsx, authToken.ts decodeToken display-purposes-only comment,
+      and epic-2-context.md stale role-specific-navigation-menu line"
+    owner: "unassigned"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-2-retro-2026-08-29.md"
+  - id: "epic-2-retro-item-16-propose-a-new-story-logout-action-and-au"
+    epic: 2
+    action: "Propose a new story: Logout action and auth-aware RootLayout nav so an
+      authenticated user has a way out of their shell"
+    owner: "unassigned"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-2-retro-2026-08-29.md"

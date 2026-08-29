@@ -1,13 +1,13 @@
-# Local dev Compose file — Story 1.1 scope: `postgres` service only.
-#
-# `docker compose up postgres` starts just the database; backend and
-# frontend run natively (`mvn spring-boot:run` / `npm run dev`) against it
-# (AD-9). The `backend`/`frontend` services and their Dockerfiles are added
-# in Epic 4 (Stories 4.1/4.2) for the fully containerized stack — not here.
+# Local dev Compose file. `docker compose up postgres` still starts just the
+# database for native dev (`mvn spring-boot:run` / `npm run dev` against it,
+# per AD-9). `docker compose up` (no service name) brings up the full stack —
+# postgres, backend, and frontend — built from the Story 4.1 Dockerfiles
+# (Story 4.2).
 #
 # Values below fall back to insecure local-dev defaults (via `${VAR:-default}`)
-# so `docker compose up postgres` works out of the box on a clean checkout.
-# Copy `.env.example` to `.env` and override them for anything beyond local dev.
+# so `docker compose up` / `docker compose up postgres` both work out of the
+# box on a clean checkout. Copy `.env.example` to `.env` and override them for
+# anything beyond local dev.
 
 services:
   postgres:
@@ -30,6 +30,47 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
+  # Story 4.2: containerized backend, only started by `docker compose up`
+  # (not by `docker compose up postgres` alone). Talks to postgres over the
+  # Compose-internal network/port — never the host-mapped POSTGRES_PORT.
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:-motorinsurance}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      JWT_SECRET: ${JWT_SECRET:-replace-with-a-long-random-secret-never-commit-a-real-one}
+    ports:
+      - '${BACKEND_PORT:-8080}:8080'
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:8080/actuator/health || exit 1']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # Story 4.2: containerized frontend. VITE_API_URL is baked in at build time
+  # (Vite/nginx, not a runtime env var) and must be the browser-reachable,
+  # host-mapped backend origin (e.g. http://localhost:8080) — the browser
+  # sits outside the Compose network, so the `backend` service name would
+  # not resolve there (AD-9).
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8080}
+    restart: unless-stopped
+    ports:
+      - '${FRONTEND_PORT:-5173}:80'
+    depends_on:
+      - backend
 
 volumes:
   postgres_data:

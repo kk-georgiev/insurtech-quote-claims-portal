@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next';
+
 /**
  * AGENT navigation shell, mounted at `/agent`. Story 2.3 turns Story 2.2's
  * bare route target into a static, clearly Agent-labeled placeholder screen:
@@ -13,10 +15,12 @@
  * shared component — each grows different real functionality later.
  */
 export function AgentShell() {
+  const { t } = useTranslation();
+
   return (
     <section data-testid="agent-shell" aria-labelledby="agent-shell-heading">
-      <h2 id="agent-shell-heading">Agent workspace</h2>
-      <p>Coming soon — Agent tools are not part of this milestone.</p>
+      <h2 id="agent-shell-heading">{t('shells.agent.heading')}</h2>
+      <p>{t('shells.agent.comingSoon')}</p>
     </section>
   );
 }

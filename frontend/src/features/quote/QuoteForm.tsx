@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 import { apiFetch, ApiRequestError } from '../../api/client';
 import type { ApiFieldError } from '../../api/client';
 import { QuoteResult } from './QuoteResult';
@@ -70,6 +71,8 @@ function toFieldErrorMap(errors: ApiFieldError[]): Record<string, string> {
  * like any other failure.
  */
 export function QuoteForm() {
+  const { t } = useTranslation();
+
   const [driverAge, setDriverAge] = useState('');
   const [regionCode, setRegionCode] = useState('');
   const [engineCc, setEngineCc] = useState('');
@@ -138,10 +141,10 @@ export function QuoteForm() {
 
   return (
     <section>
-      <h2>Get a quote</h2>
+      <h2>{t('quote.form.heading')}</h2>
       <form onSubmit={handleSubmit} noValidate>
         <div>
-          <label htmlFor="quote-driverAge">Driver age</label>
+          <label htmlFor="quote-driverAge">{t('quote.form.driverAge')}</label>
           <input
             id="quote-driverAge"
             name="driverAge"
@@ -164,7 +167,7 @@ export function QuoteForm() {
           )}
         </div>
         <div>
-          <label htmlFor="quote-regionCode">Region code</label>
+          <label htmlFor="quote-regionCode">{t('quote.form.regionCode')}</label>
           <input
             id="quote-regionCode"
             name="regionCode"
@@ -183,7 +186,7 @@ export function QuoteForm() {
           )}
         </div>
         <div>
-          <label htmlFor="quote-engineCc">Engine size (cc)</label>
+          <label htmlFor="quote-engineCc">{t('quote.form.engineCc')}</label>
           <input
             id="quote-engineCc"
             name="engineCc"
@@ -206,7 +209,7 @@ export function QuoteForm() {
           )}
         </div>
         <div>
-          <label htmlFor="quote-installments">Number of installments</label>
+          <label htmlFor="quote-installments">{t('quote.form.installments')}</label>
           <input
             id="quote-installments"
             name="installments"
@@ -232,7 +235,7 @@ export function QuoteForm() {
           </p>
         )}
         <button type="submit" disabled={submitting}>
-          {submitting ? 'Calculating…' : 'Get quote'}
+          {submitting ? t('quote.form.submitting') : t('quote.form.submit')}
         </button>
       </form>
       {quote && <QuoteResult quote={quote} />}

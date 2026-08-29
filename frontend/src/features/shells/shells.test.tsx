@@ -3,9 +3,10 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { routes } from '../../app/router';
-import { ROLES, STAFF_ROLES, roleHome, type StaffRole } from '../../app/roleHome';
+import { ROLES, STAFF_ROLES, roleHome, type Role, type StaffRole } from '../../app/roleHome';
 import { getToken } from '../../api/authToken';
 import { seedToken } from '../../test/seedToken';
+import bg from '../../i18n/bg.json';
 
 // Story 2.3: the three staff placeholder screens. This suite is driven by a
 // table rather than three hand-written cases so the cross-contamination
@@ -22,22 +23,37 @@ import { seedToken } from '../../test/seedToken';
 // "which roles are staff" (`roleHome.ts`) — this suite no longer re-derives
 // them locally.
 
-// Stated verbatim, mirroring the spec's Design Notes copy table — not
-// derived from the role name. Deriving it would let a wrong-but-consistent
-// rendering satisfy a wrong-but-consistent expectation.
+// Stated verbatim — NOT read from the i18n catalog, and not derived from the
+// role name. Reading it from `bg.json` would compare the component's own
+// source of truth against itself, letting a wrong translation satisfy a
+// wrong-but-consistent expectation. That is the reasoning Story 2.3 wrote
+// here for the English copy; Story 3.2a changes only the language.
 const COPY: Record<StaffRole, { heading: string; line: string }> = {
   AGENT: {
-    heading: 'Agent workspace',
-    line: 'Coming soon — Agent tools are not part of this milestone.',
+    heading: 'Работно място на агента',
+    line: 'Очаквайте скоро — инструментите за агенти не са част от този етап.',
   },
   LIQUIDATOR: {
-    heading: 'Liquidator workspace',
-    line: 'Coming soon — Liquidator tools are not part of this milestone.',
+    heading: 'Работно място на ликвидатора',
+    line: 'Очаквайте скоро — инструментите за ликвидатори не са част от този етап.',
   },
   ADMINISTRATOR: {
-    heading: 'Administrator workspace',
-    line: 'Coming soon — Administrator tools are not part of this milestone.',
+    heading: 'Работно място на администратора',
+    line: 'Очаквайте скоро — инструментите за администратори не са част от този етап.',
   },
+};
+
+// The cross-contamination check matches role *names* against rendered text.
+// The English names are no longer rendered anywhere, so the previous
+// word-boundary regex on `AGENT` would pass vacuously on every screen.
+// These are the Bulgarian stems the copy actually uses, deliberately
+// un-inflected so they match every case form ("агента", "агенти").
+// None is a substring of another.
+const ROLE_STEM: Record<Role, string> = {
+  CLIENT: 'клиент',
+  AGENT: 'агент',
+  LIQUIDATOR: 'ликвидатор',
+  ADMINISTRATOR: 'администратор',
 };
 
 // Anything a user could click, focus, or type into. Broader than
@@ -85,13 +101,14 @@ describe('staff placeholder screens', () => {
     const text = shell.textContent ?? '';
 
     expect(text).toContain(COPY[role].heading);
-    // Iterates the full `ROLES`, not just the staff ones: "Client" appearing
-    // on a staff screen is the same defect as "Agent" appearing on the
-    // Liquidator screen. Word-boundary matched so a future overlapping name
-    // (ADMIN vs ADMINISTRATOR) neither false-passes nor false-fails.
+    // Iterates the full `ROLES`, not just the staff ones: "клиент" appearing
+    // on a staff screen is the same defect as "агент" appearing on the
+    // Liquidator screen. Matched on the un-inflected stem rather than a
+    // word-boundary regex, because Bulgarian inflects these names and
+    // word-boundary anchoring would sail straight past "агента".
     for (const other of ROLES) {
       if (other === role) continue;
-      expect(text).not.toMatch(new RegExp(`\\b${other}\\b`, 'i'));
+      expect(text.toLowerCase()).not.toContain(ROLE_STEM[other]);
     }
   });
 
@@ -131,7 +148,7 @@ describe('staff placeholder screens', () => {
     const router = createMemoryRouter(routes, { initialEntries: [roleHome(role)] });
     render(<RouterProvider router={router} />);
 
-    expect(await screen.findByRole('heading', { name: 'Log in' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: bg.auth.login.heading })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/login');
   });
 });

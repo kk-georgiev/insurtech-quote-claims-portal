@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { useNavigate } from 'react-router';
+import { useTranslation } from 'react-i18next';
 import { apiFetch, ApiRequestError } from '../../api/client';
 import type { ApiFieldError } from '../../api/client';
 import { saveToken, decodeToken } from '../../api/authToken';
@@ -45,6 +46,8 @@ function toFieldErrorMap(errors: ApiFieldError[]): Record<string, string> {
  * (AD-4): this story adds no access enforcement — that is Story 2.4.
  */
 export function LoginForm() {
+  const { t } = useTranslation();
+
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -120,10 +123,10 @@ export function LoginForm() {
 
   return (
     <section>
-      <h2>Log in</h2>
+      <h2>{t('auth.login.heading')}</h2>
       <form onSubmit={handleSubmit} noValidate>
         <div>
-          <label htmlFor="login-email">Email</label>
+          <label htmlFor="login-email">{t('auth.login.email')}</label>
           <input
             id="login-email"
             name="email"
@@ -143,7 +146,7 @@ export function LoginForm() {
           )}
         </div>
         <div>
-          <label htmlFor="login-password">Password</label>
+          <label htmlFor="login-password">{t('auth.login.password')}</label>
           <input
             id="login-password"
             name="password"
@@ -168,7 +171,7 @@ export function LoginForm() {
           </p>
         )}
         <button type="submit" disabled={submitting}>
-          {submitting ? 'Logging in…' : 'Log in'}
+          {submitting ? t('auth.login.submitting') : t('auth.login.submit')}
         </button>
       </form>
     </section>

@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next';
+
 /**
  * ADMINISTRATOR navigation shell, mounted at `/administrator`. Story 2.3
  * turns Story 2.2's bare route target into a static, clearly
@@ -10,10 +12,12 @@
  * buttons, links, inputs, or handlers, and no per-role sub-navigation.
  */
 export function AdministratorShell() {
+  const { t } = useTranslation();
+
   return (
     <section data-testid="administrator-shell" aria-labelledby="administrator-shell-heading">
-      <h2 id="administrator-shell-heading">Administrator workspace</h2>
-      <p>Coming soon — Administrator tools are not part of this milestone.</p>
+      <h2 id="administrator-shell-heading">{t('shells.administrator.heading')}</h2>
+      <p>{t('shells.administrator.comingSoon')}</p>
     </section>
   );
 }

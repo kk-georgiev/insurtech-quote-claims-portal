@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 import { apiFetch, ApiRequestError } from '../../api/client';
 import type { ApiFieldError } from '../../api/client';
 
@@ -33,6 +34,8 @@ function toFieldErrorMap(errors: ApiFieldError[]): Record<string, string> {
  * Story 1.3) - shows a success state in place instead.
  */
 export function RegisterForm() {
+  const { t } = useTranslation();
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [phase, setPhase] = useState<FormPhase>('editing');
@@ -94,9 +97,9 @@ export function RegisterForm() {
   if (phase === 'success') {
     return (
       <section>
-        <h2>Registration successful</h2>
+        <h2>{t('auth.register.success')}</h2>
         <p data-testid="register-success">
-          Your account has been created. You will be able to log in once the login screen is available.
+          {t('auth.register.successBody')}
         </p>
       </section>
     );
@@ -106,10 +109,10 @@ export function RegisterForm() {
 
   return (
     <section>
-      <h2>Create an account</h2>
+      <h2>{t('auth.register.heading')}</h2>
       <form onSubmit={handleSubmit} noValidate>
         <div>
-          <label htmlFor="register-email">Email</label>
+          <label htmlFor="register-email">{t('auth.register.email')}</label>
           <input
             id="register-email"
             name="email"
@@ -129,7 +132,7 @@ export function RegisterForm() {
           )}
         </div>
         <div>
-          <label htmlFor="register-password">Password</label>
+          <label htmlFor="register-password">{t('auth.register.password')}</label>
           <input
             id="register-password"
             name="password"
@@ -156,7 +159,7 @@ export function RegisterForm() {
           </p>
         )}
         <button type="submit" disabled={submitting}>
-          {submitting ? 'Creating account…' : 'Register'}
+          {submitting ? t('auth.register.submitting') : t('auth.register.submit')}
         </button>
       </form>
     </section>

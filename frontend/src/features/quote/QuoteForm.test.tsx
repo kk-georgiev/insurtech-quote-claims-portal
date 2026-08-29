@@ -5,6 +5,7 @@ import userEvent from '@testing-library/user-event';
 import { QuoteForm } from './QuoteForm';
 import type { QuoteResponse } from './QuoteForm';
 import { ApiRequestError, apiFetch } from '../../api/client';
+import bg from '../../i18n/bg.json';
 
 // `apiFetch` is the only seam mocked — no backend, no network. The rest of
 // `api/client.ts` (notably `ApiRequestError`) stays real. `vitest.config.ts`
@@ -46,11 +47,11 @@ function renderForm() {
   return { user: userEvent.setup() };
 }
 
-const driverAgeField = () => screen.getByLabelText('Driver age');
-const regionCodeField = () => screen.getByLabelText('Region code');
-const engineCcField = () => screen.getByLabelText('Engine size (cc)');
-const installmentsField = () => screen.getByLabelText('Number of installments');
-const submitButton = () => screen.getByRole('button', { name: 'Get quote' });
+const driverAgeField = () => screen.getByLabelText(bg.quote.form.driverAge);
+const regionCodeField = () => screen.getByLabelText(bg.quote.form.regionCode);
+const engineCcField = () => screen.getByLabelText(bg.quote.form.engineCc);
+const installmentsField = () => screen.getByLabelText(bg.quote.form.installments);
+const submitButton = () => screen.getByRole('button', { name: bg.quote.form.submit });
 
 async function fillAndSubmit(
   user: ReturnType<typeof userEvent.setup>,

@@ -81,3 +81,46 @@ jobs:
 
       - name: npm run build
         run: npm run build
+
+  docker-compose:
+    name: Docker Compose (build + smoke test)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      # No .env file is created here on purpose: every variable in
+      # docker-compose.yml has a `${VAR:-default}` fallback (Story 4.2), so a
+      # bare `docker compose up` works out of the box on a clean checkout.
+      # `--wait` is Compose v2's built-in wait-for-healthy/running gate (no
+      # custom polling loop needed) - it blocks until postgres and backend
+      # report healthy (frontend has no healthcheck yet, a separately
+      # tracked deferred item, so it's just waited on to be running).
+      # `--wait-timeout` caps that wait explicitly so a stuck/crash-looping
+      # container fails fast instead of hanging until the job's 15-minute
+      # timeout-minutes cancels it.
+      - name: docker compose up --build -d --wait
+        run: docker compose up --build -d --wait --wait-timeout 120
+
+      # --retry-connrefused (+ --retry) covers the frontend, which has no
+      # healthcheck of its own (a separately tracked deferred item) - `--wait`
+      # above only guarantees the container is running, not that nginx has
+      # finished binding its port yet. --max-time bounds a hung connection.
+      - name: Confirm backend health endpoint responds
+        run: curl --fail --max-time 10 --retry 5 --retry-delay 3 --retry-connrefused http://localhost:8080/actuator/health
+
+      - name: Confirm frontend root responds
+        run: curl --fail --max-time 10 --retry 5 --retry-delay 3 --retry-connrefused http://localhost:5173/
+
+      # Dumps every service's logs (and their last-known state) so a red run
+      # is debuggable from the Actions log alone. Also runs on a
+      # timeout-cancelled job (cancelled()), not just a failed step.
+      - name: Dump docker compose logs
+        if: failure() || cancelled()
+        run: |
+          docker compose ps
+          docker compose logs
+
+      - name: docker compose down -v
+        if: always()
+        run: docker compose down -v

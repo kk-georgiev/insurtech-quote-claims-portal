@@ -311,6 +311,7 @@ Append-only. Entries collected from bmad-build review loopbacks. Do not modify e
 - source_spec: `_bmad-output/implementation-artifacts/spec-4-1-backend-and-frontend-dockerfiles.md`
   summary: No CI job builds or runs either Docker image (backend or frontend) — `.github/workflows/ci.yml`'s `backend`/`frontend` jobs only exercise the native Maven/Node toolchains, never `docker build` or a container smoke test.
   evidence: Review-loop finding (verification-gap). A break introduced purely in `backend/Dockerfile` or `frontend/Dockerfile`/`nginx.conf` (e.g. a bad `COPY --from` path, a broken multi-stage reference) would merge to `dev`/`main` without any CI failure — only a manual `docker build`/`docker run` would catch it, which is exactly what this story's own "Verification" section relies on today. Not fixed here: the frozen spec explicitly forbids modifying `ci.yml` for this story. Natural to pick up once Story 4.2 wires these images into `docker-compose.yml` — a `docker compose build` (or a dedicated image-build+smoke-test job) in CI at that point would close this for both images at once.
+  status: RESOLVED 2026-08-29 — `.github/workflows/ci.yml`'s new `docker-compose` job runs `docker compose up --build -d --wait` on every PR/push to `main`/`dev`, building both images and health-checking the running stack. See `spec-ci-docker-compose-smoke-test.md`.
 
 - source_spec: `_bmad-output/implementation-artifacts/spec-4-1-backend-and-frontend-dockerfiles.md`
   summary: `frontend/nginx.conf` sets no HTTP security headers (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, CSP) and no caching/compression headers (long-lived `Cache-Control` for hashed `/assets/` files, `no-cache` for `index.html`, gzip/br) on the served SPA.
@@ -329,6 +330,7 @@ Append-only. Entries collected from bmad-build review loopbacks. Do not modify e
 - source_spec: `_bmad-output/implementation-artifacts/spec-4-2-one-command-full-stack-startup.md`
   summary: No CI job runs `docker compose up` (or otherwise builds/exercises the wired-together `backend`+`frontend`+`postgres` stack) — a wiring regression in `docker-compose.yml` (wrong env var name, wrong internal port, wrong build arg) would merge to `dev`/`main` undetected.
   evidence: Review-loop finding (verification-gap). Same root gap already logged after Story 4.1 (`deferred-work.md`, "Story 4.1 review" section) anticipated this closing "once Story 4.2 wires these images into `docker-compose.yml`" — it didn't, because this story's own frozen spec explicitly forbids touching `ci.yml`, same as 4.1's. Now that the full stack is actually wired, a `docker compose up --build -d` + health-check-polling CI job (mirroring this story's own manual "Verification" steps) would close both this and the 4.1 entry at once.
+  status: RESOLVED 2026-08-29 — `.github/workflows/ci.yml`'s new `docker-compose` job (`docker compose up --build -d --wait` + curl checks against `/actuator/health` and the frontend root, on every PR/push to `main`/`dev`) closes this, the Story 4.1 entry above, and `epic-4-retro-item-22`. See `spec-ci-docker-compose-smoke-test.md`.
 
 ## Deferred from: Story 4.3 review (2026-08-29)
 

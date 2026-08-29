@@ -79,12 +79,12 @@ baseline_commit: '736a7d0f85d188a9bded6b824ecc50583b9a06db'
   [`docker-compose.yml:37`](../../docker-compose.yml#L37)
 
 - Health-gate on Postgres: why `backend` waits for `service_healthy` instead of racing the database.
-  [`docker-compose.yml:49`](../../docker-compose.yml#L49)
+  [`docker-compose.yml:54`](../../docker-compose.yml#L54)
 
 **Frontend service wiring**
 
 - Build-time `VITE_API_URL` injection — must be the host-mapped origin, never the `backend` service name.
-  [`docker-compose.yml:64`](../../docker-compose.yml#L64)
+  [`docker-compose.yml:71`](../../docker-compose.yml#L71)
 
 **Configuration surface**
 

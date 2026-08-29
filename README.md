@@ -24,7 +24,7 @@ for the live per-story status.
 | Backend | Java 21, Spring Boot 4.1.1, Maven, Flyway |
 | Frontend | React 19, TypeScript 6, Vite 8, React Router 8 |
 | Database | PostgreSQL 18 |
-| Local dev | Docker Compose (database only — see below) |
+| Local dev | Docker Compose (database only, or the full stack — see below) |
 
 ## Getting started
 
@@ -57,9 +57,11 @@ compose up` builds and starts postgres, backend, and frontend together —
 no local JDK/Maven/Node toolchain needed. Open
 `http://localhost:5173` (or `$FRONTEND_PORT` if you changed it). This is
 an alternative to steps 2-4, not a replacement for native dev during active
-development. Pulled new code? Re-run with `docker compose up --build` so
-the images pick up the changes. To stop everything, `docker compose down`
-(add `-v` to also drop the Postgres data volume).
+development. Pulled new code, or changed `.env` (e.g. `VITE_API_URL`,
+`BACKEND_PORT`)? Re-run with `docker compose up --build` — a plain `up`
+reuses the previously built images, including the frontend's baked-in
+`VITE_API_URL`. To stop everything, `docker compose down` (add `-v` to also
+drop the Postgres data volume).
 
 ### Demo accounts
 
@@ -133,7 +135,7 @@ backend/    Spring Boot app — modular monolith, package-by-feature
 frontend/   React SPA
 docs/       Business analysis, UML diagrams, dev diary
 _bmad-output/  Planning docs (PRD, architecture, epics) and per-story specs
-docker-compose.yml   Local Postgres for native dev (see AD-9 in the architecture doc)
+docker-compose.yml   Postgres (native dev) or the full stack (see AD-9 in the architecture doc)
 ```
 
 ## Planning & progress

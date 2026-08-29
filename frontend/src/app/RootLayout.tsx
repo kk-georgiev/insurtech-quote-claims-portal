@@ -16,8 +16,9 @@ import { LanguageToggle } from './LanguageToggle';
  * no logout - that is a separate proposed story (Epic 2 retrospective item
  * 5), kept out of Story 3.1 so this file changes for one reason only.
  *
- * Everything below `<Outlet />` - the auth forms, quote flow, and role shells
- * - is still untranslated English; Story 3.2 owns that.
+ * Story 3.2a translated everything below `<Outlet />` too - the auth forms,
+ * quote flow, and role shells. What is still English is the error and
+ * validation messaging, which Story 3.2b owns.
  */
 export function RootLayout() {
   const { t } = useTranslation();

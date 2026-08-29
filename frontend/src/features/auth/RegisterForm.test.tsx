@@ -4,6 +4,7 @@ import { act, cleanup, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { RegisterForm } from './RegisterForm';
 import { ApiRequestError, apiFetch } from '../../api/client';
+import bg from '../../i18n/bg.json';
 
 // `apiFetch` is the only seam mocked — no backend, no network. The rest of
 // `api/client.ts` (notably `ApiRequestError`) stays real. `vitest.config.ts`
@@ -30,9 +31,9 @@ function renderForm() {
   return { user: userEvent.setup() };
 }
 
-const emailField = () => screen.getByLabelText('Email');
-const passwordField = () => screen.getByLabelText('Password');
-const registerButton = () => screen.getByRole('button', { name: 'Register' });
+const emailField = () => screen.getByLabelText(bg.auth.register.email);
+const passwordField = () => screen.getByLabelText(bg.auth.register.password);
+const registerButton = () => screen.getByRole('button', { name: bg.auth.register.submit });
 
 async function fillAndSubmit(user: ReturnType<typeof userEvent.setup>) {
   await user.type(emailField(), EMAIL);

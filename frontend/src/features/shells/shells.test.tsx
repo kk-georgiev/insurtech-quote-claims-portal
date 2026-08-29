@@ -3,9 +3,10 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { routes } from '../../app/router';
-import { ROLES, STAFF_ROLES, roleHome, type StaffRole } from '../../app/roleHome';
+import { ROLES, STAFF_ROLES, roleHome, type Role, type StaffRole } from '../../app/roleHome';
 import { getToken } from '../../api/authToken';
 import { seedToken } from '../../test/seedToken';
+import bg from '../../i18n/bg.json';
 
 // Story 2.3: the three staff placeholder screens. This suite is driven by a
 // table rather than three hand-written cases so the cross-contamination
@@ -22,22 +23,49 @@ import { seedToken } from '../../test/seedToken';
 // "which roles are staff" (`roleHome.ts`) — this suite no longer re-derives
 // them locally.
 
-// Stated verbatim, mirroring the spec's Design Notes copy table — not
-// derived from the role name. Deriving it would let a wrong-but-consistent
-// rendering satisfy a wrong-but-consistent expectation.
+// APPROVED EXCEPTION to Story 3.2a's "re-point test queries at the catalog"
+// rule (human-approved 2026-08-29; recorded in the spec's Change Log).
+//
+// Everywhere else in this codebase a test asserting copy reads the expected
+// string from `bg.json`, because there the copy is incidental and the
+// behaviour is the point. Here the copy *is* the point: this suite exists to
+// prove each staff screen shows its own label and none of another role's.
+// Reading the expectation from `bg.json` would compare the component's own
+// source of truth against itself — a wrong or cross-wired translation would
+// satisfy a wrong-but-consistent expectation and this suite would go quiet
+// on exactly the defect it was written to catch.
+//
+// So these stay an independent oracle, stated verbatim and never derived
+// from the role name. That is the reasoning Story 2.3 wrote here for the
+// English copy; Story 3.2a changes only the language. The cost is that a
+// deliberate copy change must be made in two places — that is the intended
+// friction, not an oversight.
 const COPY: Record<StaffRole, { heading: string; line: string }> = {
   AGENT: {
-    heading: 'Agent workspace',
-    line: 'Coming soon — Agent tools are not part of this milestone.',
+    heading: 'Работно място на агента',
+    line: 'Очаквайте скоро — инструментите за агенти не са част от този етап.',
   },
   LIQUIDATOR: {
-    heading: 'Liquidator workspace',
-    line: 'Coming soon — Liquidator tools are not part of this milestone.',
+    heading: 'Работно място на ликвидатора на щети',
+    line: 'Очаквайте скоро — инструментите за ликвидатори на щети не са част от този етап.',
   },
   ADMINISTRATOR: {
-    heading: 'Administrator workspace',
-    line: 'Coming soon — Administrator tools are not part of this milestone.',
+    heading: 'Работно място на администратора',
+    line: 'Очаквайте скоро — инструментите за администратори не са част от този етап.',
   },
+};
+
+// The cross-contamination check matches role *names* against rendered text.
+// The English names are no longer rendered anywhere, so the previous
+// word-boundary regex on `AGENT` would pass vacuously on every screen.
+// These are the Bulgarian stems the copy actually uses, deliberately
+// un-inflected so they match every case form ("агента", "агенти").
+// None is a substring of another.
+const ROLE_STEM: Record<Role, string> = {
+  CLIENT: 'клиент',
+  AGENT: 'агент',
+  LIQUIDATOR: 'ликвидатор',
+  ADMINISTRATOR: 'администратор',
 };
 
 // Anything a user could click, focus, or type into. Broader than
@@ -85,13 +113,14 @@ describe('staff placeholder screens', () => {
     const text = shell.textContent ?? '';
 
     expect(text).toContain(COPY[role].heading);
-    // Iterates the full `ROLES`, not just the staff ones: "Client" appearing
-    // on a staff screen is the same defect as "Agent" appearing on the
-    // Liquidator screen. Word-boundary matched so a future overlapping name
-    // (ADMIN vs ADMINISTRATOR) neither false-passes nor false-fails.
+    // Iterates the full `ROLES`, not just the staff ones: "клиент" appearing
+    // on a staff screen is the same defect as "агент" appearing on the
+    // Liquidator screen. Matched on the un-inflected stem rather than a
+    // word-boundary regex, because Bulgarian inflects these names and
+    // word-boundary anchoring would sail straight past "агента".
     for (const other of ROLES) {
       if (other === role) continue;
-      expect(text).not.toMatch(new RegExp(`\\b${other}\\b`, 'i'));
+      expect(text.toLowerCase()).not.toContain(ROLE_STEM[other]);
     }
   });
 
@@ -131,7 +160,7 @@ describe('staff placeholder screens', () => {
     const router = createMemoryRouter(routes, { initialEntries: [roleHome(role)] });
     render(<RouterProvider router={router} />);
 
-    expect(await screen.findByRole('heading', { name: 'Log in' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: bg.auth.login.heading })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/login');
   });
 });

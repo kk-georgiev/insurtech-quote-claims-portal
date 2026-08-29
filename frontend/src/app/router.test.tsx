@@ -6,6 +6,7 @@ import { ROLES, roleHome, type Role } from './roleHome';
 import { saveToken } from '../api/authToken';
 import { apiFetch } from '../api/client';
 import { seedToken } from '../test/seedToken';
+import bg from '../i18n/bg.json';
 
 // `/health` mounts `HealthStatus`, whose effect calls `apiFetch` on load.
 // Mock it (spec: "no backend needed") so the suite never touches the
@@ -57,13 +58,13 @@ describe('route table', () => {
     expect(screen.queryByTestId('health-status')).toBeNull();
     // Guards against `<QuoteForm />` being dropped from `ClientShell` -
     // asserting the wrapper testid alone wouldn't catch that regression.
-    expect(screen.getByRole('heading', { name: 'Get a quote' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: bg.quote.form.heading })).toBeInTheDocument();
   });
 
   it('serves the backend health round-trip at /health', async () => {
     mockedApiFetch.mockResolvedValue({ status: 'UP' } as { status: string });
     renderAt('/health');
-    expect(await screen.findByTestId('health-status')).toHaveTextContent('Backend is reachable.');
+    expect(await screen.findByTestId('health-status')).toHaveTextContent(bg.app.health.reachable);
   });
 });
 
@@ -95,14 +96,14 @@ describe('RoleGuard', () => {
 
   it.each([...ROLES])('anonymous visit to %s\'s route redirects to /login', async (role) => {
     const router = renderAt(roleHome(role));
-    expect(await screen.findByRole('heading', { name: 'Log in' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: bg.auth.login.heading })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/login');
   });
 
   it.each([...ROLES])('malformed token on %s\'s route redirects to /login', async (role) => {
     saveToken(MALFORMED_TOKEN);
     const router = renderAt(roleHome(role));
-    expect(await screen.findByRole('heading', { name: 'Log in' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: bg.auth.login.heading })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/login');
   });
 
@@ -114,7 +115,7 @@ describe('RoleGuard', () => {
       // `getCurrentRole`'s "no valid role" contract.
       saveToken(INVALID_ROLE_TOKEN);
       const router = renderAt(roleHome(role));
-      expect(await screen.findByRole('heading', { name: 'Log in' })).toBeInTheDocument();
+      expect(await screen.findByRole('heading', { name: bg.auth.login.heading })).toBeInTheDocument();
       expect(router.state.location.pathname).toBe('/login');
     },
   );

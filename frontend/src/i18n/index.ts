@@ -7,8 +7,9 @@
 // and the first paint is already in the right language - no loading state, no
 // flash of untranslated keys, and no `Suspense` boundary needed.
 //
-// Story 3.1 populates the `app.*` namespace only (the RootLayout-owned
-// chrome). `auth.*`, `quote.*`, and `shells.*` are Story 3.2's.
+// Story 3.1 opened the `app.*` namespace (the RootLayout-owned chrome);
+// Story 3.2a added `auth.*`, `quote.*`, `shells.*`, and `app.health.*` for
+// the screen copy. Story 3.2b adds the backend error-`code` entries.
 
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
@@ -34,25 +35,33 @@ void i18n.use(initReactI18next).init({
 });
 
 /**
- * Keeps `<html lang>` in step with the active language, for screen readers,
- * browser translation prompts, and correct hyphenation.
+ * Keeps the two pieces of document-level state that belong to the *language*
+ * rather than to any component in step with it:
  *
- * Deliberately lives here rather than in `LanguageToggle`: it is a property
- * of the i18next instance's state, not of any one control that happens to
- * change it, so it stays correct no matter what triggers the change.
+ * - `<html lang>`, for screen readers, browser translation prompts, and
+ *   correct hyphenation.
+ * - `document.title`, which is the browser tab, the bookmark name, and the
+ *   history entry. `index.html` ships the Bulgarian default so the tab reads
+ *   correctly before React mounts; from then on it follows the selection.
+ *
+ * Deliberately lives here rather than in `LanguageToggle`: both are
+ * properties of the i18next instance's state, not of any one control that
+ * happens to change it, so they stay correct no matter what triggers the
+ * change - and `document.title` has no owning component at all.
  *
  * The listener is never removed. In the app that is correct - this module is
  * evaluated once, and a Vite HMR edit to it triggers a full page reload
  * rather than a re-execution (nothing in its import chain calls
  * `import.meta.hot.accept`). Only `LanguageToggle.test.tsx`'s reload case
  * re-runs this module against the same i18next singleton, stacking one
- * duplicate listener; the sync is idempotent, so that is harmless.
+ * duplicate listener; both syncs are idempotent, so that is harmless.
  */
-function syncDocumentLanguage(language: string): void {
+function syncDocument(language: string): void {
   document.documentElement.lang = language;
+  document.title = i18n.t('app.title');
 }
 
-syncDocumentLanguage(i18n.resolvedLanguage ?? DEFAULT_LANGUAGE);
-i18n.on('languageChanged', syncDocumentLanguage);
+syncDocument(i18n.resolvedLanguage ?? DEFAULT_LANGUAGE);
+i18n.on('languageChanged', syncDocument);
 
 export default i18n;

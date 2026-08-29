@@ -103,9 +103,11 @@ in the browser only (`localStorage`); there is no per-account language
 preference this milestone.
 
 Story 3.1 set up the i18n infrastructure and translated the app-wide header
-chrome. The feature screens — auth forms, quote flow, role shells, and all
-validation/error messages — are still English until **Story 3.2** completes
-translation coverage. See `frontend/README.md` for the key namespaces and
+chrome; **Story 3.2a** translated the screen copy — auth forms, quote form
+and breakdown, backend-health screen, and all four role shells. What is
+still English is the error and validation messaging: backend error-`code`
+messages, field-level validation text, and the tariff zone label. **Story
+3.2b** completes those. See `frontend/README.md` for the key namespaces and
 the rules for adding new copy.
 
 > **These are demo credentials, not production credentials.** They exist so

@@ -1,4 +1,5 @@
 import type { QuoteResponse } from './QuoteForm';
+import { useTranslation } from 'react-i18next';
 
 interface QuoteResultProps {
   quote: QuoteResponse;
@@ -11,42 +12,44 @@ interface QuoteResultProps {
  * & Constraints: "Money renders exactly as the API returns it").
  */
 export function QuoteResult({ quote }: QuoteResultProps) {
+  const { t } = useTranslation();
+
   return (
-    <section data-testid="quote-result" aria-label="Quote breakdown">
-      <h3>Your quote</h3>
+    <section data-testid="quote-result" aria-label={t('quote.result.label')}>
+      <h3>{t('quote.result.heading')}</h3>
       <dl>
-        <dt>Zone</dt>
+        <dt>{t('quote.result.zone')}</dt>
         <dd data-testid="quote-zoneName">{quote.zoneName}</dd>
 
-        <dt>Base premium</dt>
+        <dt>{t('quote.result.basePremium')}</dt>
         <dd data-testid="quote-basePremium">
           {quote.basePremium} {quote.currency}
         </dd>
 
-        <dt>Age surcharge</dt>
+        <dt>{t('quote.result.ageSurcharge')}</dt>
         <dd data-testid="quote-ageSurcharge">
           {quote.ageSurcharge} {quote.currency}
         </dd>
 
-        <dt>One-time premium</dt>
+        <dt>{t('quote.result.oneTimePremium')}</dt>
         <dd data-testid="quote-oneTimePremium">
           {quote.oneTimePremium} {quote.currency}
         </dd>
 
-        <dt>Installments</dt>
+        <dt>{t('quote.result.installments')}</dt>
         <dd data-testid="quote-installments">{quote.installments}</dd>
 
-        <dt>Installment fee</dt>
+        <dt>{t('quote.result.installmentFee')}</dt>
         <dd data-testid="quote-installmentFee">
           {quote.installmentFee} {quote.currency}
         </dd>
 
-        <dt>Total premium</dt>
+        <dt>{t('quote.result.totalPremium')}</dt>
         <dd data-testid="quote-totalPremium">
           {quote.totalPremium} {quote.currency}
         </dd>
 
-        <dt>Installment amount</dt>
+        <dt>{t('quote.result.installmentAmount')}</dt>
         <dd data-testid="quote-installmentAmount">
           {quote.installmentAmount} {quote.currency}
         </dd>

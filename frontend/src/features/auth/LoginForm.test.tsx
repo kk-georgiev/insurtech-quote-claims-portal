@@ -7,6 +7,7 @@ import { routes } from '../../app/router';
 import { getToken } from '../../api/authToken';
 import { ApiRequestError, apiFetch } from '../../api/client';
 import { ROLES, roleHome } from '../../app/roleHome';
+import bg from '../../i18n/bg.json';
 
 // `apiFetch` is the only seam mocked — no backend, no network. The rest of
 // `api/client.ts` (notably `ApiRequestError`) stays real. `vitest.config.ts`
@@ -40,9 +41,9 @@ function renderLogin() {
   return { router, user: userEvent.setup() };
 }
 
-const emailField = () => screen.getByLabelText('Email');
-const passwordField = () => screen.getByLabelText('Password');
-const loginButton = () => screen.getByRole('button', { name: 'Log in' });
+const emailField = () => screen.getByLabelText(bg.auth.login.email);
+const passwordField = () => screen.getByLabelText(bg.auth.login.password);
+const loginButton = () => screen.getByRole('button', { name: bg.auth.login.submit });
 
 async function fillAndSubmit(user: ReturnType<typeof userEvent.setup>) {
   await user.type(emailField(), EMAIL);

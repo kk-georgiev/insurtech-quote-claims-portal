@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { useNavigate } from 'react-router';
+import { useTranslation } from 'react-i18next';
 import { apiFetch, ApiRequestError } from '../../api/client';
 import type { ApiFieldError } from '../../api/client';
 import { saveToken, decodeToken } from '../../api/authToken';
@@ -13,9 +14,10 @@ interface LoginResponse {
 type FormPhase = 'editing' | 'submitting';
 
 // AD-7: `code` is the only thing the frontend uses to select user-facing
-// text - never the backend's dev/log-facing `message`. This story has no
-// i18n catalog yet (out of scope, same as Story 1.2's RegisterForm), so the
-// mapped copy lives here as a plain string for now. Wrong password and
+// text - never the backend's dev/log-facing `message`. The screen copy moved
+// into the i18n catalogs in Story 3.2a, but these code-driven messages did
+// not: mapping backend codes to catalog entries is Story 3.2b, which will
+// delete these constants. Until then they stay plain English strings. Wrong password and
 // unknown email both map to AUTH_INVALID_CREDENTIALS and share this exact
 // message (spec Boundaries & Constraints) - nothing here distinguishes them.
 const INVALID_CREDENTIALS_MESSAGE = 'Incorrect email or password.';
@@ -45,6 +47,8 @@ function toFieldErrorMap(errors: ApiFieldError[]): Record<string, string> {
  * (AD-4): this story adds no access enforcement — that is Story 2.4.
  */
 export function LoginForm() {
+  const { t } = useTranslation();
+
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -120,10 +124,10 @@ export function LoginForm() {
 
   return (
     <section>
-      <h2>Log in</h2>
+      <h2>{t('auth.login.heading')}</h2>
       <form onSubmit={handleSubmit} noValidate>
         <div>
-          <label htmlFor="login-email">Email</label>
+          <label htmlFor="login-email">{t('auth.login.email')}</label>
           <input
             id="login-email"
             name="email"
@@ -143,7 +147,7 @@ export function LoginForm() {
           )}
         </div>
         <div>
-          <label htmlFor="login-password">Password</label>
+          <label htmlFor="login-password">{t('auth.login.password')}</label>
           <input
             id="login-password"
             name="password"
@@ -168,7 +172,7 @@ export function LoginForm() {
           </p>
         )}
         <button type="submit" disabled={submitting}>
-          {submitting ? 'Logging in…' : 'Log in'}
+          {submitting ? t('auth.login.submitting') : t('auth.login.submit')}
         </button>
       </form>
     </section>

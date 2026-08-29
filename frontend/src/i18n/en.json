@@ -10,6 +10,70 @@
       "label": "Language",
       "bg": "Български",
       "en": "English"
+    },
+    "health": {
+      "heading": "Backend status",
+      "checking": "Checking backend...",
+      "reachable": "Backend is reachable.",
+      "unreachable": "Backend is unreachable."
+    }
+  },
+  "auth": {
+    "login": {
+      "heading": "Log in",
+      "email": "Email",
+      "password": "Password",
+      "submit": "Log in",
+      "submitting": "Logging in…"
+    },
+    "register": {
+      "heading": "Create an account",
+      "success": "Registration successful",
+      "successBody": "Registration successful. You can now log in.",
+      "email": "Email",
+      "password": "Password",
+      "submit": "Register",
+      "submitting": "Creating account…"
+    }
+  },
+  "quote": {
+    "form": {
+      "heading": "Get a quote",
+      "driverAge": "Driver age",
+      "regionCode": "Region code",
+      "engineCc": "Engine size (cc)",
+      "installments": "Number of installments",
+      "submit": "Get quote",
+      "submitting": "Calculating…"
+    },
+    "result": {
+      "label": "Quote breakdown",
+      "heading": "Your quote",
+      "zone": "Zone",
+      "basePremium": "Base premium",
+      "ageSurcharge": "Age surcharge",
+      "oneTimePremium": "One-time premium",
+      "installments": "Installments",
+      "installmentFee": "Installment fee",
+      "totalPremium": "Total premium",
+      "installmentAmount": "Installment amount"
+    }
+  },
+  "shells": {
+    "client": {
+      "heading": "Client"
+    },
+    "agent": {
+      "heading": "Agent workspace",
+      "comingSoon": "Coming soon — Agent tools are not part of this milestone."
+    },
+    "liquidator": {
+      "heading": "Liquidator workspace",
+      "comingSoon": "Coming soon — Liquidator tools are not part of this milestone."
+    },
+    "administrator": {
+      "heading": "Administrator workspace",
+      "comingSoon": "Coming soon — Administrator tools are not part of this milestone."
     }
   }
 }

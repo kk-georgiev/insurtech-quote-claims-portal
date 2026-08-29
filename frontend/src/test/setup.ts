@@ -15,13 +15,15 @@ import { cleanup } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import i18n from '../i18n';
 import { DEFAULT_LANGUAGE } from '../i18n/language';
+import bg from '../i18n/bg.json';
 
 afterEach(async () => {
   cleanup();
   localStorage.clear();
   await i18n.changeLanguage(DEFAULT_LANGUAGE);
-  // Reset on its own terms rather than relying on the `languageChanged`
+  // Reset on their own terms rather than relying on the `languageChanged`
   // listener in `i18n/index.ts` to have done it as a side effect - a test
-  // that sets `lang` without going through i18next would otherwise leak it.
+  // that sets either directly would otherwise leak it into the next one.
   document.documentElement.lang = DEFAULT_LANGUAGE;
+  document.title = bg.app.title;
 });

@@ -3,8 +3,10 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { routes } from './router';
+import { QuoteResult } from '../features/quote/QuoteResult';
 import { seedToken } from '../test/seedToken';
 import { getStoredLanguage } from '../i18n/language';
+import type { Role } from './roleHome';
 import { apiFetch } from '../api/client';
 import bg from '../i18n/bg.json';
 import en from '../i18n/en.json';
@@ -45,6 +47,7 @@ describe('LanguageToggle', () => {
     expect(await screen.findByRole('heading', { name: bg.app.title })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: bg.app.nav.register })).toBeInTheDocument();
     expect(document.documentElement.lang).toBe('bg');
+    expect(document.title).toBe(bg.app.title);
   });
 
   it('switches the chrome to English immediately and updates <html lang>', async () => {
@@ -58,6 +61,9 @@ describe('LanguageToggle', () => {
     expect(screen.getByRole('link', { name: en.app.nav.login })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: en.app.nav.health })).toBeInTheDocument();
     expect(document.documentElement.lang).toBe('en');
+    // The browser tab follows too - it has no owning component, so the sync
+    // lives on the i18next instance alongside the `<html lang>` one.
+    expect(document.title).toBe(en.app.title);
   });
 
   it('switches back to Bulgarian', async () => {
@@ -77,15 +83,18 @@ describe('LanguageToggle', () => {
     const user = userEvent.setup();
     const router = renderAt('/login');
 
-    await user.type(screen.getByLabelText('Email'), 'someone@example.com');
+    await user.type(screen.getByLabelText(bg.auth.login.email), 'someone@example.com');
     await user.click(languageButton('en'));
 
     await screen.findByRole('heading', { name: en.app.title });
     // Same route - no reload, no navigation.
     expect(router.state.location.pathname).toBe('/login');
-    // Untranslated feature screen still mounted, with what was typed into it.
-    expect(screen.getByLabelText('Email')).toHaveValue('someone@example.com');
-    expect(screen.getByRole('heading', { name: 'Log in' })).toBeInTheDocument();
+    // The field is queried by its *English* label now, and still holds what
+    // was typed under the Bulgarian one: same DOM node, re-labelled in place.
+    // Since Story 3.2a the form itself is translated too, so this doubles as
+    // proof that the whole tree re-renders, not just the header.
+    expect(screen.getByLabelText(en.auth.login.email)).toHaveValue('someone@example.com');
+    expect(screen.getByRole('heading', { name: en.auth.login.heading })).toBeInTheDocument();
   });
 
   it('persists the selection so a reload can restore it', async () => {
@@ -117,6 +126,11 @@ describe('LanguageToggle', () => {
     const freshI18n = (await import('../i18n')).default;
 
     expect(freshI18n.resolvedLanguage).toBe('en');
+    // Shows the tab title follows the *restored* language. Like the
+    // `<html lang>` assertion this test deliberately omits, it is satisfied
+    // by whichever module's listener fires, so it evidences the restore, not
+    // the fresh module's own registration.
+    expect(document.title).toBe(en.app.title);
   });
 
   it('marks the active language as pressed for assistive technology', async () => {
@@ -176,9 +190,100 @@ describe('LanguageToggle', () => {
   it('is still available after a RoleGuard bounces an anonymous visitor to /login', async () => {
     const router = renderAt('/agent');
 
-    expect(await screen.findByRole('heading', { name: 'Log in' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: bg.auth.login.heading })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/login');
     expect(screen.getByTestId('language-toggle')).toBeInTheDocument();
+  });
+});
+
+// Story 3.2a's headline AC: with Bulgarian active, no English static copy
+// survives on any screen. Rendering each route and scanning for the exact
+// English strings catches a component that was missed entirely, which a
+// per-key assertion elsewhere would not.
+describe('Bulgarian pass — no English static copy left on any screen', () => {
+  // Each row carries a `mountedTestId` and awaits *that*, never the language
+  // toggle. The toggle lives in RootLayout above `<Outlet />`, so it renders
+  // on every route including the `/login` a RoleGuard bounce lands on —
+  // awaiting it would let all four guarded rows pass green while scanning the
+  // login screen instead of the shell they name. Same vacuous-pass shape as
+  // the role-name bug this story fixed in `shells.test.tsx`.
+  // `mountedHeading` is the Bulgarian `<h2>` unique to the screen under test.
+  // Awaiting it proves the intended screen actually rendered; a guard bounce
+  // to /login would fail the await instead of quietly scanning the wrong page.
+  const SCREENS: Array<[string, Role | null, string, string[]]> = [
+    ['/login', null, bg.auth.login.heading,
+      [en.auth.login.heading, en.auth.login.email, en.auth.login.password, en.auth.login.submit]],
+    ['/register', null, bg.auth.register.heading,
+      [en.auth.register.heading, en.auth.register.email, en.auth.register.password,
+       en.auth.register.submit]],
+    ['/health', null, bg.app.health.heading, [en.app.health.heading, en.app.health.reachable]],
+    ['/', 'CLIENT', bg.shells.client.heading,
+      [en.shells.client.heading, en.quote.form.heading, en.quote.form.driverAge,
+       en.quote.form.regionCode, en.quote.form.engineCc, en.quote.form.installments,
+       en.quote.form.submit]],
+    ['/agent', 'AGENT', bg.shells.agent.heading,
+      [en.shells.agent.heading, en.shells.agent.comingSoon]],
+    ['/liquidator', 'LIQUIDATOR', bg.shells.liquidator.heading,
+      [en.shells.liquidator.heading, en.shells.liquidator.comingSoon]],
+    ['/administrator', 'ADMINISTRATOR', bg.shells.administrator.heading,
+      [en.shells.administrator.heading, en.shells.administrator.comingSoon]],
+  ];
+
+  it.each(SCREENS)(
+    '%s shows no English copy',
+    async (path, role, mountedHeading, englishStrings) => {
+      if (role) seedToken(role);
+      renderAt(path);
+      expect(await screen.findByRole('heading', { name: mountedHeading })).toBeInTheDocument();
+
+      const text = document.body.textContent ?? '';
+      for (const english of englishStrings) {
+        expect(text, `"${english}" is still rendered on ${path}`).not.toContain(english);
+      }
+    },
+  );
+
+  // `QuoteResult` only mounts after a successful submit, so the route-level
+  // scan above never reaches it — yet "quote form *and breakdown*" is in the
+  // AC verbatim. It is a pure presentational component, so render it directly
+  // rather than driving a whole submit just to see its labels.
+  it('the quote breakdown shows no English copy', () => {
+    render(
+      <QuoteResult
+        quote={{
+          id: 'q1', createdAt: '2026-08-29T00:00:00Z', driverAge: 30, regionCode: 'CB',
+          engineCc: 1600, zoneId: 3, zoneName: 'Zone 3', basePremium: 100, ageSurcharge: 10,
+          oneTimePremium: 110, installments: 2, installmentFee: 5, totalPremium: 115,
+          installmentAmount: 57.5, currency: 'BGN',
+        }}
+      />,
+    );
+
+    const region = screen.getByTestId('quote-result');
+    const text = region.textContent ?? '';
+    for (const english of Object.values(en.quote.result)) {
+      // `zoneName` ("Zone 3") is backend data still rendered raw — Story 3.2b
+      // replaces it with a zoneId-keyed label. Skip the one key that collides.
+      if (english === en.quote.result.zone) continue;
+      expect(text, `"${english}" is still rendered in the breakdown`).not.toContain(english);
+    }
+    expect(region).toHaveAccessibleName(bg.quote.result.label);
+    expect(screen.getByRole('heading', { name: bg.quote.result.heading })).toBeInTheDocument();
+  });
+
+  // Behind `phase === 'success'`, so the route-level scan never reaches it.
+  it('the registration success screen shows no English copy', async () => {
+    const user = userEvent.setup();
+    renderAt('/register');
+
+    await user.type(screen.getByLabelText(bg.auth.register.email), 'a@example.com');
+    await user.type(screen.getByLabelText(bg.auth.register.password), 'Password123');
+    await user.click(screen.getByRole('button', { name: bg.auth.register.submit }));
+
+    expect(await screen.findByTestId('register-success')).toBeInTheDocument();
+    const text = document.body.textContent ?? '';
+    expect(text).not.toContain(en.auth.register.success);
+    expect(text).not.toContain(en.auth.register.successBody);
   });
 });
 
@@ -196,24 +301,37 @@ describe('translation catalogs', () => {
     expect(keys(bg).sort()).toEqual(keys(en).sort());
   });
 
+  // The two language *option* labels are deliberately identical across
+  // catalogs: each option is named in its own language so a visitor who
+  // cannot read the current one can still find theirs.
+  const IDENTICAL_BY_DESIGN = ['app.language.bg', 'app.language.en'];
+
+  // Walks every leaf rather than a hand-written list. Story 3.2a took the
+  // catalogs from 7 keys to ~50; an enumerated list would have silently
+  // stopped covering the new ones.
   it('leaves no Bulgarian value empty or accidentally left in English', () => {
-    const translated = [
-      [bg.app.title, en.app.title],
-      [bg.app.nav.register, en.app.nav.register],
-      [bg.app.nav.login, en.app.nav.login],
-      [bg.app.nav.health, en.app.nav.health],
-      [bg.app.language.label, en.app.language.label],
-    ];
+    const leaves = (value: unknown, prefix = ''): Array<[string, string]> =>
+      typeof value === 'object' && value !== null
+        ? Object.entries(value).flatMap(([key, child]) =>
+            leaves(child, prefix ? `${prefix}.${key}` : key),
+          )
+        : [[prefix, String(value)]];
 
-    for (const [bulgarian, english] of translated) {
-      // The "empty" half of this test's name — an unset value would sail
-      // past the inequality check below.
-      expect(bulgarian.trim()).not.toBe('');
-      expect(bulgarian).not.toBe(english);
+    const english = new Map(leaves(en));
+
+    for (const [key, bulgarian] of leaves(bg)) {
+      expect(bulgarian.trim(), `${key} is empty`).not.toBe('');
+      if (IDENTICAL_BY_DESIGN.includes(key)) {
+        expect(bulgarian, `${key} should match en`).toBe(english.get(key));
+      } else {
+        expect(bulgarian, `${key} is still the English string`).not.toBe(english.get(key));
+      }
     }
+  });
 
-    // The two language *option* labels are the deliberate exception: each is
-    // named in its own language, so they are identical across catalogs.
+  // Guards the exception list itself: if someone deletes `app.language.bg`,
+  // the loop above would still pass while the allowlist quietly rots.
+  it('keeps every identical-by-design key present in both catalogs', () => {
     expect(bg.app.language.bg).toBe(en.app.language.bg);
     expect(bg.app.language.en).toBe(en.app.language.en);
   });

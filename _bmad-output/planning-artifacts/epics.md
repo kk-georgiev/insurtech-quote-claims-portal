@@ -281,19 +281,40 @@ So that I can use the portal in my preferred language.
 **And** given I toggle the language, when I do, then all text within this story's translated surface switches immediately — no reload, no navigation, no lost route state (full screen coverage is Story 3.2)
 **And** given I reload the page after toggling, when the app loads again, then my selected language persists (client-side only, per AD-8)
 
-### Story 3.2: Full Translation Coverage of Milestone 1 Screens
+### Story 3.2a: Screen Copy Translation
+
+> Story 3.2 was split into 3.2a and 3.2b during planning (2026-08-29). The
+> static copy is mechanical, roughly 38 strings; the error messaging carries
+> the whole architectural decision. Reviewing them together would have buried
+> the risky half under the rote half. Together they still deliver the original
+> Story 3.2 acceptance criteria, unchanged in substance.
 
 As a user,
-I want every screen and message built so far (login, registration, quote form/result, all four role shells, validation/error messages) to appear correctly in both languages,
-So that no part of the experience is left in the wrong language.
+I want every screen built so far (login, registration, quote form and breakdown, backend health, all four role shells) to read in my chosen language,
+So that the app is not a Bulgarian header over an English product.
 
 **Acceptance Criteria:**
 
 **Given** every screen delivered in Epic 1 and Epic 2
-**When** viewed in either language
-**Then** no untranslated key or English-fallback artifact is visible in the Bulgarian pass (PRD SM-4)
-**And** given a backend error response, when displayed to the user, then the frontend maps its `code` (AD-7) to a translated message — the raw backend `message` is never shown directly
+**When** viewed with Bulgarian active
+**Then** no English static copy is visible on any of them — headings, form labels, buttons, busy states, shell copy, and accessible names alike
+**And** given English is active, when viewed, then the copy reads exactly as it did before this story
+**And** given the existing test suites, when updated, then they assert the same behaviour through catalog-backed queries — never weakened to `data-testid` to dodge language-sensitive assertions
+
+### Story 3.2b: Error and Validation Message Translation
+
+As a user,
+I want every failure message — backend error codes, field-level validation, and the tariff zone label — to appear in my chosen language,
+So that no part of the experience falls back to English exactly when something has gone wrong.
+
+**Acceptance Criteria:**
+
+**Given** a backend error response
+**When** it is displayed to the user
+**Then** the frontend maps its `code` (AD-7) to a translated message — the raw backend `message` is never shown directly
+**And** given a field-level validation failure, when shown beside the input, then it is a translated per-field message, never Bean Validation's English text
 **And** given a new `code` is introduced by the backend, when it ships, then its i18n entry ships in the same change (AD-7's naming contract)
+**And** given a successful quote in Bulgarian, when the breakdown renders, then the tariff zone is labeled from `zoneId`, leaving no English on the screen (PRD SM-4)
 
 ## Epic 4: The Team Demos From a Clean Machine
 

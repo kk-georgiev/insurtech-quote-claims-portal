@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next';
+
 /**
  * LIQUIDATOR navigation shell, mounted at `/liquidator`. Story 2.3 turns
  * Story 2.2's bare route target into a static, clearly Liquidator-labeled
@@ -10,10 +12,12 @@
  * buttons, links, inputs, or handlers, and no per-role sub-navigation.
  */
 export function LiquidatorShell() {
+  const { t } = useTranslation();
+
   return (
     <section data-testid="liquidator-shell" aria-labelledby="liquidator-shell-heading">
-      <h2 id="liquidator-shell-heading">Liquidator workspace</h2>
-      <p>Coming soon — Liquidator tools are not part of this milestone.</p>
+      <h2 id="liquidator-shell-heading">{t('shells.liquidator.heading')}</h2>
+      <p>{t('shells.liquidator.comingSoon')}</p>
     </section>
   );
 }

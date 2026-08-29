@@ -1,4 +1,5 @@
 import { QuoteForm } from '../../quote/QuoteForm';
+import { useTranslation } from 'react-i18next';
 
 /**
  * CLIENT navigation shell, mounted at `/`. Story 1.7 fills this in with the
@@ -9,9 +10,11 @@ import { QuoteForm } from '../../quote/QuoteForm';
  * here).
  */
 export function ClientShell() {
+  const { t } = useTranslation();
+
   return (
     <section data-testid="client-shell">
-      <h2>Client</h2>
+      <h2>{t('shells.client.heading')}</h2>
       <QuoteForm />
     </section>
   );

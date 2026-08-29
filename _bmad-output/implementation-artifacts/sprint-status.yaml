@@ -29,7 +29,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 08-23-2026 17:25
-last_updated: 08-29-2026 23:05
+last_updated: 08-29-2026 22:47
 project: Motor Insurance Quote & Claims Portal
 project_key: NOKEY
 tracking_system: file-system
@@ -58,10 +58,10 @@ development_status:
   epic-3-retrospective: optional
 
   epic-4: in-progress
-  4-1-backend-and-frontend-dockerfiles: review
-  4-2-one-command-full-stack-startup: review
-  4-3-local-dev-workflow-preserved-alongside-docker: review
-  epic-4-retrospective: optional
+  4-1-backend-and-frontend-dockerfiles: done
+  4-2-one-command-full-stack-startup: done
+  4-3-local-dev-workflow-preserved-alongside-docker: done
+  epic-4-retrospective: done
 action_items:
   - id: "epic-1-retro-item-1-add-auth-module-test-coverage-registrati"
     epic: 1
@@ -176,3 +176,66 @@ action_items:
     owner: "unassigned"
     status: open
     ref: "_bmad-output/implementation-artifacts/epic-2-retro-2026-08-29.md"
+  - id: "epic-4-retro-item-17-fix-stale-root-readme-docker-compose-des"
+    epic: 4
+    action: "Fix stale root-README Docker Compose descriptions in the Tech stack table
+      and Project structure map"
+    owner: "unassigned"
+    status: done
+    ref: "_bmad-output/implementation-artifacts/epic-4-retro-2026-08-29.md"
+  - id: "epic-4-retro-item-18-disambiguate-postgres_ports-two-meanings"
+    epic: 4
+    action: "Disambiguate POSTGRES_PORTs two meanings in docker-compose.yml with an
+      inline comment"
+    owner: "unassigned"
+    status: done
+    ref: "_bmad-output/implementation-artifacts/epic-4-retro-2026-08-29.md"
+  - id: "epic-4-retro-item-19-extend-the-readmes-rebuild-note-to-state"
+    epic: 4
+    action: "Extend the READMEs rebuild note to state that editing .env also requires
+      docker compose up --build"
+    owner: "unassigned"
+    status: done
+    ref: "_bmad-output/implementation-artifacts/epic-4-retro-2026-08-29.md"
+  - id: "epic-4-retro-item-20-correct-spec-4-2s-suggested-review-order"
+    epic: 4
+    action: "Correct spec-4-2s Suggested Review Order line citation for VITE_API_URL
+      from docker-compose.yml:64 to :68"
+    owner: "unassigned"
+    status: done
+    ref: "_bmad-output/implementation-artifacts/epic-4-retro-2026-08-29.md"
+  - id: "epic-4-retro-item-21-escalate-epic-1-retro-item-10-jwt-secret"
+    epic: 4
+    action: "Escalate epic-1-retro-item-10 (JWT-secret fail-fast guard) now that Epic
+      4 delivered a real deployment artifact"
+    owner: "unassigned"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-4-retro-2026-08-29.md"
+  - id: "epic-4-retro-item-22-add-a-ci-job-that-builds-and-exercises-t"
+    epic: 4
+    action: "Add a CI job that builds and exercises the Docker Compose stack (docker
+      compose up --build -d plus health-check polling)"
+    owner: "unassigned"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-4-retro-2026-08-29.md"
+  - id: "epic-4-retro-item-23-health-gate-frontends-depends_on-on-back"
+    epic: 4
+    action: "Health-gate frontends depends_on on backend (condition: service_healthy)
+      and add a frontend healthcheck"
+    owner: "unassigned"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-4-retro-2026-08-29.md"
+  - id: "epic-4-retro-item-24-enforce-or-derive-vite_api_url-from-back"
+    epic: 4
+    action: "Enforce or derive VITE_API_URL from BACKEND_PORT instead of relying on
+      a documentation comment alone"
+    owner: "unassigned"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-4-retro-2026-08-29.md"
+  - id: "epic-4-retro-item-25-consider-a-yaml-anchor-for-the-duplicate"
+    epic: 4
+    action: "Consider a YAML anchor for the duplicated Postgres credential fallbacks
+      in docker-compose.yml once a third consumer exists"
+    owner: "unassigned"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-4-retro-2026-08-29.md"

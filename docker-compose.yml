@@ -39,6 +39,9 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_HOST: postgres
+      # Docker-internal container port, always 5432 - distinct from the
+      # host-mapped ${POSTGRES_PORT} used by postgres.ports below, which
+      # only matters to a native process connecting from outside Compose.
       POSTGRES_PORT: 5432
       POSTGRES_DB: ${POSTGRES_DB:-motorinsurance}
       POSTGRES_USER: ${POSTGRES_USER:-postgres}

@@ -71,9 +71,13 @@ taken to its own route — `/agent`, `/liquidator`, `/administrator`, and the
 client at `/`. The landing URL and shell are how you confirm the account
 authenticated as the role you expected. Story 2.3 gave each staff route a
 static, role-labeled placeholder screen ("Agent workspace" and a coming-soon
-line); the client shell at `/` hosts Story 1.7's quote flow. There are no
-route guards yet (typing another role's URL still renders that role's screen
-— Story 2.4).
+line); the client shell at `/` hosts Story 1.7's quote flow. Story 2.4 added
+route guards: typing another role's URL (or visiting any of the four while
+logged out) redirects instead of rendering that role's screen — a logged-in
+user hitting a route that isn't their own is redirected to their *own* shell
+(via `roleHome()`), not to `/login`; only an anonymous or invalid-token
+visitor lands on `/login`. `/health`, `/register`, and `/login` are
+intentionally left unguarded — they are not role-restricted.
 
 To get a **CLIENT** account, register one through the app (or
 `POST /api/v1/auth/register`).

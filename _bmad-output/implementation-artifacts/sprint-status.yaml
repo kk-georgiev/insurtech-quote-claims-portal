@@ -29,7 +29,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 08-23-2026 17:25
-last_updated: 08-30-2026 16:00
+last_updated: 08-30-2026 16:58
 project: Motor Insurance Quote & Claims Portal
 project_key: NOKEY
 tracking_system: file-system
@@ -108,7 +108,7 @@ action_items:
     action: "Add DataIntegrityViolationException handling in QuoteService.calculate
       mapped to a clean 401/404, flagged for Epic 2 account lifecycle work"
     owner: "Konstantin"
-    status: open
+    status: done
     ref: "_bmad-output/implementation-artifacts/epic-1-retro-2026-08-26.md"
   - id: "epic-1-retro-item-6-record-a-design-note-for-epic-2-planning"
     epic: 1
@@ -141,7 +141,7 @@ action_items:
     action: "Bundle a JWT-secret fail-fast guard with the existing Postgres-credentials
       deferred item once a real deployment target/profile strategy is defined"
     owner: "unassigned"
-    status: open
+    status: in-progress
     ref: "_bmad-output/implementation-artifacts/epic-1-retro-2026-08-26.md"
   - id: "epic-1-retro-item-11-add-a-one-line-note-recording-that-staff"
     epic: 1
@@ -185,7 +185,7 @@ action_items:
     action: "Propose a new story: Logout action and auth-aware RootLayout nav so an
       authenticated user has a way out of their shell"
     owner: "unassigned"
-    status: open
+    status: done
     ref: "_bmad-output/implementation-artifacts/epic-2-retro-2026-08-29.md"
   - id: "epic-4-retro-item-17-fix-stale-root-readme-docker-compose-des"
     epic: 4
@@ -220,7 +220,7 @@ action_items:
     action: "Escalate epic-1-retro-item-10 (JWT-secret fail-fast guard) now that Epic
       4 delivered a real deployment artifact"
     owner: "unassigned"
-    status: open
+    status: done
     ref: "_bmad-output/implementation-artifacts/epic-4-retro-2026-08-29.md"
   - id: "epic-4-retro-item-22-add-a-ci-job-that-builds-and-exercises-t"
     epic: 4
@@ -262,7 +262,7 @@ action_items:
     action: "Add a contract check tying errorMessages.ts's CODES list to the backend's
       actual error-code enum, per Story 3.2b's own AC"
     owner: "unassigned"
-    status: open
+    status: done
     ref: "_bmad-output/implementation-artifacts/epic-3-retro-2026-08-30.md"
   - id: "epic-3-retro-item-28-extend-the-bg-en-catalog-parity-test-to"
     epic: 3

@@ -153,14 +153,19 @@ docs/<кратко-описание>     ->  само документация
 
 ## 6. Repo hygiene
 
-- [ ] Default branch на GitHub → `dev`.
-- [ ] Branch protection на `main`: изисква PR + 1 approve, забранява force
+- [x] Default branch на GitHub → `dev`.
+- [x] Branch protection на `main`: изисква PR + 1 approve, забранява force
       push и директен push (важи и за admin).
-- [ ] Branch protection на `dev`: изисква PR + 1 approve, забранява директен
+- [x] Branch protection на `dev`: изисква PR + 1 approve, забранява директен
       push.
-- [ ] `.github/workflows/` — CI за build + тестове (Maven backend, npm/vite
-      frontend) при всеки PR, включено като required status check по-горе.
-- [ ] `.github/PULL_REQUEST_TEMPLATE.md` — чеклист какво/как е тествано.
+- [x] `.github/workflows/` — CI за build + тестове (Maven backend, npm/vite
+      frontend) при всеки PR.
+- [ ] CI включен като required status check в ruleset-ите на `main`/`dev` —
+      възможно едва след първото успешно run (GitHub трябва да "види" job
+      имената, за да могат да се изберат в Settings → Rules).
+- [x] `.github/PULL_REQUEST_TEMPLATE.md` — процес-checklist (branch/base branch,
+      merge стратегия, CI, self-review по §4, post-merge cleanup), не само
+      какво/как е тествано.
 - [ ] `CODEOWNERS` (по желание), ако искаме определени хора да ревюват
       определени модули.
 - [ ] `LICENSE`, ако repo-то стане публично извън тренинг контекста.

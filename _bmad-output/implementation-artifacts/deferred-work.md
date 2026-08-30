@@ -37,6 +37,7 @@ Append-only. Entries collected from bmad-build review loopbacks. Do not modify e
 - source_spec: `_bmad-output/implementation-artifacts/spec-1-2-client-self-registration.md`
   summary: Field-level validation messages (`ApiError.FieldError.message`) are raw Bean Validation text rendered directly to the user in `RegisterForm`, which contradicts AD-8's "backend never emits user-facing prose — only stable codes" invariant (the top-level `ApiError.code` already follows this; per-field errors don't).
   evidence: Proper fix needs a stable code per validation rule plus a frontend i18n mapping, which is Epic 3's job; this milestone's I/O matrix explicitly expects "field-level messages" to reach the user, so it's an accepted simplification for now, not a regression.
+  status: RESOLVED 2026-08-29 (Story 3.2b) — resolved without the backend change this entry anticipated. `i18n/errorMessages.ts` selects copy from the field *name* plus the envelope's `code`, and `ApiFieldError.message` is no longer rendered anywhere. Per-field messages therefore describe the field's whole constraint set, since no per-rule code exists to distinguish them; that trade-off was taken deliberately to keep the backend untouched per PRD §4.5.
 
 - source_spec: `_bmad-output/implementation-artifacts/spec-1-2-client-self-registration.md`
   summary: `GlobalExceptionHandler` has no handler for a malformed JSON request body (`HttpMessageNotReadableException`) — it falls through to the generic 500 instead of a clean 400. Now that `/api/v1/auth/register` is the first real controller with a request body, this is reachable, not purely theoretical.
@@ -119,7 +120,8 @@ Append-only. Entries collected from bmad-build review loopbacks. Do not modify e
 
 - source_spec: `_bmad-output/implementation-artifacts/spec-1-6-quote-persistence-and-retrieval.md`
   summary: The new `@ExceptionHandler(MethodArgumentTypeMismatchException.class)` in `GlobalExceptionHandler` is application-wide — every controller's typed `@PathVariable`/`@RequestParam` mismatch now returns 400 instead of the previous 500.
-  evidence: Review-loop finding (blind-hunter + edge-case-hunter, 2nd run). The 400 is the correct response, so the widening is an improvement, but: (a) no test covers a query-param mismatch or a non-quote controller; (b) the message (`"Malformed request parameter"` / `"Malformed value"`) names no expected type and does not go through the AD-7/AD-8 i18n path the class javadoc describes; (c) `ex.getName()` is passed into `ApiError.FieldError` with no null guard. Polish + coverage, deferred as non-blocking.
+  evidence: Review-loop finding (blind-hunter + edge-case-hunter, 2nd run). The 400 is the correct response, so the widening is an improvement, but: (a) no test covers a query-param mismatch or a non-quote controller; (b) the message (`"Malformed request parameter"` / `"Malformed value"`) names no expected type and does not go through the AD-7/AD-8 i18n path the class javadoc describes; (c) `ex.getName()` is passed into `ApiError.FieldError` with no null guard.
+  status: PARTIALLY RESOLVED 2026-08-29 (Story 3.2b) — (b) is closed: that handler's `SHARED_VALIDATION_ERROR` code now maps to a translated message and its `"Malformed value"` field prose is never rendered, so the i18n path the javadoc describes is real. (a) test coverage and (c) the `ex.getName()` null guard are backend-side and remain open. Polish + coverage, deferred as non-blocking.
 
 - source_spec: `_bmad-output/implementation-artifacts/spec-1-6-quote-persistence-and-retrieval.md`
   summary: `quotes.created_at` has no DB `DEFAULT now()` and is populated solely from the app clock (`Instant.now()` in the `Quote` constructor), with no injectable `Clock`.
@@ -134,3 +136,220 @@ Append-only. Entries collected from bmad-build review loopbacks. Do not modify e
 - source_spec: `_bmad-output/implementation-artifacts/epic-1-retro-2026-08-26.md`
   summary: No documented decision recording that staff roles (AGENT/LIQUIDATOR/ADMINISTRATOR) are locked out of the Quote module in Epic 1.
   evidence: Every quote endpoint hardcodes `hasRole('CLIENT')`; no staff path and no per-staff-role test exist. Given Epic 2 is explicitly titled "Every Role Gets Their Own Workspace" and Epic 1's own spec never mentions staff quote access, this is deliberate scope sequencing, not an oversight — recorded here so Epic 2's implementer doesn't have to rediscover it.
+
+## Deferred from: Story 2.1 review (2026-08-28)
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-2-1-seeded-staff-demo-accounts.md`
+  summary: `V5__seed_staff_accounts.sql` is ungated, so the three demo staff accounts — including an ADMINISTRATOR whose password is published in `README.md` — would be provisioned into any database the app is ever pointed at, including a real deployment.
+  evidence: Review-loop finding (blind-hunter + edge-case-hunter, 1st run). `application.yml` sets `spring.flyway.locations: classpath:db/migration` with no profile split, and the project has no active profile at all. The README's "any real deployment must delete or rotate these accounts" is an unenforced honour-system note. The correct fix (a separate `classpath:db/demo` location enabled only under a `local`/`demo` profile) requires a profile strategy this project has not yet defined — the same blocker as open epic-1 retro action item 10 (JWT-secret fail-fast guard + Postgres-credentials deferred item, both awaiting "a real deployment target/profile strategy"). Bundle all three when that strategy lands. Not a Milestone 1 demo risk: the only databases in play are a local Docker volume and throwaway Testcontainers instances.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-2-1-seeded-staff-demo-accounts.md`
+  summary: No CI runs the backend test suite, so the backend suite (76 tests as of Story 2.1) only executes when someone runs `mvn test` locally with a Docker daemon up.
+  evidence: Review-loop finding (verification-gap, 1st run). `.github/` contains only Java-upgrade tooling artifacts and no `workflows/` directory; `CONTRIBUTING.md:161` still lists "`.github/workflows/` — CI за build + тестове" as an unchecked TODO. Pre-existing and repo-wide, surfaced incidentally by this story rather than caused by it — but every story that adds Testcontainers-backed tests raises the cost of the gap.
+  status: RESOLVED 2026-08-28 — `.github/workflows/ci.yml` added (see `spec-ci-pipeline.md`), running the full backend suite (now 76 tests) and the frontend typecheck/build on every PR and push to `main`/`dev`.
+
+## Deferred from: CI pipeline review (2026-08-28)
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-ci-pipeline.md`
+  summary: On a failing CI run, no test-report artifacts (Surefire/JUnit XML) are uploaded and no annotation/summary step surfaces which test failed — only the raw console log.
+  evidence: Review-loop finding (blind-hunter). Adding structured reporting (e.g. a JUnit-report annotation action) is a real improvement but a distinct piece of work with its own choices (which action, retention policy); not needed for CI to exist and catch regressions in the first place.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-ci-pipeline.md`
+  summary: The Testcontainers `postgres:18` image is re-pulled from Docker Hub on every CI run with no layer/image caching, adding run time and exposure to Docker Hub's anonymous-pull rate limit on shared GitHub-hosted runner IPs.
+  evidence: Review-loop finding (blind-hunter). Inherent to using Testcontainers in CI at all, not something this workflow file introduces or can fix alone — would need a registry mirror or a self-hosted runner with a warm image cache. Revisit if CI runs start failing/slowing from rate-limiting in practice.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-ci-pipeline.md`
+  summary: The frontend has no lint/format tooling (no ESLint/Prettier in `package.json` or anywhere else) and therefore no lint step in CI.
+  evidence: Review-loop finding (blind-hunter). Pre-existing gap, not caused by adding CI — the workflow can only run scripts that exist. Installing and configuring lint tooling is its own task with its own rule-set decisions.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-ci-pipeline.md`
+  summary: The frontend job never runs tests — `frontend/package.json` has no `test` script, so CI only typechecks and builds; a frontend logic regression is caught solely by manual QA.
+  evidence: Review-loop finding (blind-hunter). No frontend test framework (Vitest, React Testing Library, etc.) is installed yet. Adding one is a separate, non-trivial decision (framework choice, first test conventions) beyond wiring up CI for what already exists.
+  status: RESOLVED 2026-08-28 — Story 2.2 landed the Vitest/RTL toolchain in the same merge window; `ci.yml`'s frontend job now runs `npm test` between typecheck and build. See the Story 2.2 entry below.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-ci-pipeline.md`
+  summary: `.github/PULL_REQUEST_TEMPLATE.md` still does not exist, even though it's the next item on `CONTRIBUTING.md` §6's checklist right after CI.
+  evidence: Review-loop finding (blind-hunter). A distinct, independently shippable deliverable (its own checklist content to design) — kept out of this change's scope per the workflow's single-goal rule.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-ci-pipeline.md`
+  summary: No dependency/security scanning (`npm audit`, OWASP dependency-check, Dependabot config) exists anywhere under `.github/`.
+  evidence: Review-loop finding (blind-hunter). Real, but a separate concern with its own tooling choice and noise-tuning; out of scope for a first CI pipeline that only needed to wire up the build/test commands that already exist.
+
+## Deferred from: Story 2.2 (2026-08-28)
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-2-2-role-based-post-login-routing.md`
+  summary: After Story 2.2 a logged-in CLIENT lands on a bare `features/shells/client/ClientShell.tsx` stub instead of a quote flow, because Epic 1's quote-flow frontend was never built — only the backend `POST /api/v1/quotes` endpoint exists.
+  evidence: Story 2.2 deliberately ships the client shell as a bare route target at `/` (Story 2.3 adds real shell content and chrome; the client shell's *actual* home is Epic 1's quote form/result view). This extends the pre-existing gap already recorded above in this file's `spec-1-5-quote-calculation-with-transparent-breakdown.md` entry ("No end-to-end frontend exists for quote calculation") — no quote-flow frontend story exists anywhere in `epics.md`. Turning this into an `epics.md` story is a PM decision, not Story 2.2's to make. RESOLVED 2026-08-28 by Story 1.7 (`spec-1-7-client-quote-flow-submit-and-see-the-breakdown.md`, merged as #21): `ClientShell` now renders `QuoteForm`, so a logged-in CLIENT lands on the real quote flow. The root Story 1.5 entry above records the same underlying gap and is closed by the same change.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-2-2-role-based-post-login-routing.md`
+  summary: The new frontend Vitest suite (`frontend/`, `npm test`) has no CI runner — like the backend `mvn test` suite (see the Story 2.1 entry above), it only executes when someone invokes it by hand.
+  evidence: Same root gap as the Story 2.1 verification-gap finding: `.github/` has no `workflows/` directory and `CONTRIBUTING.md` still lists CI as an unchecked TODO. Story 2.2 ships the first frontend test toolchain, so the gap now covers two independent suites (JVM + Node) that both rely on the honour system. Bundle a `frontend` job into the same CI workflow whenever the backend one is set up.
+  status: RESOLVED 2026-08-28 — exactly this bundling, done in the same merge window. `ci.yml`'s frontend job runs `npm test` (`vitest run`) between typecheck and build.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-2-2-role-based-post-login-routing.md`
+  summary: `frontend/src/app/router.tsx` has no `errorElement` and no catch-all `*` route — the table grew from 2 routes to 7, and a mistyped/unknown path now drops the user on React Router's raw default error screen.
+  evidence: Not in Story 2.2's I/O matrix (which only covers the four role routes, the auth screens, and direct staff-URL visits). Wants a `NotFound` screen (Story 2.3-style copy) plus an `errorElement` on the `RootLayout` route so route errors render in-shell. A deliberate error-UX decision for Story 2.3 or a PM call, not a one-liner to bolt on here.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-2-2-role-based-post-login-routing.md`
+  summary: The first frontend test toolchain ships with no coverage story — no `@vitest/coverage-v8`, no `test:coverage` script, no `coverage/` entry in `.gitignore`, no thresholds.
+  evidence: Story 2.2's scope was the routing behaviour and the toolchain to pin it, not a coverage regime. Worth a deliberate testing-strategy decision (which provider, what thresholds, enforce in CI or advisory-only) before Stories 2.3, 2.4, and Epic 3 add substantially more frontend code and tests.
+
+## Deferred from: PR template review (2026-08-28)
+
+- source_spec: none
+  summary: `.github/PULL_REQUEST_TEMPLATE.md` has no reminder of the optional release-tag step (`git tag -a v0.2.0-epic2 ...`) that `CONTRIBUTING.md` §3a lists for a `dev → main` promotion.
+  evidence: Review-loop finding (blind-hunter). Tagging happens after merge, by whoever merges the release PR — not something the PR author self-checks before opening it, so it doesn't fit the template's pre-submission checklist shape. Worth a one-line callout in §3a's own text instead, if this keeps getting missed in practice.
+
+## Deferred from: Story 1.7 review (2026-08-28)
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-1-7-client-quote-flow-submit-and-see-the-breakdown.md`
+  summary: `QuoteForm`'s `installments` field is a free-typed `<input type="number">` (`min=1 max=4`), even though the backend only ever accepts `{1, 2, 4}` — `3` is in the HTML range but always server-rejects.
+  evidence: Review-loop finding (blind-hunter). A `<select>` restricted to the three real values would prevent the round trip entirely, but the frozen I/O Matrix's "Unsupported installments" row is specifically demonstrated today by typing `3` into this input — restricting the control would make that row's current test unreachable via the UI and needs a coordinated spec/test change, not a standalone patch.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-1-7-client-quote-flow-submit-and-see-the-breakdown.md`
+  summary: The form's `<form noValidate>` disables the browser's enforcement of the visible `required`/`min`/`max` attributes; a blank numeric field becomes `Number('') === 0` and is sent as a real value.
+  evidence: Review-loop finding (blind-hunter). Not a correctness bug — every such case (driverAge=0, engineCc=0, installments=0, blank regionCode) already round-trips to the exact bean-validation field error the frozen I/O Matrix expects, verified by an existing passing test. Purely an avoidable extra network round trip; client-side pre-validation would need to exactly mirror the backend's constraints to be worth adding.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-1-7-client-quote-flow-submit-and-see-the-breakdown.md`
+  summary: No test exercises `QuoteForm`'s `cancelledRef` unmount guard (a response resolving after the component unmounts should not call any state setter).
+  evidence: Review-loop finding (blind-hunter). The mechanism is documented and mirrors `LoginForm.tsx`'s identical, equally-untested guard — a pre-existing coverage gap in the pattern this story copied, not something newly introduced here specifically.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-1-7-client-quote-flow-submit-and-see-the-breakdown.md`
+  summary: Field-level error `<p role="alert">` elements in `QuoteForm.tsx` have no `id`, and their `<input>`s carry no `aria-describedby`/`aria-invalid` pointing at them — a screen-reader user tabbing back into an already-errored field gets no re-announcement.
+  evidence: Review-loop finding (blind-hunter + verification-gap, both independently). Mirrors an identical, pre-existing gap in `LoginForm.tsx`/`RegisterForm.tsx` — worth a single a11y pass across all three forms together rather than a one-off fix here.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-1-7-client-quote-flow-submit-and-see-the-breakdown.md`
+  summary: The numeric inputs (`driverAge`, `engineCc`, `installments`) set no `step`, so a value like `25.5` can be typed and, combined with `noValidate`, is sent as-is — the backend's `Integer`-typed DTO fields would then fail JSON deserialization rather than a clean bean-validation field error.
+  evidence: Review-loop finding (blind-hunter). Not covered by the frozen I/O Matrix's "Bean-validation failure" row (that row covers valid-typed values outside range, not type-mismatched JSON). Fixing properly needs either stricter client-side parsing or confirming/improving the backend's malformed-body error path — a small design decision, not a one-line patch.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-1-7-client-quote-flow-submit-and-see-the-breakdown.md`
+  summary: `QuoteForm` has no guard against a rapid double-submit (e.g. double Enter) firing `handleSubmit` twice before the `disabled` attribute re-renders, potentially sending two concurrent `POST /api/v1/quotes` requests.
+  evidence: Review-loop finding (edge-case-hunter). Mirrors `LoginForm.tsx`'s identical structure and identical latent gap — pre-existing pattern this story copied, not newly introduced. Worth a shared fix (e.g. a `phase === 'submitting'` guard at the top of `handleSubmit`) applied to all three forms together.
+
+## Deferred from: quote input bounds review (2026-08-28)
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-quote-input-bounds.md`
+  summary: `QuoteForm`'s `driverAge`/`engineCc` inputs give the user no visible hint of the new 100/8000 ceilings before they submit — `noValidate` suppresses the browser's native tooltip for `max`, so an over-ceiling value only surfaces as an error after a round trip to the server.
+  evidence: Review-loop finding (blind-hunter). Same root cause as the already-deferred `noValidate` UX round-trip finding from Story 1.7's own review — worth a single client-side pre-validation pass across all bounded fields together, not a one-off fix here.
+
+## Deferred from: minimal styling review (2026-08-28)
+
+- source_spec: none
+  summary: `index.css` gives error text (`role="alert"`) a distinct red color, but nothing changes the associated `<input>`'s border/background when it's currently invalid — an erroring field looks identical to a valid one unless the red text below it is noticed.
+  evidence: Review-loop finding (blind-hunter). Fixable with a `:has()` selector (e.g. `div:has([role="alert"]) input`, well-supported in evergreen browsers) or an `aria-invalid` attribute the components would need to start setting — either way a small design decision (how prominent, which mechanism) beyond this pass's "target what's already there" scope.
+
+- source_spec: none
+  summary: `index.css` styles forms/buttons via bare element selectors (`form div`, `button`) with no class-based scoping or escape hatch — any future non-field `div` inside a form, or a secondary/tertiary button (e.g. a header logout button), will silently inherit this styling.
+  evidence: Review-loop finding (blind-hunter). A deliberate trade-off for this pass (zero JSX/className changes, matching the "minimal, no framework" scope) — resolving it properly means introducing component-scoped classes across every form, a bigger, more invasive change than "add a stylesheet."
+
+- source_spec: none
+  summary: No "skip to content" link exists — `RootLayout`'s nav (Register/Login/Health) sits before `<main>` with no bypass, so keyboard/screen-reader users tab through it on every single page before reaching the actual screen.
+  evidence: Review-loop finding (blind-hunter). Real a11y gap, but fixing it needs a new JSX element in `RootLayout.tsx`, which this pass deliberately avoided (CSS-only diff). Worth doing alongside a broader a11y pass (see the `aria-describedby` finding already deferred from Story 1.7's review).
+
+- source_spec: none
+  summary: No required-field indicator (e.g. `*`) exists even though every current input across `LoginForm`/`RegisterForm`/`QuoteForm` is `required`.
+  evidence: Review-loop finding (blind-hunter). Low value today (everything happens to be required, so nothing is being distinguished in practice) and a pure-CSS solution would need a fragile `label:has(+ div input:required)`-style selector; revisit if/when a genuinely optional field appears.
+
+## Deferred from: Story 2.4 verification (2026-08-29)
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-2-4-frontend-route-guards-per-role.md`
+  summary: On Node ≥ ~22-24, any test that triggers a real React Router client-side navigation (`navigate()` / `<Navigate>`) throws `TypeError: RequestInit: Expected signal ("AbortSignal {}") to be an instance of AbortSignal` inside `createClientSideRequest`, failing the test — a jsdom (v26) vs Node's built-in undici incompatibility (jsdom substitutes its own `AbortController`/`AbortSignal` globals, which fail Node undici's `instanceof` check).
+  evidence: Pre-existing, not introduced by Story 2.4 — reproduces identically on the untouched `LoginForm.test.tsx` (its post-login `navigate()` cases) on a local machine running Node v24.18.0. `frontend/package.json`'s `"engines": { "node": ">=20" }` technically permits this Node version, but the toolchain doesn't actually support it for navigation-triggering tests. `.github/workflows/ci.yml` pins Node 20, where this does not reproduce, so CI stays green. Story 2.4 added the first tests whose entire purpose is asserting a redirect (`RoleGuard`'s `<Navigate>` cases) — all were verified passing manually via a real browser session against `npm run dev` instead (every I/O-matrix scenario exercised, no console errors), since the local automated run could not confirm them. Worth either pinning a supported Node version for local dev (`.nvmrc` matching CI's 20) or upgrading jsdom/vitest to a version compatible with newer Node's undici, whichever is less disruptive when picked up.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-2-4-frontend-route-guards-per-role.md`
+  summary: `roleHome.ts`'s new `getCurrentRole()` decodes the stored JWT and trusts its `role` claim without checking the `exp` claim, so `RoleGuard` treats an already-expired-but-decodable token as a valid session and renders the shell instead of redirecting to `/login`; the backend would still reject any resulting API call, but the UI itself gives no proactive signal.
+  evidence: Review-loop finding (blind-hunter + edge-case-hunter, both independently). Not added to Story 2.4's frozen I/O Matrix — deliberately treated as out of scope, consistent with the pre-existing Epic 1 retro deferred item ("No token revocation/logout mechanism exists... Not a Milestone-1 defect... Story 1.4's spec explicitly names 'no refresh token, login rate limiting, or lockout' as non-goals"). This app has no logout, no expiry countdown, and no proactive expiry handling anywhere yet; adding it only to `RoleGuard` would be inconsistent, isolated scope creep. Revisit together with that same deferred item once session-freshness/logout is actually specced.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-2-4-frontend-route-guards-per-role.md`
+  summary: `RoleGuard`'s redirect is silent (no toast/message explaining why) and drops the originally-requested location — an anonymous visitor bounced to `/login` isn't returned to the page they wanted after logging in (no `state={{ from: location }}` on the `Navigate`).
+  evidence: Review-loop finding (blind-hunter). Explicitly out of scope per the frozen spec's own "Ask First" boundary ("Anything beyond redirecting ... out of scope unless requested"). A real UX improvement, but needs its own design decision (toast copy, where the post-login redirect-back logic would live given `LoginForm` currently always calls `roleHome(role)`) rather than a one-line addition.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-2-4-frontend-route-guards-per-role.md`
+  summary: No test mounts `RoleGuard` in isolation (e.g. against a stub `<Outlet/>`) — all coverage exercises it indirectly through the full route table in `router.tsx`/`router.test.tsx`, and no test specifically asserts the `replace` history behavior its JSDoc promises (every guard test checks only the final `pathname`, never the history stack length).
+  evidence: Review-loop finding (blind-hunter). The route-table-level tests do fully pin the guard's observable behavior (the actual AC), so this is a test-architecture/localization nicety, not a coverage hole — worth doing if `RoleGuard` grows more branches later and regressions become harder to localize through the full table.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-2-4-frontend-route-guards-per-role.md`
+  summary: A token cleared or changed in another browser tab doesn't cause an already-mounted guarded route in this tab to react — `RoleGuard` only evaluates `getCurrentRole()` on render/navigation, not via a `storage` event subscription.
+  evidence: Review-loop finding (edge-case-hunter). No component anywhere in the app reacts to cross-tab storage changes today (same gap would apply to `apiFetch`'s Authorization header, etc.) — a pre-existing architectural limitation this story's narrow scope (one wrapper component) was never going to close. Worth a deliberate decision (a shared auth-state hook/context reacting to `storage` events) if multi-tab correctness becomes a real requirement.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-2-4-frontend-route-guards-per-role.md`
+  summary: No test explicitly confirms `/health`, `/register`, and `/login` remain reachable and unaffected (for both anonymous and authenticated visitors) now that the four shell routes are nested under `RoleGuard` — only the four newly-guarded routes gained coverage.
+  evidence: Review-loop finding (blind-hunter). `/health` already has a pre-existing render test that still passes unchanged; `/register`/`/login` never had dedicated render tests before this story either, so this is a pre-existing gap surfaced incidentally, not introduced by this diff. Worth a small "unguarded routes stay reachable" regression test if the route table grows more guards later.
+
+## Deferred from: form a11y and resubmit-guard hardening review (2026-08-28)
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-form-a11y-resubmit-hardening.md`
+  summary: The double-submit guard (`if (phase === 'submitting') return;`) reads `phase` from the `handleSubmit` closure rather than a ref, so it's correct for the tested scenario (two separately-awaited clicks) but not provably correct against any path where two invocations could land before an intervening `setPhase('submitting')` is flushed.
+  evidence: Review-loop finding (blind-hunter). The codebase already has a working ref idiom (`cancelledRef`) that would make this guard timing-independent; worth adopting if a less-tame double-submit path (e.g. a raw `fireEvent` sequence, or a future event-handling change) is ever found to slip through.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-form-a11y-resubmit-hardening.md`
+  summary: `fieldErrors` (and now `aria-invalid`) is never cleared per-field as the user edits an input — a field marked invalid by a failed submit stays `aria-invalid="true"` until the next full submit resolves, even after the user types a corrected value.
+  evidence: Review-loop finding (blind-hunter). Pre-existing gap (predates this chore), but wiring `aria-invalid` straight to `fieldErrors` makes it more consequential for screen-reader users than before. Fixing properly means deciding whether `onChange` should clear that field's error, which touches all three forms' state logic, not a one-line patch.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-form-a11y-resubmit-hardening.md`
+  summary: No focus management on submit failure — when field-level or form-level errors appear, focus doesn't move to the first invalid field or the error banner.
+  evidence: Review-loop finding (blind-hunter). Real a11y gap; a screen-reader/keyboard user has to discover the new error state manually. Needs a design decision (focus the first invalid field vs. the error banner) applied consistently across all three forms, beyond this chore's aria-wiring-only scope.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-form-a11y-resubmit-hardening.md`
+  summary: The `cancelledRef` boilerplate, the `FormPhase` state machine, and now the double-submit guard line are duplicated near-verbatim across `LoginForm.tsx`, `RegisterForm.tsx`, and `QuoteForm.tsx` (each file's comment points to "same intent/rationale as X.tsx" in a circular chain) — a third copy was added by this chore rather than extracting a shared hook.
+  evidence: Review-loop finding (blind-hunter). A genuine refactor opportunity (e.g. a `useSubmittableForm` hook), but disproportionate to this chore's scope and matches the codebase's existing convention of not sharing base classes/hooks across forms/tests yet (see `SeededStaffAccountsTest`'s javadoc: "no shared test base class" is a deliberate pattern here). Revisit if a fourth form is ever added.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-form-a11y-resubmit-hardening.md`
+  summary: No `aria-live` region announces the submit-button label change ("Log in" → "Logging in…", etc.) to screen-reader users; `disabled` alone isn't reliably announced.
+  evidence: Review-loop finding (blind-hunter). Real a11y enhancement, but a new pattern beyond the three findings this chore was scoped to bundle — worth its own follow-up alongside the focus-management gap above.
+
+## Deferred from: Story 2.3 (2026-08-28)
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-2-3-placeholder-screens-for-agent-liquidator-and-administrator.md`
+  summary: No per-route `document.title` — `/agent`, `/liquidator` and `/administrator` all keep the single `index.html` title, so browser tabs, history entries and bookmarks are indistinguishable across the role areas.
+  evidence: Review-loop finding (blind-hunter). Sharp for a story whose entire deliverable is *labeling*: the screens are now distinct on-page but identical in the tab strip. Not fixed here because title management is cross-cutting — it belongs to every route (auth screens, `/health`, the client shell), not just the three staff shells, and adding an effect to components the spec defines as "static and non-interactive" would contradict this story's own contract. Wants one deliberate decision on where route titles live (a `<title>` per route element, a router-level effect, or a small `useDocumentTitle` hook) applied across the whole table.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-2-3-placeholder-screens-for-agent-liquidator-and-administrator.md`
+  summary: "Staff role" (`Exclude<Role, 'CLIENT'>`) is a domain concept currently invented inside `frontend/src/features/shells/shells.test.tsx` rather than exported from `app/roleHome.ts`.
+  evidence: Review-loop finding (blind-hunter). `roleHome.ts` declares itself "the frontend's single source of truth for which roles exist", and Story 2.4's route guard needs exactly the same staff/client distinction to decide who may reach which route. Not done here because Story 2.3's frozen spec forbids touching `roleHome.ts` or `router.tsx`. Story 2.4 should export `StaffRole` + `STAFF_ROLES` from `roleHome.ts` and have the test import them instead of re-deriving the filter.
+
+## Deferred from: Story 4.1 review (2026-08-29)
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-4-1-backend-and-frontend-dockerfiles.md`
+  summary: No CI job builds or runs either Docker image (backend or frontend) — `.github/workflows/ci.yml`'s `backend`/`frontend` jobs only exercise the native Maven/Node toolchains, never `docker build` or a container smoke test.
+  evidence: Review-loop finding (verification-gap). A break introduced purely in `backend/Dockerfile` or `frontend/Dockerfile`/`nginx.conf` (e.g. a bad `COPY --from` path, a broken multi-stage reference) would merge to `dev`/`main` without any CI failure — only a manual `docker build`/`docker run` would catch it, which is exactly what this story's own "Verification" section relies on today. Not fixed here: the frozen spec explicitly forbids modifying `ci.yml` for this story. Natural to pick up once Story 4.2 wires these images into `docker-compose.yml` — a `docker compose build` (or a dedicated image-build+smoke-test job) in CI at that point would close this for both images at once.
+  status: RESOLVED 2026-08-29 — `.github/workflows/ci.yml`'s new `docker-compose` job runs `docker compose up --build -d --wait` on every PR/push to `main`/`dev`, building both images and health-checking the running stack. See `spec-ci-docker-compose-smoke-test.md`.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-4-1-backend-and-frontend-dockerfiles.md`
+  summary: `frontend/nginx.conf` sets no HTTP security headers (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, CSP) and no caching/compression headers (long-lived `Cache-Control` for hashed `/assets/` files, `no-cache` for `index.html`, gzip/br) on the served SPA.
+  evidence: Review-loop finding (blind-hunter). Real production-hardening gaps, but out of scope for this story's frozen intent (a working containerized image, not a hardened one) and not mentioned anywhere in Epic 4's requirements or the architecture spine — this milestone's PRD explicitly excludes production-grade hardening. Worth revisiting together if/when this project takes on a real deployment-hardening pass beyond the Milestone 1 skeleton.
+
+## Deferred from: Story 4.2 review (2026-08-29)
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-4-2-one-command-full-stack-startup.md`
+  summary: `docker-compose.yml`'s `frontend` service uses the short-form `depends_on: - backend` (start-order only) instead of a health-gated `condition: service_healthy`, unlike `backend`'s own health-gated dependency on `postgres`; `frontend` also has no `healthcheck` of its own.
+  evidence: Review-loop finding (blind-hunter + edge-case-hunter, both independently). Matches the spec's own frozen task wording verbatim (`depends_on: backend`), so not a deviation — but the practical effect is that nginx can start, and a very early browser request could hit a backend still inside its `start_period`, before the backend's own healthcheck reports healthy. Low real-world impact given the "couple of minutes" first-run tolerance in this story's AC and `restart: unless-stopped` elsewhere, but worth a `condition: service_healthy` upgrade (plus an nginx healthcheck) if this compose file is ever relied on for a stricter startup guarantee.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-4-2-one-command-full-stack-startup.md`
+  summary: `docker-compose.yml`'s `frontend.build.args.VITE_API_URL` default (`http://localhost:8080`) isn't derived from `${BACKEND_PORT}`, so overriding `BACKEND_PORT` in `.env` without also updating `VITE_API_URL` silently builds a frontend image pointing at the wrong backend origin.
+  evidence: Review-loop finding (edge-case-hunter). `.env.example` already carries an explicit comment warning the two must be kept in sync, so this isn't undocumented — but nothing enforces or validates it, and the failure mode (every API call from the browser fails) gives no direct clue back to this mismatch. Worth a validation step or a documented single-var convention if this compose setup sees more than default-port usage in practice.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-4-2-one-command-full-stack-startup.md`
+  summary: No CI job runs `docker compose up` (or otherwise builds/exercises the wired-together `backend`+`frontend`+`postgres` stack) — a wiring regression in `docker-compose.yml` (wrong env var name, wrong internal port, wrong build arg) would merge to `dev`/`main` undetected.
+  evidence: Review-loop finding (verification-gap). Same root gap already logged after Story 4.1 (`deferred-work.md`, "Story 4.1 review" section) anticipated this closing "once Story 4.2 wires these images into `docker-compose.yml`" — it didn't, because this story's own frozen spec explicitly forbids touching `ci.yml`, same as 4.1's. Now that the full stack is actually wired, a `docker compose up --build -d` + health-check-polling CI job (mirroring this story's own manual "Verification" steps) would close both this and the 4.1 entry at once.
+  status: RESOLVED 2026-08-29 — `.github/workflows/ci.yml`'s new `docker-compose` job (`docker compose up --build -d --wait` + curl checks against `/actuator/health` and the frontend root, on every PR/push to `main`/`dev`) closes this, the Story 4.1 entry above, and `epic-4-retro-item-22`. See `spec-ci-docker-compose-smoke-test.md`.
+
+## Deferred from: Story 4.3 review (2026-08-29)
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-4-3-local-dev-workflow-preserved-alongside-docker.md`
+  summary: The one-line Docker cross-reference this story added to `backend/README.md`/`frontend/README.md` is one-directional — the root README's "Getting started" section doesn't link back to either module README for a reader who wants the native-dev path's full detail.
+  evidence: Review-loop finding (blind-hunter). Minor discoverability gap, not required by this story's frozen scope (which only specified the forward pointer from each module README). Worth a symmetric link back if the root README's Getting Started section is revisited.
+
+## Deferred from: Story 2.5 review (2026-08-30)
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-2-5-logout-action-and-authenticated-navigation.md`
+  summary: `RootLayout`'s nav doesn't react to a token cleared or set in a different browser tab — logging out in one tab leaves other open tabs of the same app showing stale authenticated nav until their next navigation/render.
+  evidence: Review-loop finding (blind-hunter + edge-case-hunter, both independently). `getCurrentRole()` is read fresh on every render but nothing subscribes to the `storage` event, so a background tab never re-renders on its own. Not a security issue (the frontend guard is UX-only per AD-4; the backend still rejects requests with no valid token), and multi-tab usage isn't a stated requirement anywhere in this milestone's scope — worth a `window.addEventListener('storage', ...)` listener if cross-tab consistency becomes a real user complaint.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-2-5-logout-action-and-authenticated-navigation.md`
+  summary: The auth-aware nav (and `RoleGuard`, which predates this story) treats any token with a well-formed `role` claim as "logged in," with no check against the token's own `exp` claim — an expired-but-not-yet-cleared token still renders the Logout control and an authenticated-looking nav.
+  evidence: Review-loop finding (blind-hunter + edge-case-hunter, both independently). Pre-existing gap in `getCurrentRole()`/`decodeToken` (`app/roleHome.ts`, `api/authToken.ts`), not introduced by Story 2.5 — `RoleGuard` already had the same blind spot for its own redirect decisions since Story 2.4. This story just reuses the existing helper for a new purpose (nav) and inherits the limitation rather than creating it. A real backend call would still fail correctly on an expired token (AD-3/Story 1.4); the only user-visible symptom is a nav that looks logged-in until the next failed request.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-2-5-logout-action-and-authenticated-navigation.md`
+  summary: Clicking Logout navigates via `navigate('/login', { replace: true })` with no focus management — focus is left wherever it was rather than moved to the login screen's heading or main content.
+  evidence: Review-loop finding (blind-hunter). A real accessibility regression for keyboard/screen-reader users compared to a full page navigation, but accessibility/focus management is not a stated requirement anywhere in this milestone's epics or PRD (visual polish and mobile/responsive layout are explicit non-goals in the Epic 2 context), so it wasn't treated as in-scope for this story. Worth addressing if an accessibility pass is ever scoped for this project.

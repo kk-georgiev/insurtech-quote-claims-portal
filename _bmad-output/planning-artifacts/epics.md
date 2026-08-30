@@ -193,6 +193,19 @@ So that I can revisit it.
 **And** given a quote ID I own, when I request it, then I get the full original quote
 **And** given a quote ID belonging to another client, when I request it, then I'm rejected — never shown someone else's data
 
+### Story 1.7: Client Quote Flow — Submit and See the Breakdown
+
+As an authenticated client,
+I want to submit my driver and vehicle details and see the calculated premium breakdown on screen,
+So that I actually receive the quote Epic 1 promised (FR-8/FR-9), not just a backend response nobody can see.
+
+**Acceptance Criteria:**
+
+**Given** I am logged in as CLIENT and viewing my shell
+**When** I submit valid driver_age/region_code/engine_cc/installments
+**Then** I see the full breakdown from `POST /api/v1/quotes` (base premium, age surcharge, one-time premium, installment fee, total premium, installment amount) rendered on screen, not just a raw JSON response
+**And** given invalid or rejected input (unknown region code, unsupported installment count, out-of-range values), when submitted, then I see the field-level error message from the API's error envelope (AD-7), consistent with how `RegisterForm`/`LoginForm` already surface errors
+
 ## Epic 2: Every Role Gets Their Own Workspace
 
 Any of the four roles — including staff provisioned via seed data — logs in and lands on their own correctly role-guarded navigation shell, proving the role model is real, not cosmetic (realizes PRD UJ-2).
@@ -250,6 +263,36 @@ So that the UI never even attempts to show data a role shouldn't see.
 **Then** I am redirected back to my own shell, never shown Agent content
 **And** given this holds symmetrically for every role against every other role's URL, when tested, then the same redirect applies — implemented as the single role-guard wrapper component (AD-10), not per-screen checks
 
+### Story 2.5: Logout Action and Authenticated Navigation
+
+> Added post-Milestone-1 (2026-08-30), from Epic 2 retrospective action item
+> "Propose a new story: Logout action and auth-aware RootLayout nav so an
+> authenticated user has a way out of their shell" — `RootLayout.tsx`'s own
+> javadoc already flagged the nav as "deliberately still not auth-aware and
+> has no logout" pending this story.
+
+As an authenticated user,
+I want a visible way to log out from any screen,
+So that I can end my session instead of being permanently signed in with no way out.
+
+**Acceptance Criteria:**
+
+**Given** I am logged in as any role
+**When** I view any screen behind the root layout
+**Then** the nav shows a Logout control in place of the Register/Login links (Health stays visible either way — it isn't auth-specific)
+
+**Given** I click Logout
+**When** it completes
+**Then** my stored token is cleared and I land on `/login`, with the nav immediately reflecting the logged-out state (Register/Login reappear, Logout disappears) — no reload, consistent with how Story 3.1's language toggle already avoids one
+
+**Given** I am not logged in
+**When** I view the nav
+**Then** I see exactly the existing Register/Login/Health links and no Logout control — the unauthenticated experience is unchanged
+
+**Given** the nav's auth state
+**When** rendered
+**Then** it is derived fresh from `roleHome.ts`'s `getCurrentRole()` on each render, not cached separately — one source of truth for "am I logged in," reused rather than re-decoded
+
 ## Epic 3: The Portal Speaks Bulgarian and English
 
 Every screen delivered by Epic 1 and Epic 2 is fully usable in Bulgarian (default) or English, switchable at any time.
@@ -265,22 +308,43 @@ So that I can use the portal in my preferred language.
 **Given** a first-time, unauthenticated visit
 **When** the app loads
 **Then** it renders in Bulgarian by default
-**And** given I toggle the language, when I do, then all currently-visible text switches immediately without losing my place
+**And** given I toggle the language, when I do, then all text within this story's translated surface switches immediately — no reload, no navigation, no lost route state (full screen coverage is Story 3.2)
 **And** given I reload the page after toggling, when the app loads again, then my selected language persists (client-side only, per AD-8)
 
-### Story 3.2: Full Translation Coverage of Milestone 1 Screens
+### Story 3.2a: Screen Copy Translation
+
+> Story 3.2 was split into 3.2a and 3.2b during planning (2026-08-29). The
+> static copy is mechanical, roughly 38 strings; the error messaging carries
+> the whole architectural decision. Reviewing them together would have buried
+> the risky half under the rote half. Together they still deliver the original
+> Story 3.2 acceptance criteria, unchanged in substance.
 
 As a user,
-I want every screen and message built so far (login, registration, quote form/result, all four role shells, validation/error messages) to appear correctly in both languages,
-So that no part of the experience is left in the wrong language.
+I want every screen built so far (login, registration, quote form and breakdown, backend health, all four role shells) to read in my chosen language,
+So that the app is not a Bulgarian header over an English product.
 
 **Acceptance Criteria:**
 
 **Given** every screen delivered in Epic 1 and Epic 2
-**When** viewed in either language
-**Then** no untranslated key or English-fallback artifact is visible in the Bulgarian pass (PRD SM-4)
-**And** given a backend error response, when displayed to the user, then the frontend maps its `code` (AD-7) to a translated message — the raw backend `message` is never shown directly
+**When** viewed with Bulgarian active
+**Then** no English static copy is visible on any of them — headings, form labels, buttons, busy states, shell copy, and accessible names alike
+**And** given English is active, when viewed, then the copy reads exactly as it did before this story
+**And** given the existing test suites, when updated, then they assert the same behaviour through catalog-backed queries — never weakened to `data-testid` to dodge language-sensitive assertions
+
+### Story 3.2b: Error and Validation Message Translation
+
+As a user,
+I want every failure message — backend error codes, field-level validation, and the tariff zone label — to appear in my chosen language,
+So that no part of the experience falls back to English exactly when something has gone wrong.
+
+**Acceptance Criteria:**
+
+**Given** a backend error response
+**When** it is displayed to the user
+**Then** the frontend maps its `code` (AD-7) to a translated message — the raw backend `message` is never shown directly
+**And** given a field-level validation failure, when shown beside the input, then it is a translated per-field message, never Bean Validation's English text
 **And** given a new `code` is introduced by the backend, when it ships, then its i18n entry ships in the same change (AD-7's naming contract)
+**And** given a successful quote in Bulgarian, when the breakdown renders, then the tariff zone is labeled from `zoneId`, leaving no English on the screen (PRD SM-4)
 
 ## Epic 4: The Team Demos From a Clean Machine
 

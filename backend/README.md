@@ -11,6 +11,11 @@ and `quote` (Story 1.5).
 - Maven 3.9+ (or your IDE's bundled Maven)
 - Docker + Docker Compose (for local Postgres)
 
+Prefer to run the whole stack in containers instead? See the root README's
+[One-command alternative](../README.md#getting-started) (`docker compose up`)
+— it builds and starts postgres, backend, and frontend together, no local
+JDK/Maven/Node toolchain needed.
+
 ## Run natively against a containerized Postgres
 
 1. From the repo root, start Postgres only:
@@ -46,6 +51,11 @@ On startup, Flyway runs every migration under
 `src/main/resources/db/migration/` against the database. If Postgres is
 unreachable, the app fails fast with a clear error in the logs instead of
 starting in a broken state.
+
+One of those migrations (`V5__seed_staff_accounts.sql`) seeds the AGENT,
+LIQUIDATOR and ADMINISTRATOR demo accounts, since self-registration only ever
+creates CLIENT users. Their credentials are documented in one place only —
+the root README's [Demo accounts](../README.md#demo-accounts) section.
 
 ## Run tests
 

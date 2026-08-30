@@ -10,19 +10,32 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "typecheck": "tsc -b --noEmit"
+    "typecheck": "tsc -b --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
+    "i18next": "^26.4.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
+    "react-i18next": "^17.0.12",
     "react-router": "^8.3.0"
   },
   "devDependencies": {
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
     "@types/node": "^20.19.43",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
     "@vitejs/plugin-react": "^6.1.0",
+    "jsdom": "^26.1.0",
     "typescript": "^6.0.3",
-    "vite": "^8.2.2"
+    "vite": "^8.2.2",
+    "vitest": "^3.2.4"
+  },
+  "volta": {
+    "node": "20.20.2"
   }
 }

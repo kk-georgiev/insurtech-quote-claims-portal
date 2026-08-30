@@ -20,6 +20,11 @@ export function getToken(): string | null {
   return localStorage.getItem(TOKEN_STORAGE_KEY);
 }
 
+/** Clears the stored JWT (logout) — symmetric with {@link saveToken}. */
+export function clearToken(): void {
+  localStorage.removeItem(TOKEN_STORAGE_KEY);
+}
+
 /**
  * Shape of this backend's JWT payload (`auth/application/JwtService.java`):
  * exactly `sub` (user id) and `role` (Role enum name), plus the standard

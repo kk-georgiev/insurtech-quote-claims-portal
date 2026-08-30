@@ -1,0 +1,152 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main, dev]
+  push:
+    branches: [main, dev]
+  workflow_dispatch: {}
+
+# Cancel a superseded run when new commits land on the same PR, so only the
+# latest push is ever waited on. Scoped to pull_request only: cancelling a
+# push run on main/dev would leave an intermediate commit permanently
+# unverified if a fast-follow push lands before it finishes.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Backend (Maven test)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      # Temurin matches the JDK vendor documented in spec-2-1 for local dev
+      # (Eclipse Adoptium). No Maven wrapper exists in this repo (spec-2-1),
+      # so `mvn` below is the runner's system Maven, driven by this JDK.
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      # Testcontainers-backed tests (PricingServiceTest, QuoteControllerTest,
+      # AuthControllerTest, SeededStaffAccountsTest, ...) need a Docker
+      # daemon; ubuntu-latest GitHub-hosted runners ship one preinstalled and
+      # running, so no extra setup step is required here.
+      - name: mvn clean test
+        run: mvn --batch-mode --no-transfer-progress clean test
+
+  frontend:
+    name: Frontend (typecheck + test + build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: npm ci
+        run: npm ci
+
+      # Separate from `build` for a clearer failure signal: a red typecheck
+      # step means a type error, a red build step means something else
+      # (bundling, asset resolution). `build` itself also runs `tsc -b`
+      # first (package.json), so this duplicates that check on purpose.
+      - name: npm run typecheck
+        run: npm run typecheck
+
+      # Story 2.2's Vitest + Testing Library suite (jsdom env, no real
+      # backend or browser needed — api/client.ts is mocked per-test).
+      # `test` runs `vitest run` (single pass, non-watch) per package.json.
+      - name: npm test
+        run: npm test
+
+      - name: npm run build
+        run: npm run build
+
+  error-code-contract:
+    name: Error-code contract (backend <-> frontend i18n)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      # Plain Node, no dependencies - scripts/check-error-code-contract.mjs
+      # only uses built-in fs/path, so no `npm ci` is needed here.
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: node scripts/check-error-code-contract.mjs
+        run: node scripts/check-error-code-contract.mjs
+
+  docker-compose:
+    name: Docker Compose (build + smoke test)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      # No .env file is created here on purpose: every variable in
+      # docker-compose.yml has a `${VAR:-default}` fallback (Story 4.2), so a
+      # bare `docker compose up` works out of the box on a clean checkout.
+      # JWT_SECRET is the one exception: DeploymentSecretsGuard now fails
+      # backend startup fast under the `docker` profile if it's still that
+      # fallback placeholder (epic-1-retro-item-10) - exactly what a clean
+      # checkout would otherwise resolve to here. A real value, generated
+      # fresh per run and never persisted, keeps this job exercising the
+      # actual `docker compose up` path rather than working around the guard.
+      - name: Generate a JWT secret for this run
+        run: echo "JWT_SECRET=$(openssl rand -base64 48)" >> "$GITHUB_ENV"
+
+      # `--wait` is Compose v2's built-in wait-for-healthy/running gate (no
+      # custom polling loop needed) - it blocks until postgres and backend
+      # report healthy (frontend has no healthcheck yet, a separately
+      # tracked deferred item, so it's just waited on to be running).
+      # `--wait-timeout` caps that wait explicitly so a stuck/crash-looping
+      # container fails fast instead of hanging until the job's 15-minute
+      # timeout-minutes cancels it.
+      - name: docker compose up --build -d --wait
+        run: docker compose up --build -d --wait --wait-timeout 120
+
+      # --retry-connrefused (+ --retry) covers the frontend, which has no
+      # healthcheck of its own (a separately tracked deferred item) - `--wait`
+      # above only guarantees the container is running, not that nginx has
+      # finished binding its port yet. --max-time bounds a hung connection.
+      - name: Confirm backend health endpoint responds
+        run: curl --fail --max-time 10 --retry 5 --retry-delay 3 --retry-connrefused http://localhost:8080/actuator/health
+
+      - name: Confirm frontend root responds
+        run: curl --fail --max-time 10 --retry 5 --retry-delay 3 --retry-connrefused http://localhost:5173/
+
+      # Dumps every service's logs (and their last-known state) so a red run
+      # is debuggable from the Actions log alone. Also runs on a
+      # timeout-cancelled job (cancelled()), not just a failed step.
+      - name: Dump docker compose logs
+        if: failure() || cancelled()
+        run: |
+          docker compose ps
+          docker compose logs
+
+      - name: docker compose down -v
+        if: always()
+        run: docker compose down -v

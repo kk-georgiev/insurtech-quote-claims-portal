@@ -29,7 +29,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 08-23-2026 17:25
-last_updated: 08-27-2026 21:20
+last_updated: 08-30-2026 15:00
 project: Motor Insurance Quote & Claims Portal
 project_key: NOKEY
 tracking_system: file-system
@@ -42,25 +42,30 @@ development_status:
   1-4-backend-enforced-access-to-the-quote-endpoints: done
   1-5-quote-calculation-with-transparent-breakdown: done
   1-6-quote-persistence-and-retrieval: done
+  1-7-client-quote-flow-submit-and-see-the-breakdown: done
   epic-1-retrospective: done
 
-  epic-2: backlog
-  2-1-seeded-staff-demo-accounts: backlog
-  2-2-role-based-post-login-routing: backlog
-  2-3-placeholder-screens-for-agent-liquidator-and-administrator: backlog
-  2-4-frontend-route-guards-per-role: backlog
-  epic-2-retrospective: optional
+  epic-2: in-progress
+  2-1-seeded-staff-demo-accounts: done
+  2-2-role-based-post-login-routing: done
+  2-3-placeholder-screens-for-agent-liquidator-and-administrator: done
+  2-4-frontend-route-guards-per-role: done
+  2-5-logout-action-and-authenticated-navigation: review
+  epic-2-retrospective: done
 
-  epic-3: backlog
-  3-1-i18n-infrastructure-and-language-toggle: backlog
-  3-2-full-translation-coverage-of-milestone-1-screens: backlog
+  epic-3: done
+  3-1-i18n-infrastructure-and-language-toggle: done
+  3-2a-screen-copy-translation: done
+  3-2b-error-and-validation-message-translation: done
   epic-3-retrospective: optional
+  3-2b-error-message-translation: done
+  epic-3-retrospective: done
 
-  epic-4: backlog
-  4-1-backend-and-frontend-dockerfiles: backlog
-  4-2-one-command-full-stack-startup: backlog
-  4-3-local-dev-workflow-preserved-alongside-docker: backlog
-  epic-4-retrospective: optional
+  epic-4: done
+  4-1-backend-and-frontend-dockerfiles: done
+  4-2-one-command-full-stack-startup: done
+  4-3-local-dev-workflow-preserved-alongside-docker: done
+  epic-4-retrospective: done
 action_items:
   - id: "epic-1-retro-item-1-add-auth-module-test-coverage-registrati"
     epic: 1
@@ -138,3 +143,172 @@ action_items:
     owner: "Konstantin"
     status: done
     ref: "_bmad-output/implementation-artifacts/epic-1-retro-2026-08-26.md"
+  - id: "epic-2-retro-item-12-add-a-contract-integration-test-tying-th"
+    epic: 2
+    action: "Add a contract/integration test tying the backend JWT role claim wire
+      format to the frontend isRole/getCurrentRole/roleHome pipeline"
+    owner: "unassigned"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-2-retro-2026-08-29.md"
+  - id: "epic-2-retro-item-13-guard-login-and-register-against-an-alre"
+    epic: 2
+    action: "Guard /login and /register against an already-authenticated visitor (redirect
+      to roleHome(currentRole)); add a test for the already-logged-in re-login identity-swap
+      path"
+    owner: "unassigned"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-2-retro-2026-08-29.md"
+  - id: "epic-2-retro-item-14-de-duplicate-token-role-validation-have"
+    epic: 2
+    action: "De-duplicate token/role validation: have LoginForm.tsx reuse roleHome.ts
+      getCurrentRole() instead of re-implementing decodeToken+isRole inline"
+    owner: "unassigned"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-2-retro-2026-08-29.md"
+  - id: "epic-2-retro-item-15-doc-cleanup-refresh-stale-no-guard-until"
+    epic: 2
+    action: "Doc cleanup: refresh stale no-guard-until-2.4 comments on the 3 staff
+      shells and shells.test.tsx, authToken.ts decodeToken display-purposes-only comment,
+      and epic-2-context.md stale role-specific-navigation-menu line"
+    owner: "unassigned"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-2-retro-2026-08-29.md"
+  - id: "epic-2-retro-item-16-propose-a-new-story-logout-action-and-au"
+    epic: 2
+    action: "Propose a new story: Logout action and auth-aware RootLayout nav so an
+      authenticated user has a way out of their shell"
+    owner: "unassigned"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-2-retro-2026-08-29.md"
+  - id: "epic-4-retro-item-17-fix-stale-root-readme-docker-compose-des"
+    epic: 4
+    action: "Fix stale root-README Docker Compose descriptions in the Tech stack table
+      and Project structure map"
+    owner: "unassigned"
+    status: done
+    ref: "_bmad-output/implementation-artifacts/epic-4-retro-2026-08-29.md"
+  - id: "epic-4-retro-item-18-disambiguate-postgres_ports-two-meanings"
+    epic: 4
+    action: "Disambiguate POSTGRES_PORTs two meanings in docker-compose.yml with an
+      inline comment"
+    owner: "unassigned"
+    status: done
+    ref: "_bmad-output/implementation-artifacts/epic-4-retro-2026-08-29.md"
+  - id: "epic-4-retro-item-19-extend-the-readmes-rebuild-note-to-state"
+    epic: 4
+    action: "Extend the READMEs rebuild note to state that editing .env also requires
+      docker compose up --build"
+    owner: "unassigned"
+    status: done
+    ref: "_bmad-output/implementation-artifacts/epic-4-retro-2026-08-29.md"
+  - id: "epic-4-retro-item-20-correct-spec-4-2s-suggested-review-order"
+    epic: 4
+    action: "Correct spec-4-2s Suggested Review Order line citation for VITE_API_URL
+      from docker-compose.yml:64 to :68"
+    owner: "unassigned"
+    status: done
+    ref: "_bmad-output/implementation-artifacts/epic-4-retro-2026-08-29.md"
+  - id: "epic-4-retro-item-21-escalate-epic-1-retro-item-10-jwt-secret"
+    epic: 4
+    action: "Escalate epic-1-retro-item-10 (JWT-secret fail-fast guard) now that Epic
+      4 delivered a real deployment artifact"
+    owner: "unassigned"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-4-retro-2026-08-29.md"
+  - id: "epic-4-retro-item-22-add-a-ci-job-that-builds-and-exercises-t"
+    epic: 4
+    action: "Add a CI job that builds and exercises the Docker Compose stack (docker
+      compose up --build -d plus health-check polling)"
+    owner: "unassigned"
+    status: done
+    ref: "_bmad-output/implementation-artifacts/epic-4-retro-2026-08-29.md"
+  - id: "epic-4-retro-item-23-health-gate-frontends-depends_on-on-back"
+    epic: 4
+    action: "Health-gate frontends depends_on on backend (condition: service_healthy)
+      and add a frontend healthcheck"
+    owner: "unassigned"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-4-retro-2026-08-29.md"
+  - id: "epic-4-retro-item-24-enforce-or-derive-vite_api_url-from-back"
+    epic: 4
+    action: "Enforce or derive VITE_API_URL from BACKEND_PORT instead of relying on
+      a documentation comment alone"
+    owner: "unassigned"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-4-retro-2026-08-29.md"
+  - id: "epic-4-retro-item-25-consider-a-yaml-anchor-for-the-duplicate"
+    epic: 4
+    action: "Consider a YAML anchor for the duplicated Postgres credential fallbacks
+      in docker-compose.yml once a third consumer exists"
+    owner: "unassigned"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-4-retro-2026-08-29.md"
+  - id: "epic-3-retro-item-26-handle-i18n-changelanguage-s-rejection-i"
+    epic: 3
+    action: "Handle i18n.changeLanguage's rejection in LanguageToggle.tsx with a .catch()
+      instead of discarding the promise with void"
+    owner: "unassigned"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-3-retro-2026-08-30.md"
+  - id: "epic-3-retro-item-27-add-a-contract-check-tying-errormessages"
+    epic: 3
+    action: "Add a contract check tying errorMessages.ts's CODES list to the backend's
+      actual error-code enum, per Story 3.2b's own AC"
+    owner: "unassigned"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-3-retro-2026-08-30.md"
+  - id: "epic-3-retro-item-28-extend-the-bg-en-catalog-parity-test-to"
+    epic: 3
+    action: "Extend the bg/en catalog-parity test to assert interpolation placeholders
+      match, not just key sets, in LanguageToggle.test.tsx"
+    owner: "unassigned"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-3-retro-2026-08-30.md"
+  - id: "epic-3-retro-item-29-add-render-time-resolution-regression-te"
+    epic: 3
+    action: "Add render-time-resolution regression tests to RegisterForm.test.tsx
+      and QuoteForm.test.tsx mirroring LoginForm.test.tsx's language-switch tests"
+    owner: "unassigned"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-3-retro-2026-08-30.md"
+  - id: "epic-3-retro-item-30-fix-non-native-guillemet-quotes-in-en-js"
+    epic: 3
+    action: "Fix non-native guillemet quotes in en.json's region-code example strings
+      to standard English double quotes"
+    owner: "unassigned"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-3-retro-2026-08-30.md"
+  - id: "epic-3-retro-item-31-guard-errormessages-ts-s-key-interpolati"
+    epic: 3
+    action: "Guard errorMessages.ts's key interpolation against field/code names containing
+      a dot before building an i18next key path"
+    owner: "unassigned"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-3-retro-2026-08-30.md"
+  - id: "epic-3-retro-item-32-give-loginform-registerform-a-form-level"
+    epic: 3
+    action: "Give LoginForm/RegisterForm a form-level fallback when a backend fieldErrors
+      entry names a field with no rendered input"
+    owner: "unassigned"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-3-retro-2026-08-30.md"
+  - id: "epic-3-retro-item-33-add-a-test-for-quoteresult-s-zonefallbac"
+    epic: 3
+    action: "Add a test for QuoteResult's zoneFallback branch and make the fallback
+      translation lookup lazy instead of always-evaluated"
+    owner: "unassigned"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-3-retro-2026-08-30.md"
+  - id: "epic-3-retro-item-34-add-a-console-error-call-assertion-to-he"
+    epic: 3
+    action: "Add a console.error-call assertion to HealthStatus's failure-path tests"
+    owner: "unassigned"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-3-retro-2026-08-30.md"
+  - id: "epic-3-retro-item-35-escalate-epic-2-retro-item-14-loginform"
+    epic: 3
+    action: "Escalate epic-2-retro-item-14 (LoginForm token/role de-duplication) since
+      Story 3.2b touched LoginForm.tsx again without fixing it"
+    owner: "unassigned"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-3-retro-2026-08-30.md"

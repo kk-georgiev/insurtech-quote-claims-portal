@@ -82,6 +82,23 @@ jobs:
       - name: npm run build
         run: npm run build
 
+  error-code-contract:
+    name: Error-code contract (backend <-> frontend i18n)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      # Plain Node, no dependencies - scripts/check-error-code-contract.mjs
+      # only uses built-in fs/path, so no `npm ci` is needed here.
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: node scripts/check-error-code-contract.mjs
+        run: node scripts/check-error-code-contract.mjs
+
   docker-compose:
     name: Docker Compose (build + smoke test)
     runs-on: ubuntu-latest

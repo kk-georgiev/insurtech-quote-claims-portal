@@ -8,6 +8,8 @@ import { getToken } from '../../api/authToken';
 import { ApiRequestError, apiFetch } from '../../api/client';
 import { ROLES, roleHome } from '../../app/roleHome';
 import bg from '../../i18n/bg.json';
+import en from '../../i18n/en.json';
+import i18n from '../../i18n';
 
 // `apiFetch` is the only seam mocked — no backend, no network. The rest of
 // `api/client.ts` (notably `ApiRequestError`) stays real. `vitest.config.ts`
@@ -19,8 +21,8 @@ vi.mock('../../api/client', async (importOriginal) => {
 
 const mockedApiFetch = vi.mocked(apiFetch);
 
-const GENERIC_ERROR = 'Something went wrong. Please try again.';
-const INVALID_CREDENTIALS = 'Incorrect email or password.';
+const GENERIC_ERROR = bg.errors.generic;
+const INVALID_CREDENTIALS = bg.errors.codes.AUTH_INVALID_CREDENTIALS;
 const EMAIL = 'someone@example.com';
 const PASSWORD = 'DemoPass123!';
 
@@ -158,13 +160,13 @@ describe('LoginForm role-based post-login routing', () => {
 
     await fillAndSubmit(user);
 
-    expect(await screen.findByText('must be a well-formed email address')).toBeInTheDocument();
+    expect(await screen.findByText(bg.auth.login.fieldErrors.email)).toBeInTheDocument();
     expect(screen.queryByTestId('login-error')).not.toBeInTheDocument();
     expect(loginButton()).toBeEnabled();
 
     expect(emailField()).toHaveAttribute('aria-invalid', 'true');
     expect(emailField()).toHaveAttribute('aria-describedby', 'login-email-error');
-    expect(screen.getByText('must be a well-formed email address').id).toBe('login-email-error');
+    expect(screen.getByText(bg.auth.login.fieldErrors.email).id).toBe('login-email-error');
     // password had no field error - neither attribute is present.
     expect(passwordField()).not.toHaveAttribute('aria-invalid');
     expect(passwordField()).not.toHaveAttribute('aria-describedby');
@@ -242,5 +244,55 @@ describe('LoginForm role-based post-login routing', () => {
     // setState-after-unmount, so that assertion proved nothing; this one
     // proves the guard actually did something).
     expect(getToken()).toBeNull();
+  });
+});
+
+describe('LoginForm error messages follow a language change', () => {
+  // Regression: the form used to store the *resolved* string in state, so an
+  // error already on screen stayed in the language it was raised in until the
+  // user resubmitted. The failure is now held language-neutral and resolved
+  // during render.
+  it('re-translates a visible form-level error without resubmitting', async () => {
+    mockedApiFetch.mockRejectedValue(
+      new ApiRequestError('Request failed with status 401', 401, 'AUTH_INVALID_CREDENTIALS'),
+    );
+    const { user } = renderLogin();
+    await fillAndSubmit(user);
+
+    expect(await screen.findByTestId('login-error')).toHaveTextContent(
+      bg.errors.codes.AUTH_INVALID_CREDENTIALS,
+    );
+
+    await act(async () => {
+      await i18n.changeLanguage('en');
+    });
+
+    expect(screen.getByTestId('login-error')).toHaveTextContent(
+      en.errors.codes.AUTH_INVALID_CREDENTIALS,
+    );
+    // Exactly one request: the switch re-rendered, it did not resubmit.
+    expect(mockedApiFetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('re-translates a visible field-level error without resubmitting', async () => {
+    mockedApiFetch.mockRejectedValue(
+      new ApiRequestError('Request failed with status 400', 400, 'SHARED_VALIDATION_ERROR', [
+        { field: 'email', message: 'must be a well-formed email address' },
+      ]),
+    );
+    const { user } = renderLogin();
+    await fillAndSubmit(user);
+
+    expect(await screen.findByText(bg.auth.login.fieldErrors.email)).toBeInTheDocument();
+
+    await act(async () => {
+      await i18n.changeLanguage('en');
+    });
+
+    expect(screen.getByText(en.auth.login.fieldErrors.email)).toBeInTheDocument();
+    expect(screen.queryByText(bg.auth.login.fieldErrors.email)).not.toBeInTheDocument();
+    // Still wired to the input it describes after the re-render.
+    expect(screen.getByText(en.auth.login.fieldErrors.email).id).toBe('login-email-error');
+    expect(mockedApiFetch).toHaveBeenCalledTimes(1);
   });
 });

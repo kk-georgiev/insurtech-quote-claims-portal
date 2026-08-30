@@ -19,7 +19,11 @@ export function QuoteResult({ quote }: QuoteResultProps) {
       <h3>{t('quote.result.heading')}</h3>
       <dl>
         <dt>{t('quote.result.zone')}</dt>
-        <dd data-testid="quote-zoneName">{quote.zoneName}</dd>
+        <dd data-testid="quote-zoneName">
+          {t(`quote.result.zones.${quote.zoneId}`, {
+            defaultValue: t('quote.result.zoneFallback', { zoneId: quote.zoneId }),
+          })}
+        </dd>
 
         <dt>{t('quote.result.basePremium')}</dt>
         <dd data-testid="quote-basePremium">

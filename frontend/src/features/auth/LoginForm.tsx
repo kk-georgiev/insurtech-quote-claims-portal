@@ -3,9 +3,10 @@ import type { FormEvent } from 'react';
 import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { apiFetch, ApiRequestError } from '../../api/client';
-import type { ApiFieldError } from '../../api/client';
 import { saveToken, decodeToken } from '../../api/authToken';
 import { isRole, roleHome } from '../../app/roleHome';
+import { resolveFieldErrors, resolveFormError } from '../../i18n/errorMessages';
+import type { FieldFailure, FormFailure } from '../../i18n/errorMessages';
 
 interface LoginResponse {
   token: string;
@@ -13,23 +14,7 @@ interface LoginResponse {
 
 type FormPhase = 'editing' | 'submitting';
 
-// AD-7: `code` is the only thing the frontend uses to select user-facing
-// text - never the backend's dev/log-facing `message`. The screen copy moved
-// into the i18n catalogs in Story 3.2a, but these code-driven messages did
-// not: mapping backend codes to catalog entries is Story 3.2b, which will
-// delete these constants. Until then they stay plain English strings. Wrong password and
-// unknown email both map to AUTH_INVALID_CREDENTIALS and share this exact
-// message (spec Boundaries & Constraints) - nothing here distinguishes them.
-const INVALID_CREDENTIALS_MESSAGE = 'Incorrect email or password.';
-const GENERIC_ERROR_MESSAGE = 'Something went wrong. Please try again.';
 
-function toFieldErrorMap(errors: ApiFieldError[]): Record<string, string> {
-  const map: Record<string, string> = {};
-  for (const error of errors) {
-    map[error.field] = error.message;
-  }
-  return map;
-}
 
 /**
  * Login screen (Story 1.3, routing added Story 2.2). On success: decode the
@@ -53,8 +38,8 @@ export function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [phase, setPhase] = useState<FormPhase>('editing');
-  const [formError, setFormError] = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [formFailure, setFormFailure] = useState<FormFailure>(null);
+  const [fieldFailure, setFieldFailure] = useState<FieldFailure>(null);
 
   // Unmount guard, same intent/rationale as RegisterForm.tsx's cancelledRef:
   // the request can resolve after the user navigates away mid-submit, and
@@ -72,8 +57,8 @@ export function LoginForm() {
     event.preventDefault();
     if (phase === 'submitting') return;
     setPhase('submitting');
-    setFormError(null);
-    setFieldErrors({});
+    setFormFailure(null);
+    setFieldFailure(null);
 
     try {
       const response = await apiFetch<LoginResponse>('/api/v1/auth/login', {
@@ -88,7 +73,10 @@ export function LoginForm() {
       const decoded = decodeToken(response.token);
       if (!decoded || !isRole(decoded.role)) {
         setPhase('editing');
-        setFormError(GENERIC_ERROR_MESSAGE);
+        // Not a backend error - the request succeeded and the token came back
+        // unusable - so there is no `code` to resolve. Same generic copy the
+        // resolver falls back to, taken straight from the catalog.
+        setFormFailure({ source: null });
         return;
       }
 
@@ -108,17 +96,25 @@ export function LoginForm() {
 
       if (error instanceof ApiRequestError) {
         if (error.code === 'AUTH_INVALID_CREDENTIALS') {
-          setFormError(INVALID_CREDENTIALS_MESSAGE);
+          setFormFailure({ source: error });
           return;
         }
         if (error.fieldErrors && error.fieldErrors.length > 0) {
-          setFieldErrors(toFieldErrorMap(error.fieldErrors));
+          setFieldFailure({ fieldErrors: error.fieldErrors, code: error.code });
           return;
         }
       }
-      setFormError(GENERIC_ERROR_MESSAGE);
+      setFormFailure({ source: error });
     }
   }
+
+  // Resolved during render, never stored resolved: an error already on
+  // screen must re-translate the instant the language changes, with no
+  // resubmit. `formFailure`/`fieldFailure` hold language-neutral sources.
+  const formError = formFailure ? resolveFormError(formFailure.source, t) : null;
+  const fieldErrors = fieldFailure
+    ? resolveFieldErrors(fieldFailure.fieldErrors, 'auth.login', fieldFailure.code, t)
+    : {};
 
   const submitting = phase === 'submitting';
 

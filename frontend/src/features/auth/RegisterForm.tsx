@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { apiFetch, ApiRequestError } from '../../api/client';
-import type { ApiFieldError } from '../../api/client';
+import { resolveFieldErrors, resolveFormError } from '../../i18n/errorMessages';
+import type { FieldFailure, FormFailure } from '../../i18n/errorMessages';
 
 interface RegisterResponse {
   id: string;
@@ -12,20 +13,7 @@ interface RegisterResponse {
 
 type FormPhase = 'editing' | 'submitting' | 'success';
 
-// AD-7: `code` is the only thing the frontend uses to select user-facing
-// text - never the backend's dev/log-facing `message`. The screen copy moved
-// into the i18n catalogs in Story 3.2a; these code-driven messages are
-// Story 3.2b's, which will delete these constants. Plain English until then.
-const EMAIL_TAKEN_MESSAGE = 'This email is already registered.';
-const GENERIC_ERROR_MESSAGE = 'Something went wrong. Please try again.';
 
-function toFieldErrorMap(errors: ApiFieldError[]): Record<string, string> {
-  const map: Record<string, string> = {};
-  for (const error of errors) {
-    map[error.field] = error.message;
-  }
-  return map;
-}
 
 /**
  * Client self-registration screen (Story 1.2). Always registers as CLIENT -
@@ -39,8 +27,8 @@ export function RegisterForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [phase, setPhase] = useState<FormPhase>('editing');
-  const [formError, setFormError] = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [formFailure, setFormFailure] = useState<FormFailure>(null);
+  const [fieldFailure, setFieldFailure] = useState<FieldFailure>(null);
 
   // Unmount guard, same intent as HealthStatus.tsx's `cancelled` flag: the
   // request can still resolve after the user navigates away mid-submit, and
@@ -64,8 +52,8 @@ export function RegisterForm() {
     event.preventDefault();
     if (phase === 'submitting') return;
     setPhase('submitting');
-    setFormError(null);
-    setFieldErrors({});
+    setFormFailure(null);
+    setFieldFailure(null);
 
     try {
       await apiFetch<RegisterResponse>('/api/v1/auth/register', {
@@ -82,15 +70,15 @@ export function RegisterForm() {
 
       if (error instanceof ApiRequestError) {
         if (error.code === 'AUTH_EMAIL_TAKEN') {
-          setFormError(EMAIL_TAKEN_MESSAGE);
+          setFormFailure({ source: error });
           return;
         }
         if (error.fieldErrors && error.fieldErrors.length > 0) {
-          setFieldErrors(toFieldErrorMap(error.fieldErrors));
+          setFieldFailure({ fieldErrors: error.fieldErrors, code: error.code });
           return;
         }
       }
-      setFormError(GENERIC_ERROR_MESSAGE);
+      setFormFailure({ source: error });
     }
   }
 
@@ -104,6 +92,14 @@ export function RegisterForm() {
       </section>
     );
   }
+
+  // Resolved during render, never stored resolved: an error already on
+  // screen must re-translate the instant the language changes, with no
+  // resubmit. `formFailure`/`fieldFailure` hold language-neutral sources.
+  const formError = formFailure ? resolveFormError(formFailure.source, t) : null;
+  const fieldErrors = fieldFailure
+    ? resolveFieldErrors(fieldFailure.fieldErrors, 'auth.register', fieldFailure.code, t)
+    : {};
 
   const submitting = phase === 'submitting';
 

@@ -17,8 +17,8 @@ vi.mock('../../api/client', async (importOriginal) => {
 
 const mockedApiFetch = vi.mocked(apiFetch);
 
-const GENERIC_ERROR = 'Something went wrong. Please try again.';
-const EMAIL_TAKEN = 'This email is already registered.';
+const GENERIC_ERROR = bg.errors.generic;
+const EMAIL_TAKEN = bg.errors.codes.AUTH_EMAIL_TAKEN;
 const EMAIL = 'someone@example.com';
 const PASSWORD = 'DemoPass123!';
 
@@ -88,17 +88,17 @@ describe('RegisterForm', () => {
 
     await fillAndSubmit(user);
 
-    expect(await screen.findByText('must be a well-formed email address')).toBeInTheDocument();
-    expect(screen.getByText('size must be between 8 and 100')).toBeInTheDocument();
+    expect(await screen.findByText(bg.auth.register.fieldErrors.email)).toBeInTheDocument();
+    expect(screen.getByText(bg.auth.register.fieldErrors.password)).toBeInTheDocument();
     expect(screen.queryByTestId('register-error')).not.toBeInTheDocument();
     expect(registerButton()).toBeEnabled();
 
     expect(emailField()).toHaveAttribute('aria-invalid', 'true');
     expect(emailField()).toHaveAttribute('aria-describedby', 'register-email-error');
-    expect(screen.getByText('must be a well-formed email address').id).toBe('register-email-error');
+    expect(screen.getByText(bg.auth.register.fieldErrors.email).id).toBe('register-email-error');
     expect(passwordField()).toHaveAttribute('aria-invalid', 'true');
     expect(passwordField()).toHaveAttribute('aria-describedby', 'register-password-error');
-    expect(screen.getByText('size must be between 8 and 100').id).toBe('register-password-error');
+    expect(screen.getByText(bg.auth.register.fieldErrors.password).id).toBe('register-password-error');
   });
 
   it('falls back to a generic form-level error on a plain network error (not an ApiRequestError)', async () => {

@@ -29,7 +29,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 08-23-2026 17:25
-last_updated: 08-29-2026 23:33
+last_updated: 08-30-2026 00:13
 project: Motor Insurance Quote & Claims Portal
 project_key: NOKEY
 tracking_system: file-system
@@ -56,8 +56,8 @@ development_status:
   3-1-i18n-infrastructure-and-language-toggle: done
   # Story 3.2 was split into 3.2a/3.2b during planning (2026-08-29); see the
   # note in epics.md. Together they cover the original 3.2 acceptance criteria.
-  3-2a-screen-copy-translation: in-progress
-  3-2b-error-message-translation: backlog
+  3-2a-screen-copy-translation: done
+  3-2b-error-message-translation: review
   epic-3-retrospective: optional
 
   epic-4: in-progress
@@ -219,7 +219,7 @@ action_items:
     action: "Add a CI job that builds and exercises the Docker Compose stack (docker
       compose up --build -d plus health-check polling)"
     owner: "unassigned"
-    status: open
+    status: done
     ref: "_bmad-output/implementation-artifacts/epic-4-retro-2026-08-29.md"
   - id: "epic-4-retro-item-23-health-gate-frontends-depends_on-on-back"
     epic: 4

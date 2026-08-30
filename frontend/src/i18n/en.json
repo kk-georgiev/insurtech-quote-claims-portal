@@ -56,7 +56,7 @@
       "submitting": "Calculating…",
       "fieldErrors": {
         "driverAge": "The driver age must be a whole number between 18 and 100.",
-        "regionCode": "Enter a region code from the registration plate, for example „CA“.",
+        "regionCode": "Enter a region code from the registration plate, for example \"CA\".",
         "engineCc": "The engine size must be a whole number between 800 and 8000 cc.",
         "installments": "The number of installments must be 1, 2 or 4."
       }
@@ -106,7 +106,7 @@
       "AUTH_FORBIDDEN": "You do not have permission to do that.",
       "AUTH_INVALID_CREDENTIALS": "Incorrect email or password.",
       "AUTH_EMAIL_TAKEN": "An account with this email already exists.",
-      "PRICING_UNKNOWN_REGION": "Unknown region code. Use the code from the registration plate, for example „CA“ or „CB“.",
+      "PRICING_UNKNOWN_REGION": "Unknown region code. Use the code from the registration plate, for example \"CA\" or \"CB\".",
       "PRICING_UNSUPPORTED_INSTALLMENTS": "The selected number of installments is not supported. Choose 1, 2 or 4.",
       "QUOTE_NOT_FOUND": "Quote not found.",
       "SHARED_VALIDATION_ERROR": "Please check the details you entered.",

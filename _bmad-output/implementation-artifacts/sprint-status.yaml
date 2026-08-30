@@ -29,7 +29,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 08-23-2026 17:25
-last_updated: 08-30-2026 00:13
+last_updated: 08-30-2026 12:30
 project: Motor Insurance Quote & Claims Portal
 project_key: NOKEY
 tracking_system: file-system
@@ -52,15 +52,15 @@ development_status:
   2-4-frontend-route-guards-per-role: done
   epic-2-retrospective: done
 
-  epic-3: in-progress
+  epic-3: done
   3-1-i18n-infrastructure-and-language-toggle: done
   # Story 3.2 was split into 3.2a/3.2b during planning (2026-08-29); see the
   # note in epics.md. Together they cover the original 3.2 acceptance criteria.
   3-2a-screen-copy-translation: done
-  3-2b-error-message-translation: review
-  epic-3-retrospective: optional
+  3-2b-error-message-translation: done
+  epic-3-retrospective: done
 
-  epic-4: in-progress
+  epic-4: done
   4-1-backend-and-frontend-dockerfiles: done
   4-2-one-command-full-stack-startup: done
   4-3-local-dev-workflow-preserved-alongside-docker: done
@@ -242,3 +242,72 @@ action_items:
     owner: "unassigned"
     status: open
     ref: "_bmad-output/implementation-artifacts/epic-4-retro-2026-08-29.md"
+  - id: "epic-3-retro-item-26-handle-i18n-changelanguage-s-rejection-i"
+    epic: 3
+    action: "Handle i18n.changeLanguage's rejection in LanguageToggle.tsx with a .catch()
+      instead of discarding the promise with void"
+    owner: "unassigned"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-3-retro-2026-08-30.md"
+  - id: "epic-3-retro-item-27-add-a-contract-check-tying-errormessages"
+    epic: 3
+    action: "Add a contract check tying errorMessages.ts's CODES list to the backend's
+      actual error-code enum, per Story 3.2b's own AC"
+    owner: "unassigned"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-3-retro-2026-08-30.md"
+  - id: "epic-3-retro-item-28-extend-the-bg-en-catalog-parity-test-to"
+    epic: 3
+    action: "Extend the bg/en catalog-parity test to assert interpolation placeholders
+      match, not just key sets, in LanguageToggle.test.tsx"
+    owner: "unassigned"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-3-retro-2026-08-30.md"
+  - id: "epic-3-retro-item-29-add-render-time-resolution-regression-te"
+    epic: 3
+    action: "Add render-time-resolution regression tests to RegisterForm.test.tsx
+      and QuoteForm.test.tsx mirroring LoginForm.test.tsx's language-switch tests"
+    owner: "unassigned"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-3-retro-2026-08-30.md"
+  - id: "epic-3-retro-item-30-fix-non-native-guillemet-quotes-in-en-js"
+    epic: 3
+    action: "Fix non-native guillemet quotes in en.json's region-code example strings
+      to standard English double quotes"
+    owner: "unassigned"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-3-retro-2026-08-30.md"
+  - id: "epic-3-retro-item-31-guard-errormessages-ts-s-key-interpolati"
+    epic: 3
+    action: "Guard errorMessages.ts's key interpolation against field/code names containing
+      a dot before building an i18next key path"
+    owner: "unassigned"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-3-retro-2026-08-30.md"
+  - id: "epic-3-retro-item-32-give-loginform-registerform-a-form-level"
+    epic: 3
+    action: "Give LoginForm/RegisterForm a form-level fallback when a backend fieldErrors
+      entry names a field with no rendered input"
+    owner: "unassigned"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-3-retro-2026-08-30.md"
+  - id: "epic-3-retro-item-33-add-a-test-for-quoteresult-s-zonefallbac"
+    epic: 3
+    action: "Add a test for QuoteResult's zoneFallback branch and make the fallback
+      translation lookup lazy instead of always-evaluated"
+    owner: "unassigned"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-3-retro-2026-08-30.md"
+  - id: "epic-3-retro-item-34-add-a-console-error-call-assertion-to-he"
+    epic: 3
+    action: "Add a console.error-call assertion to HealthStatus's failure-path tests"
+    owner: "unassigned"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-3-retro-2026-08-30.md"
+  - id: "epic-3-retro-item-35-escalate-epic-2-retro-item-14-loginform"
+    epic: 3
+    action: "Escalate epic-2-retro-item-14 (LoginForm token/role de-duplication) since
+      Story 3.2b touched LoginForm.tsx again without fixing it"
+    owner: "unassigned"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-3-retro-2026-08-30.md"

@@ -4,7 +4,7 @@
 
 ## Goal
 
-Any of the four roles — CLIENT plus the three staff roles provisioned via seed data — logs in and lands on their own correctly role-guarded navigation shell, proving the role model is structurally real rather than cosmetic. Epic 1 proved one role end to end; this epic proves the role *system*: staff accounts exist after a fresh migration with no manual setup, login routes each user automatically to their own shell, every role has a distinct role-labeled screen, and the frontend refuses to render another role's screens even on manual URL navigation. Only the CLIENT shell carries real functionality (Epic 1's quote flow); the staff shells are deliberately static placeholders whose whole job is to make role separation visible. This is structural proof for the demo, not the start of staff functionality.
+Any of the four roles — CLIENT plus the three staff roles provisioned via seed data — logs in and lands on their own correctly role-guarded navigation shell, proving the role model is structurally real rather than cosmetic. Epic 1 proved one role end to end; this epic proves the role *system*: staff accounts exist after a fresh migration with no manual setup, login routes each user automatically to their own shell, every role has a distinct role-labeled screen, the frontend refuses to render another role's screens even on manual URL navigation, and any authenticated user has a visible way to end their session. This is structural proof for the demo, not the start of staff functionality.
 
 ## Stories
 
@@ -12,6 +12,7 @@ Any of the four roles — CLIENT plus the three staff roles provisioned via seed
 - Story 2.2: Role-Based Post-Login Routing
 - Story 2.3: Placeholder Screens for Agent, Liquidator, and Administrator
 - Story 2.4: Frontend Route Guards Per Role
+- Story 2.5: Logout Action and Authenticated Navigation
 
 ## Requirements & Constraints
 
@@ -23,8 +24,9 @@ Any of the four roles — CLIENT plus the three staff roles provisioned via seed
 - Every role has at least one reachable, distinctly role-labeled screen. Staff screens are static and non-interactive (e.g. "Agent workspace — coming soon") — exactly one placeholder per staff role, with no sub-navigation inside a role.
 - Manual navigation to another role's URL redirects the user back to their own shell and never renders the other role's content; this must hold symmetrically for every role against every other role's routes.
 - The frontend guard is a UX convenience, never the security boundary. Backend role checks (401 for missing/invalid token, 403 for wrong role) stand independently of anything the frontend does, and a direct API call carrying the wrong role's token must still be rejected server-side.
+- Every authenticated user, regardless of role, must have a visible logout control in the shared navigation; logging out clears the stored token and returns the user to `/login`, with nav state updating immediately and no full page reload. The unauthenticated nav (Register/Login/Health) is otherwise unchanged.
 - Out of scope: any real staff functionality (agent-assisted quoting, claim review queues, tariff administration), per-role sub-navigation, visual polish, and mobile/responsive layout. Screens must be functional and correctly gated, not finished-looking.
-- Translation of the new shell copy is a later concern, but any new backend error code introduced here ships with its matching i18n entry in the same change.
+- Translation of the new shell and nav copy is a later concern, but any new backend error code introduced here ships with its matching i18n entry in the same change.
 
 ## Technical Decisions
 
@@ -33,15 +35,17 @@ Any of the four roles — CLIENT plus the three staff roles provisioned via seed
 - Role authorization stays backend-enforced on every protected endpoint via the one shared JWT validation filter; modules read the current user and Role from the security context, never by calling `auth` directly.
 - Frontend routing is owned entirely by React Router v8. Exactly one role-guard wrapper component gates every role-restricted route — never per-screen ad hoc role checks. The user's Role for routing purposes comes from the login token.
 - Frontend layout for this epic: router setup, root layout, and the role-guard wrapper live under `frontend/src/app`; the static staff screens live under `frontend/src/features/shells/{agent,liquidator,administrator}`; the client shell's real content is Epic 1's `features/quote`.
+- The root layout's navigation derives its authenticated/unauthenticated state fresh on each render from the same single source of truth already used for routing decisions (the current-role helper), rather than tracking auth state separately — avoiding two places that can disagree about whether a user is logged in.
+- Logging out is a client-side-only action this milestone: it clears the locally stored token and navigates to `/login`, consistent with there being no refresh-token/session-revocation mechanism (AD-3) — there is no backend logout endpoint to call.
 - All backend calls go through the single typed `fetch`-based API client module — no data-fetching library this milestone.
 - Errors keep the uniform `{timestamp, status, code, message, fieldErrors}` envelope produced by the one centralized handler in `shared`; `code` is a stable, language-independent `MODULE_REASON` key and is the only thing the frontend maps to display text.
-- The backend emits no localized prose; i18n is 100% frontend-owned with keys namespaced per feature (`auth.*`, `quote.*`, `shells.*`), so the placeholder screen labels are frontend copy from the start.
+- The backend emits no localized prose; i18n is 100% frontend-owned with keys namespaced per feature (`auth.*`, `quote.*`, `shells.*`), so the placeholder screen labels and nav copy are frontend copy from the start.
 - Conventions carried from Epic 1: `UUID` ids, `Instant` timestamps stored UTC, `snake_case` plural tables, REST under `/api/v1`, and the frontend API base URL always resolved from `VITE_API_URL`, never hardcoded.
 - Stack pins: Java 21, Spring Boot 4.1.1, Maven, PostgreSQL 18, Flyway, React 19, TypeScript 6.x, Vite 8, React Router 8, react-i18next.
 
 ## UX & Interaction Patterns
 
-The staff journey this epic realizes: a staff user arrives unauthenticated at the login screen, logs in with seeded credentials, and is routed automatically to their own navigation shell — not the client one, not another staff role's. They see a role-labeled placeholder screen and a role-specific navigation menu, which is the visible proof that role separation is real. They cannot navigate into another role's area, and hitting another role's API directly is rejected by the backend rather than merely hidden by the UI. No visual design work is expected: correctness of gating and labeling is the deliverable.
+The staff journey this epic realizes: a staff user arrives unauthenticated at the login screen, logs in with seeded credentials, and is routed automatically to their own navigation shell — not the client one, not another staff role's. They see a role-labeled placeholder screen and a role-specific navigation menu, which is the visible proof that role separation is real. They cannot navigate into another role's area, and hitting another role's API directly is rejected by the backend rather than merely hidden by the UI. Every authenticated user, of any role, also sees a Logout control in the shared root layout's nav in place of Register/Login (a Health link stays visible regardless of auth state); clicking it ends the session and returns them to the login screen without a reload, mirroring the no-reload pattern already established by the language toggle. No visual design work is expected: correctness of gating and labeling is the deliverable.
 
 ## Cross-Story Dependencies
 
@@ -49,6 +53,7 @@ The staff journey this epic realizes: a staff user arrives unauthenticated at th
 - Story 2.2 depends on Epic 1's login issuing a Role-bearing token, and on Epic 1's quote flow existing as the CLIENT shell's destination.
 - Story 2.3 supplies the staff destinations that Story 2.2 routes to, so routing for staff roles is only demonstrable once those screens exist.
 - Story 2.4 builds on 2.2's routing and 2.3's screens, and must be implemented as the single shared role-guard wrapper rather than as checks added to individual screens.
+- Story 2.5 builds on the root layout and the current-role helper already established by 2.2/2.4's routing work, and reuses the no-reload interaction pattern Story 3.1 (Epic 3) establishes for the language toggle.
 - Backend-enforced authorization from Epic 1 remains the real security boundary underneath this epic's frontend guard; the two are independently testable and must not be conflated.
-- Epic 3 depends on all four shells and their copy existing here, so it can deliver full Bulgarian/English coverage with no untranslated text.
+- Epic 3 depends on all four shells, the nav (including the logout control), and their copy existing here, so it can deliver full Bulgarian/English coverage with no untranslated text.
 - Epic 4's clean-machine demo depends on Story 2.1's seeded accounts appearing automatically during the one-command startup's migrations, with no manual database intervention.

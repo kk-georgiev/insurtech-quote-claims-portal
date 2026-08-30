@@ -4,6 +4,7 @@
     "nav": {
       "register": "Register",
       "login": "Login",
+      "logout": "Logout",
       "health": "Health"
     },
     "language": {

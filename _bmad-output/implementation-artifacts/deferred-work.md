@@ -339,3 +339,17 @@ Append-only. Entries collected from bmad-build review loopbacks. Do not modify e
 - source_spec: `_bmad-output/implementation-artifacts/spec-4-3-local-dev-workflow-preserved-alongside-docker.md`
   summary: The one-line Docker cross-reference this story added to `backend/README.md`/`frontend/README.md` is one-directional — the root README's "Getting started" section doesn't link back to either module README for a reader who wants the native-dev path's full detail.
   evidence: Review-loop finding (blind-hunter). Minor discoverability gap, not required by this story's frozen scope (which only specified the forward pointer from each module README). Worth a symmetric link back if the root README's Getting Started section is revisited.
+
+## Deferred from: Story 2.5 review (2026-08-30)
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-2-5-logout-action-and-authenticated-navigation.md`
+  summary: `RootLayout`'s nav doesn't react to a token cleared or set in a different browser tab — logging out in one tab leaves other open tabs of the same app showing stale authenticated nav until their next navigation/render.
+  evidence: Review-loop finding (blind-hunter + edge-case-hunter, both independently). `getCurrentRole()` is read fresh on every render but nothing subscribes to the `storage` event, so a background tab never re-renders on its own. Not a security issue (the frontend guard is UX-only per AD-4; the backend still rejects requests with no valid token), and multi-tab usage isn't a stated requirement anywhere in this milestone's scope — worth a `window.addEventListener('storage', ...)` listener if cross-tab consistency becomes a real user complaint.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-2-5-logout-action-and-authenticated-navigation.md`
+  summary: The auth-aware nav (and `RoleGuard`, which predates this story) treats any token with a well-formed `role` claim as "logged in," with no check against the token's own `exp` claim — an expired-but-not-yet-cleared token still renders the Logout control and an authenticated-looking nav.
+  evidence: Review-loop finding (blind-hunter + edge-case-hunter, both independently). Pre-existing gap in `getCurrentRole()`/`decodeToken` (`app/roleHome.ts`, `api/authToken.ts`), not introduced by Story 2.5 — `RoleGuard` already had the same blind spot for its own redirect decisions since Story 2.4. This story just reuses the existing helper for a new purpose (nav) and inherits the limitation rather than creating it. A real backend call would still fail correctly on an expired token (AD-3/Story 1.4); the only user-visible symptom is a nav that looks logged-in until the next failed request.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-2-5-logout-action-and-authenticated-navigation.md`
+  summary: Clicking Logout navigates via `navigate('/login', { replace: true })` with no focus management — focus is left wherever it was rather than moved to the login screen's heading or main content.
+  evidence: Review-loop finding (blind-hunter). A real accessibility regression for keyboard/screen-reader users compared to a full page navigation, but accessibility/focus management is not a stated requirement anywhere in this milestone's epics or PRD (visual polish and mobile/responsive layout are explicit non-goals in the Epic 2 context), so it wasn't treated as in-scope for this story. Worth addressing if an accessibility pass is ever scoped for this project.

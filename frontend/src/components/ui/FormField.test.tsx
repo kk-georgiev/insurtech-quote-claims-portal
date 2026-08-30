@@ -54,6 +54,19 @@ describe('FormField', () => {
     expect(wrapper?.className).toContain('space-y-1');
   });
 
+  it('uses the errorId override verbatim for both the error id and aria-describedby', () => {
+    render(
+      <FormField label="Email" error="Email is required" errorId="login-email-error">
+        <Input invalid />
+      </FormField>,
+    );
+    expect(screen.getByRole('alert')).toHaveAttribute('id', 'login-email-error');
+    expect(screen.getByLabelText('Email')).toHaveAttribute(
+      'aria-describedby',
+      'login-email-error',
+    );
+  });
+
   it('keeps the error text out of the label so the label name stays just the field name', () => {
     render(
       <FormField label="Email" error="Email is required">

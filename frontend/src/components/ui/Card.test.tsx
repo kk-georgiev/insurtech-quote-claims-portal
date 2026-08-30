@@ -18,6 +18,19 @@ describe('Card', () => {
     expect(container.querySelector('h3')).not.toBeInTheDocument();
   });
 
+  it('defaults the title to h3, and renders h2 when titleAs="h2" (review-loop finding)', () => {
+    const { container, rerender } = render(<Card title="Quote summary">Content</Card>);
+    expect(container.querySelector('h3')).toHaveTextContent('Quote summary');
+
+    rerender(
+      <Card title="Log in" titleAs="h2">
+        Content
+      </Card>,
+    );
+    expect(container.querySelector('h2')).toHaveTextContent('Log in');
+    expect(container.querySelector('h3')).not.toBeInTheDocument();
+  });
+
   it('renders a footer when provided', () => {
     render(<Card footer={<span>Footer text</span>}>Content</Card>);
     expect(screen.getByText('Footer text')).toBeInTheDocument();

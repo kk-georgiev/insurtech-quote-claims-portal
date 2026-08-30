@@ -301,6 +301,29 @@ describe('translation catalogs', () => {
     expect(keys(bg).sort()).toEqual(keys(en).sort());
   });
 
+  // The key-set check above doesn't catch a mistyped or renamed {{placeholder}}
+  // within an otherwise-matching key - a translator fixing bg.json's wording
+  // could rename {{zoneId}} to {{zoneID}} and both prior tests would still
+  // pass, then i18next would render the literal "{{zoneID}}" to a real user
+  // (Epic 3 retro action item, adversarial finding).
+  it('uses the same interpolation placeholders in both catalogs for every key', () => {
+    const placeholders = (value: string): string[] =>
+      [...value.matchAll(/\{\{(\w+)\}\}/g)].map((match) => match[1]).sort();
+
+    const leafEntries = (value: unknown, prefix = ''): Array<[string, string]> =>
+      typeof value === 'object' && value !== null
+        ? Object.entries(value).flatMap(([key, child]) =>
+            leafEntries(child, prefix ? `${prefix}.${key}` : key),
+          )
+        : [[prefix, String(value)]];
+
+    const englishPlaceholders = new Map(leafEntries(en).map(([key, value]) => [key, placeholders(value)]));
+
+    for (const [key, bulgarian] of leafEntries(bg)) {
+      expect(placeholders(bulgarian), `${key} placeholder mismatch`).toEqual(englishPlaceholders.get(key));
+    }
+  });
+
   // The two language *option* labels are deliberately identical across
   // catalogs: each option is named in its own language so a visitor who
   // cannot read the current one can still find theirs.

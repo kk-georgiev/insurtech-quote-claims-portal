@@ -7,6 +7,9 @@ import com.motorinsurance.quote.api.QuoteResponse;
 import com.motorinsurance.quote.domain.Quote;
 import com.motorinsurance.quote.persistence.QuoteRepository;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +22,8 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Service
 public class QuoteService {
+
+    private static final Logger log = LoggerFactory.getLogger(QuoteService.class);
 
     private final PricingService pricingService;
     private final QuoteRepository quoteRepository;
@@ -48,7 +53,25 @@ public class QuoteService {
                 result.totalPremium(),
                 result.installmentAmount(),
                 result.currency());
-        Quote saved = quoteRepository.save(quote);
+
+        Quote saved;
+        try {
+            // saveAndFlush, not save: forces the INSERT (and thus the
+            // customer_id foreign-key check) to run now, inside this
+            // try/catch, rather than being deferred to this method's
+            // @Transactional commit - where a DataIntegrityViolationException
+            // would surface outside any catch block here.
+            saved = quoteRepository.saveAndFlush(quote);
+        } catch (DataIntegrityViolationException ex) {
+            // Only reachable via customer_id's FK into users (every other
+            // NOT NULL column is guaranteed by CreateQuoteRequest's Bean
+            // Validation or PricingService's own computed values) - a token
+            // whose subject no longer identifies a real account. No account-
+            // deletion feature exists yet, so this is currently unreachable
+            // in production, but was previously an unhandled 500 (epic-1-retro-item-5).
+            log.warn("Rejected quote calculation: customer id {} has no matching account", customerId, ex);
+            throw new QuoteCustomerNotFoundException(customerId);
+        }
 
         return toResponse(saved);
     }

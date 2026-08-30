@@ -12,7 +12,9 @@ app:
 # clearly-labeled dev-only value so `mvn spring-boot:run` still works out of
 # the box on a clean checkout; a real deployment overrides it via the actual
 # JWT_SECRET environment variable (documented in .env.example). Must stay at
-# least 32 bytes long - HS256 requires a >=256-bit signing key.
+# least 32 bytes long - HS256 requires a >=256-bit signing key. Under the
+# `docker` profile, DeploymentSecretsGuard fails startup fast if this - or
+# the .env.example placeholder - is still active (epic-1-retro-item-10).
 jwt:
   secret: ${JWT_SECRET:insecure-dev-only-default-jwt-secret-do-not-use-in-any-real-deployment-override-via-JWT_SECRET}
   expiration-hours: 8

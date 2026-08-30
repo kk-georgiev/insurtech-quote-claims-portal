@@ -61,7 +61,9 @@ development. Pulled new code, or changed `.env` (e.g. `VITE_API_URL`,
 `BACKEND_PORT`)? Re-run with `docker compose up --build` — a plain `up`
 reuses the previously built images, including the frontend's baked-in
 `VITE_API_URL`. To stop everything, `docker compose down` (add `-v` to also
-drop the Postgres data volume).
+drop the Postgres data volume). The containerized backend refuses to start
+if `JWT_SECRET` in `.env` is still the placeholder from `.env.example` —
+generate a real one first (`openssl rand -base64 48`).
 
 ### Demo accounts
 

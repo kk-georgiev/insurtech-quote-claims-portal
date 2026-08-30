@@ -4,6 +4,10 @@ import { useTranslation } from 'react-i18next';
 import { apiFetch, ApiRequestError } from '../../api/client';
 import { resolveFieldErrors, resolveFormError } from '../../i18n/errorMessages';
 import type { FieldFailure, FormFailure } from '../../i18n/errorMessages';
+import { Button } from '../../components/ui/Button';
+import { Card } from '../../components/ui/Card';
+import { FormField } from '../../components/ui/FormField';
+import { Input } from '../../components/ui/Input';
 
 interface RegisterResponse {
   id: string;
@@ -84,12 +88,11 @@ export function RegisterForm() {
 
   if (phase === 'success') {
     return (
-      <section>
-        <h2>{t('auth.register.success')}</h2>
+      <Card title={t('auth.register.success')} titleAs="h2">
         <p data-testid="register-success">
           {t('auth.register.successBody')}
         </p>
-      </section>
+      </Card>
     );
   }
 
@@ -104,12 +107,14 @@ export function RegisterForm() {
   const submitting = phase === 'submitting';
 
   return (
-    <section>
-      <h2>{t('auth.register.heading')}</h2>
-      <form onSubmit={handleSubmit} noValidate>
-        <div>
-          <label htmlFor="register-email">{t('auth.register.email')}</label>
-          <input
+    <Card title={t('auth.register.heading')} titleAs="h2">
+      <form onSubmit={handleSubmit} noValidate className="space-y-4">
+        <FormField
+          label={t('auth.register.email')}
+          error={fieldErrors.email}
+          errorId="register-email-error"
+        >
+          <Input
             id="register-email"
             name="email"
             type="email"
@@ -118,18 +123,15 @@ export function RegisterForm() {
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             disabled={submitting}
-            aria-invalid={fieldErrors.email ? true : undefined}
-            aria-describedby={fieldErrors.email ? 'register-email-error' : undefined}
+            invalid={Boolean(fieldErrors.email)}
           />
-          {fieldErrors.email && (
-            <p role="alert" id="register-email-error">
-              {fieldErrors.email}
-            </p>
-          )}
-        </div>
-        <div>
-          <label htmlFor="register-password">{t('auth.register.password')}</label>
-          <input
+        </FormField>
+        <FormField
+          label={t('auth.register.password')}
+          error={fieldErrors.password}
+          errorId="register-password-error"
+        >
+          <Input
             id="register-password"
             name="password"
             type="password"
@@ -140,24 +142,18 @@ export function RegisterForm() {
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             disabled={submitting}
-            aria-invalid={fieldErrors.password ? true : undefined}
-            aria-describedby={fieldErrors.password ? 'register-password-error' : undefined}
+            invalid={Boolean(fieldErrors.password)}
           />
-          {fieldErrors.password && (
-            <p role="alert" id="register-password-error">
-              {fieldErrors.password}
-            </p>
-          )}
-        </div>
+        </FormField>
         {formError && (
-          <p role="alert" data-testid="register-error">
+          <p role="alert" data-testid="register-error" className="text-sm text-danger">
             {formError}
           </p>
         )}
-        <button type="submit" disabled={submitting}>
+        <Button type="submit" disabled={submitting}>
           {submitting ? t('auth.register.submitting') : t('auth.register.submit')}
-        </button>
+        </Button>
       </form>
-    </section>
+    </Card>
   );
 }

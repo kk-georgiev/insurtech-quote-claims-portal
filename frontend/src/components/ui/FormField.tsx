@@ -13,6 +13,14 @@ export interface FormFieldProps extends Omit<HTMLAttributes<HTMLDivElement>, 'ch
   label: ReactNode;
   /** The already-translated error message, or omitted for no error (AD-5). */
   error?: string;
+  /**
+   * Overrides the generated `useId()` value for both the error `<span id>`
+   * and the `aria-describedby` wired onto the control. Needed when a caller
+   * (e.g. `LoginForm`/`RegisterForm`) has an existing test suite asserting a
+   * literal id string (`'login-email-error'`) rather than just presence of
+   * an id. Falls back to the generated id when omitted.
+   */
+  errorId?: string;
   /** The control (e.g. `Input`) the label wraps and associates with. */
   children: ReactNode;
 }
@@ -33,8 +41,16 @@ export interface FormFieldProps extends Omit<HTMLAttributes<HTMLDivElement>, 'ch
  * `aria-describedby` on the control is what actually links the two, without
  * polluting the label's name.
  */
-export function FormField({ className, label, error, children, ...props }: FormFieldProps) {
-  const errorId = useId();
+export function FormField({
+  className,
+  label,
+  error,
+  errorId: errorIdOverride,
+  children,
+  ...props
+}: FormFieldProps) {
+  const generatedId = useId();
+  const errorId = errorIdOverride ?? generatedId;
   const control =
     error && isValidElement(children)
       ? cloneElement(children as ReactElement<{ 'aria-describedby'?: string }>, {

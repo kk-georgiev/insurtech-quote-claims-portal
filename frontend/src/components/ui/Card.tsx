@@ -3,6 +3,16 @@ import { cn } from './cn';
 
 export interface CardProps extends HTMLAttributes<HTMLDivElement> {
   title?: string;
+  /**
+   * Heading level for `title` (default `h3`, the common case: a card
+   * subordinate to a screen's own `h1`/`h2`). Still a flat prop, not a
+   * compound-component API (AD-2) — a screen using `Card` as its *own* page
+   * heading (e.g. a form screen with no separate `h2`) passes `titleAs="h2"`
+   * to avoid skipping a heading level, per review-loop finding (Story 5.2:
+   * blind-hunter + verification-gap, both independently, on LoginForm's and
+   * RegisterForm's `<h2>` demoted to `<h3>` with no test catching it).
+   */
+  titleAs?: 'h2' | 'h3';
   footer?: ReactNode;
   children?: ReactNode;
 }
@@ -12,13 +22,14 @@ export interface CardProps extends HTMLAttributes<HTMLDivElement> {
  * `Card.Body`), per AD-2, keeping the four-component set's surface small
  * and single-shaped.
  */
-export function Card({ className, title, footer, children, ...props }: CardProps) {
+export function Card({ className, title, titleAs = 'h3', footer, children, ...props }: CardProps) {
+  const Heading = titleAs;
   return (
     <div
       className={cn('rounded-lg border border-border bg-surface p-6 shadow-sm', className)}
       {...props}
     >
-      {title && <h3 className="mb-4 mt-0 text-base font-semibold text-text">{title}</h3>}
+      {title && <Heading className="mb-4 mt-0 text-base font-semibold text-text">{title}</Heading>}
       {children}
       {footer && <div className="mt-4 border-t border-border pt-4">{footer}</div>}
     </div>

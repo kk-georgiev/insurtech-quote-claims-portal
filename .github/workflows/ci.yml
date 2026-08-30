@@ -92,6 +92,15 @@ jobs:
       # No .env file is created here on purpose: every variable in
       # docker-compose.yml has a `${VAR:-default}` fallback (Story 4.2), so a
       # bare `docker compose up` works out of the box on a clean checkout.
+      # JWT_SECRET is the one exception: DeploymentSecretsGuard now fails
+      # backend startup fast under the `docker` profile if it's still that
+      # fallback placeholder (epic-1-retro-item-10) - exactly what a clean
+      # checkout would otherwise resolve to here. A real value, generated
+      # fresh per run and never persisted, keeps this job exercising the
+      # actual `docker compose up` path rather than working around the guard.
+      - name: Generate a JWT secret for this run
+        run: echo "JWT_SECRET=$(openssl rand -base64 48)" >> "$GITHUB_ENV"
+
       # `--wait` is Compose v2's built-in wait-for-healthy/running gate (no
       # custom polling loop needed) - it blocks until postgres and backend
       # report healthy (frontend has no healthcheck yet, a separately

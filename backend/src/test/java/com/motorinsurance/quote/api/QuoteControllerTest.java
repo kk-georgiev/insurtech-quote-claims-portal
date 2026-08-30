@@ -291,6 +291,22 @@ class QuoteControllerTest {
     }
 
     @Test
+    void clientRole_tokenForNonexistentCustomer_returnsUnauthenticatedNotServerError() {
+        // A forged token for a customer id with no matching users row - see
+        // registerClient()'s javadoc. quotes.customer_id's foreign key used
+        // to surface this as an unhandled DataIntegrityViolationException
+        // (epic-1-retro-item-5); it must now collapse to the same clean 401
+        // the JWT gate itself uses for "this token doesn't identify a real,
+        // currently-valid account".
+        String tokenForMissingCustomer = jwtService.issueToken(UUID.randomUUID(), Role.CLIENT);
+
+        ResponseEntity<String> response = postJson(validRequestBody(), tokenForMissingCustomer);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        assertThat(response.getBody()).contains("\"code\":\"AUTH_UNAUTHENTICATED\"");
+    }
+
+    @Test
     void clientRole_calculateThenRetrieveById_returnsTheSamePersistedQuote() {
         String clientToken = jwtService.issueToken(registerClient(), Role.CLIENT);
 

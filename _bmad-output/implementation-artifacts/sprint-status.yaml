@@ -29,7 +29,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 08-23-2026 17:25
-last_updated: 08-30-2026 15:00
+last_updated: 08-30-2026 16:00
 project: Motor Insurance Quote & Claims Portal
 project_key: NOKEY
 tracking_system: file-system
@@ -45,20 +45,18 @@ development_status:
   1-7-client-quote-flow-submit-and-see-the-breakdown: done
   epic-1-retrospective: done
 
-  epic-2: in-progress
+  epic-2: done
   2-1-seeded-staff-demo-accounts: done
   2-2-role-based-post-login-routing: done
   2-3-placeholder-screens-for-agent-liquidator-and-administrator: done
   2-4-frontend-route-guards-per-role: done
-  2-5-logout-action-and-authenticated-navigation: review
+  2-5-logout-action-and-authenticated-navigation: done
   epic-2-retrospective: done
 
   epic-3: done
   3-1-i18n-infrastructure-and-language-toggle: done
   3-2a-screen-copy-translation: done
   3-2b-error-and-validation-message-translation: done
-  epic-3-retrospective: optional
-  3-2b-error-message-translation: done
   epic-3-retrospective: done
 
   epic-4: done
@@ -66,6 +64,15 @@ development_status:
   4-2-one-command-full-stack-startup: done
   4-3-local-dev-workflow-preserved-alongside-docker: done
   epic-4-retrospective: done
+
+  epic-5: backlog
+  5-1-design-tokens-base-component-library: backlog
+  5-2-auth-screens-visual-pass: backlog
+  5-3-quote-flow-visual-pass: backlog
+  5-4-navigation-role-shells-visual-pass: backlog
+  5-5-responsive-layout: backlog
+  5-6-loading-error-state-polish-should-have: backlog
+  epic-5-retrospective: optional
 action_items:
   - id: "epic-1-retro-item-1-add-auth-module-test-coverage-registrati"
     epic: 1

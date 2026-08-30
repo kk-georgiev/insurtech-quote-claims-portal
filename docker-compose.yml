@@ -38,6 +38,11 @@ services:
     build: ./backend
     restart: unless-stopped
     environment:
+      # Activates DeploymentSecretsGuard (epic-1-retro-item-10): fails fast
+      # if JWT_SECRET below is still an insecure placeholder, since this is
+      # the first real deployment artifact the project has. Native
+      # `mvn spring-boot:run` never sets this, so that workflow is unaffected.
+      SPRING_PROFILES_ACTIVE: docker
       POSTGRES_HOST: postgres
       # Docker-internal container port, always 5432 - distinct from the
       # host-mapped ${POSTGRES_PORT} used by postgres.ports below, which

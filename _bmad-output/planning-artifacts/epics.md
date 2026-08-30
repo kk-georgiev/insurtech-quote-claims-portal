@@ -263,6 +263,36 @@ So that the UI never even attempts to show data a role shouldn't see.
 **Then** I am redirected back to my own shell, never shown Agent content
 **And** given this holds symmetrically for every role against every other role's URL, when tested, then the same redirect applies — implemented as the single role-guard wrapper component (AD-10), not per-screen checks
 
+### Story 2.5: Logout Action and Authenticated Navigation
+
+> Added post-Milestone-1 (2026-08-30), from Epic 2 retrospective action item
+> "Propose a new story: Logout action and auth-aware RootLayout nav so an
+> authenticated user has a way out of their shell" — `RootLayout.tsx`'s own
+> javadoc already flagged the nav as "deliberately still not auth-aware and
+> has no logout" pending this story.
+
+As an authenticated user,
+I want a visible way to log out from any screen,
+So that I can end my session instead of being permanently signed in with no way out.
+
+**Acceptance Criteria:**
+
+**Given** I am logged in as any role
+**When** I view any screen behind the root layout
+**Then** the nav shows a Logout control in place of the Register/Login links (Health stays visible either way — it isn't auth-specific)
+
+**Given** I click Logout
+**When** it completes
+**Then** my stored token is cleared and I land on `/login`, with the nav immediately reflecting the logged-out state (Register/Login reappear, Logout disappears) — no reload, consistent with how Story 3.1's language toggle already avoids one
+
+**Given** I am not logged in
+**When** I view the nav
+**Then** I see exactly the existing Register/Login/Health links and no Logout control — the unauthenticated experience is unchanged
+
+**Given** the nav's auth state
+**When** rendered
+**Then** it is derived fresh from `roleHome.ts`'s `getCurrentRole()` on each render, not cached separately — one source of truth for "am I logged in," reused rather than re-decoded
+
 ## Epic 3: The Portal Speaks Bulgarian and English
 
 Every screen delivered by Epic 1 and Epic 2 is fully usable in Bulgarian (default) or English, switchable at any time.

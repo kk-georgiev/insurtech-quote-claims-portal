@@ -29,7 +29,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 08-23-2026 17:25
-last_updated: 08-30-2026 00:13
+last_updated: 08-30-2026 15:00
 project: Motor Insurance Quote & Claims Portal
 project_key: NOKEY
 tracking_system: file-system
@@ -45,19 +45,18 @@ development_status:
   1-7-client-quote-flow-submit-and-see-the-breakdown: done
   epic-1-retrospective: done
 
-  epic-2: done
+  epic-2: in-progress
   2-1-seeded-staff-demo-accounts: done
   2-2-role-based-post-login-routing: done
   2-3-placeholder-screens-for-agent-liquidator-and-administrator: done
   2-4-frontend-route-guards-per-role: done
+  2-5-logout-action-and-authenticated-navigation: review
   epic-2-retrospective: done
 
   epic-3: in-progress
   3-1-i18n-infrastructure-and-language-toggle: done
-  # Story 3.2 was split into 3.2a/3.2b during planning (2026-08-29); see the
-  # note in epics.md. Together they cover the original 3.2 acceptance criteria.
   3-2a-screen-copy-translation: done
-  3-2b-error-message-translation: review
+  3-2b-error-and-validation-message-translation: done
   epic-3-retrospective: optional
 
   epic-4: in-progress

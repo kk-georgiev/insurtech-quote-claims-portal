@@ -1,240 +1,298 @@
+/* Design tokens (Story 5.1, AD-1) + legacy baseline styling.
+   Tailwind is imported WITHOUT Preflight (its own reset/base-element
+   styles) - `legacy` below already resets box-sizing/body margin/etc., and
+   Preflight's bare `button`/`input` resets would otherwise fight `legacy`'s
+   equivalent rules for cross-layer priority, with no layer order able to
+   make legacy win for un-migrated screens AND Tailwind utility classes win
+   for a new `components/ui/` primitive at the same time - both target the
+   exact same element types (verification-gap review, 2026-08-30; the
+   official Tailwind pattern for "adopt Tailwind inside an existing
+   stylesheet" is exactly this selective import, not the full `@import
+   "tailwindcss"` an earlier draft of this file used). `legacy` sorts below
+   `utilities` so a screen adopting a `components/ui/` primitive gets
+   Tailwind's utility classes, not the old blanket element-selector rules. */
+@layer legacy, theme, base, components, utilities;
+
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
+
+/* Single source of design tokens (AD-1). Every value here traces to PRD §4:
+   Sirma's navy `#2A2859` base, a restrained accent, neutral grays, Inter,
+   and the fixed success/warning/danger/info status vocabulary (AD-6) —
+   fixed now even though no component consumes it yet (no Badge this
+   milestone). Semantic names only — Tailwind's own default spacing/type
+   scale already covers raw scale values, so nothing here re-derives it. */
+@theme {
+  --color-primary: #2a2859;
+  --color-primary-dark: #1e1d40;
+  --color-primary-light: #4a4780;
+
+  --color-accent: #3e7c8c;
+  --color-accent-dark: #2e5d69;
+
+  --color-surface: #ffffff;
+  --color-surface-muted: #f4f5f9;
+  --color-border: #d8d9e4;
+
+  --color-text: #1a1a2e;
+  --color-text-muted: #5c5e73;
+
+  --color-success: #16a34a;
+  --color-warning: #d97706;
+  --color-danger: #dc2626;
+  --color-info: #2563eb;
+
+  /* Overrides Tailwind's default `font-sans` stack so every `font-sans`
+     utility (including the `<body>` default in `@layer base`) resolves to
+     Inter, per PRD §4's typeface decision. */
+  --font-sans:
+    'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
 /* Minimal global styling — no framework, no component library.
    Targets existing semantic elements and already-present attributes
    (role="alert", data-testid) so every screen picks this up automatically
    with zero JSX/className changes. Visual design is explicitly out of scope
-   for this milestone (PRD non-goal) — this is baseline readability only. */
+   for this milestone (PRD non-goal) — this is baseline readability only.
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
+   Layered (Story 5.1, AD-1) rather than left unlayered: unlayered rules
+   always outrank any `@layer`, which would let these bare-element
+   selectors keep beating a `components/ui/` component's Tailwind utility
+   classes even after Story 5.2+ adopts them. Layer order above sorts
+   `legacy` beneath Tailwind's own layers, so adoption actually wins. */
+@layer legacy {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
 
-body {
-  margin: 0;
-  font-family:
-    system-ui,
-    -apple-system,
-    'Segoe UI',
-    Roboto,
-    sans-serif;
-  color: #1a1a1a;
-  background: #f7f7f8;
-  line-height: 1.5;
-}
+  body {
+    margin: 0;
+    font-family:
+      system-ui,
+      -apple-system,
+      'Segoe UI',
+      Roboto,
+      sans-serif;
+    color: #1a1a1a;
+    background: #f7f7f8;
+    line-height: 1.5;
+  }
 
-/* Header / nav (RootLayout) */
+  /* Header / nav (RootLayout) */
 
-header {
-  background: #1f2937;
-  color: #fff;
-  padding: 1rem 1.5rem;
-}
+  header {
+    background: #1f2937;
+    color: #fff;
+    padding: 1rem 1.5rem;
+  }
 
-header h1 {
-  margin: 0 0 0.5rem;
-  font-size: 1.25rem;
-}
+  header h1 {
+    margin: 0 0 0.5rem;
+    font-size: 1.25rem;
+  }
 
-header nav {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
+  header nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
 
-header nav a {
-  color: #cbd5e1;
-  text-decoration: none;
-  font-size: 0.9rem;
-}
+  header nav a {
+    color: #cbd5e1;
+    text-decoration: none;
+    font-size: 0.9rem;
+  }
 
-header nav a:hover {
-  color: #fff;
-  text-decoration: underline;
-}
+  header nav a:hover {
+    color: #fff;
+    text-decoration: underline;
+  }
 
-/* Language toggle (LanguageToggle, Story 3.1). `aria-pressed` already tells
-   assistive tech which language is active; these rules give sighted users
-   the same information, which two identically-styled buttons do not. Quieter
-   and smaller than the base `button` rule below, because this is header
-   chrome rather than a primary action.
+  /* Language toggle (LanguageToggle, Story 3.1). `aria-pressed` already tells
+     assistive tech which language is active; these rules give sighted users
+     the same information, which two identically-styled buttons do not. Quieter
+     and smaller than the base `button` rule below, because this is header
+     chrome rather than a primary action.
 
-   Hooked off the existing `data-testid` and `aria-pressed` attributes, like
-   the `[data-testid='quote-result']` and `[data-testid='register-success']`
-   rules further down — this file deliberately adds no classNames. */
+     Hooked off the existing `data-testid` and `aria-pressed` attributes, like
+     the `[data-testid='quote-result']` and `[data-testid='register-success']`
+     rules further down — this file deliberately adds no classNames. */
 
-[data-testid='language-toggle'] {
-  display: flex;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
-}
+  [data-testid='language-toggle'] {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+  }
 
-[data-testid='language-toggle'] button {
-  background: transparent;
-  border: 1px solid #475569;
-  color: #cbd5e1;
-  padding: 0.25rem 0.6rem;
-  font-size: 0.8rem;
-}
+  [data-testid='language-toggle'] button {
+    background: transparent;
+    border: 1px solid #475569;
+    color: #cbd5e1;
+    padding: 0.25rem 0.6rem;
+    font-size: 0.8rem;
+  }
 
-[data-testid='language-toggle'] button:hover:not(:disabled) {
-  background: #334155;
-  color: #fff;
-}
+  [data-testid='language-toggle'] button:hover:not(:disabled) {
+    background: #334155;
+    color: #fff;
+  }
 
-[data-testid='language-toggle'] button[aria-pressed='true'] {
-  background: #2563eb;
-  border-color: #2563eb;
-  color: #fff;
-  font-weight: 600;
-}
+  [data-testid='language-toggle'] button[aria-pressed='true'] {
+    background: #2563eb;
+    border-color: #2563eb;
+    color: #fff;
+    font-weight: 600;
+  }
 
-/* Content container */
+  /* Content container */
 
-main {
-  max-width: 640px;
-  margin: 2rem auto;
-  padding: 0 1.5rem;
-}
+  main {
+    max-width: 640px;
+    margin: 2rem auto;
+    padding: 0 1.5rem;
+  }
 
-/* The outermost section under <main> is always the "page card" — true for
-   LoginForm/RegisterForm (their own <section> is that direct child) and for
-   ClientShell/the role shells (their wrapping <section> is that direct
-   child, with real content, e.g. QuoteForm, nested one level inside it).
-   Deliberately NOT depth-based beyond this one level: nesting varies per
-   screen (QuoteForm's own <section> sits inside ClientShell's; QuoteResult
-   sits inside that again), so anything nested just flows as part of the
-   same card instead of stacking duplicate card chrome. */
+  /* The outermost section under <main> is always the "page card" — true for
+     LoginForm/RegisterForm (their own <section> is that direct child) and for
+     ClientShell/the role shells (their wrapping <section> is that direct
+     child, with real content, e.g. QuoteForm, nested one level inside it).
+     Deliberately NOT depth-based beyond this one level: nesting varies per
+     screen (QuoteForm's own <section> sits inside ClientShell's; QuoteResult
+     sits inside that again), so anything nested just flows as part of the
+     same card instead of stacking duplicate card chrome. */
 
-main > section {
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 1.5rem;
-  margin-bottom: 1.5rem;
-}
+  main > section {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
 
-main > section h2 {
-  margin-top: 0;
-}
+  main > section h2 {
+    margin-top: 0;
+  }
 
-/* A heading on a nested section (e.g. QuoteForm's own "Get a quote" inside
-   ClientShell's card) still needs its top margin zeroed, even though the
-   section itself gets no extra card chrome. */
+  /* A heading on a nested section (e.g. QuoteForm's own "Get a quote" inside
+     ClientShell's card) still needs its top margin zeroed, even though the
+     section itself gets no extra card chrome. */
 
-main section section h2 {
-  margin-top: 0;
-}
+  main section section h2 {
+    margin-top: 0;
+  }
 
-/* The one nested block that does need visual separation from what's above
-   it: the quote breakdown result. Targeted by data-testid, not nesting
-   depth, so it doesn't care which shell/how many levels it ends up under. */
+  /* The one nested block that does need visual separation from what's above
+     it: the quote breakdown result. Targeted by data-testid, not nesting
+     depth, so it doesn't care which shell/how many levels it ends up under. */
 
-[data-testid='quote-result'] {
-  margin-top: 1.5rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid #e2e8f0;
-}
+  [data-testid='quote-result'] {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e2e8f0;
+  }
 
-[data-testid='quote-result'] h3 {
-  margin-top: 0;
-}
+  [data-testid='quote-result'] h3 {
+    margin-top: 0;
+  }
 
-/* Forms */
+  /* Forms */
 
-form div {
-  margin-bottom: 1rem;
-}
+  form div {
+    margin-bottom: 1rem;
+  }
 
-form label {
-  display: block;
-  margin-bottom: 0.25rem;
-  font-weight: 600;
-  font-size: 0.9rem;
-}
+  form label {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
 
-form input,
-form select,
-form textarea {
-  width: 100%;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
-  font-size: 1rem;
-  font-family: inherit;
-}
+  form input,
+  form select,
+  form textarea {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-family: inherit;
+  }
 
-form input:focus,
-form select:focus,
-form textarea:focus {
-  outline: 2px solid #2563eb;
-  outline-offset: 1px;
-}
+  form input:focus,
+  form select:focus,
+  form textarea:focus {
+    outline: 2px solid #2563eb;
+    outline-offset: 1px;
+  }
 
-form input:disabled,
-form select:disabled,
-form textarea:disabled {
-  background: #f1f5f9;
-  color: #94a3b8;
-}
+  form input:disabled,
+  form select:disabled,
+  form textarea:disabled {
+    background: #f1f5f9;
+    color: #94a3b8;
+  }
 
-button {
-  background: #2563eb;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  padding: 0.6rem 1.2rem;
-  font-size: 1rem;
-  font-family: inherit;
-  cursor: pointer;
-}
+  button {
+    background: #2563eb;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 0.6rem 1.2rem;
+    font-size: 1rem;
+    font-family: inherit;
+    cursor: pointer;
+  }
 
-button:hover:not(:disabled) {
-  background: #1d4ed8;
-}
+  button:hover:not(:disabled) {
+    background: #1d4ed8;
+  }
 
-button:focus-visible {
-  outline: 2px solid #2563eb;
-  outline-offset: 1px;
-}
+  button:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 1px;
+  }
 
-button:disabled {
-  background: #94a3b8;
-  cursor: not-allowed;
-}
+  button:disabled {
+    background: #94a3b8;
+    cursor: not-allowed;
+  }
 
-/* Errors — every field-level and form-level error uses role="alert"
-   (LoginForm, RegisterForm, QuoteForm). Bottom margin (not just top) so a
-   form-level error — a direct child of <form>, not wrapped in a field div —
-   doesn't sit flush against the submit button right after it. */
+  /* Errors — every field-level and form-level error uses role="alert"
+     (LoginForm, RegisterForm, QuoteForm). Bottom margin (not just top) so a
+     form-level error — a direct child of <form>, not wrapped in a field div —
+     doesn't sit flush against the submit button right after it. */
 
-[role='alert'] {
-  color: #dc2626;
-  font-size: 0.875rem;
-  margin: 0.25rem 0 0.75rem;
-}
+  [role='alert'] {
+    color: #dc2626;
+    font-size: 0.875rem;
+    margin: 0.25rem 0 0.75rem;
+  }
 
-/* Success feedback (e.g. RegisterForm's post-registration message) */
+  /* Success feedback (e.g. RegisterForm's post-registration message) */
 
-[data-testid='register-success'] {
-  color: #16a34a;
-  font-weight: 600;
-}
+  [data-testid='register-success'] {
+    color: #16a34a;
+    font-weight: 600;
+  }
 
-/* Quote breakdown (QuoteResult's dl/dt/dd) */
+  /* Quote breakdown (QuoteResult's dl/dt/dd) */
 
-dl {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 0.5rem 1rem;
-  margin: 0;
-}
+  dl {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.5rem 1rem;
+    margin: 0;
+  }
 
-dt {
-  font-weight: 600;
-  color: #475569;
-}
+  dt {
+    font-weight: 600;
+    color: #475569;
+  }
 
-dd {
-  margin: 0;
+  dd {
+    margin: 0;
+  }
 }

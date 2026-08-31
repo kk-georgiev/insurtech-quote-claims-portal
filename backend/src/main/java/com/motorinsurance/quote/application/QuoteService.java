@@ -36,7 +36,11 @@ public class QuoteService {
     @Transactional
     public QuoteResponse calculate(CreateQuoteRequest request, UUID customerId) {
         PricingResult result = pricingService.calculate(
-                request.driverAge(), request.regionCode(), request.engineCc(), request.installments());
+                request.driverAge(),
+                request.regionCode(),
+                request.engineCc(),
+                request.installments(),
+                request.bonusMalusClass());
 
         Quote quote = new Quote(
                 customerId,
@@ -47,6 +51,8 @@ public class QuoteService {
                 result.zoneName(),
                 result.basePremium(),
                 result.ageSurcharge(),
+                result.bonusMalusClass(),
+                result.bonusMalusFactor(),
                 result.oneTimePremium(),
                 request.installments(),
                 result.installmentFee(),
@@ -96,6 +102,8 @@ public class QuoteService {
                 quote.getZoneName(),
                 quote.getBasePremium(),
                 quote.getAgeSurcharge(),
+                quote.getBonusMalusCode(),
+                quote.getBonusMalusFactor(),
                 quote.getOneTimePremium(),
                 quote.getInstallments(),
                 quote.getInstallmentFee(),

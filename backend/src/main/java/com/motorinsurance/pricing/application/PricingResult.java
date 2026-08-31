@@ -18,6 +18,8 @@ public record PricingResult(
         String regionCode,
         BigDecimal basePremium,
         BigDecimal ageSurcharge,
+        String bonusMalusClass,
+        BigDecimal bonusMalusFactor,
         BigDecimal oneTimePremium,
         int installments,
         BigDecimal installmentFee,

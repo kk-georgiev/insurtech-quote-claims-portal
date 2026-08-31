@@ -10,6 +10,7 @@ import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { FormField } from '../../components/ui/FormField';
 import { Input } from '../../components/ui/Input';
+import { Select } from '../../components/ui/Select';
 import { Spinner } from '../../components/ui/Spinner';
 
 /** Mirrors the backend's `CreateQuoteRequest` (READ-ONLY, quote/api). */
@@ -18,6 +19,7 @@ interface CreateQuoteRequest {
   regionCode: string;
   engineCc: number;
   installments: number;
+  bonusMalusClass: string;
 }
 
 /** Mirrors the backend's `QuoteResponse` (READ-ONLY, quote/api) field for field. */
@@ -31,6 +33,8 @@ export interface QuoteResponse {
   zoneName: string;
   basePremium: number;
   ageSurcharge: number;
+  bonusMalusClass: string;
+  bonusMalusFactor: number;
   oneTimePremium: number;
   installments: number;
   installmentFee: number;
@@ -41,12 +45,23 @@ export interface QuoteResponse {
 
 type FormPhase = 'editing' | 'submitting';
 
+// Story 6.1 - the five classes seeded in `bonus_malus_class`. Fixed here
+// alongside the form rather than fetched: same pattern the existing
+// `installments` field already uses (a small, backend-defined enum
+// rendered as a closed set of options, not free text).
+const BONUS_MALUS_CLASSES = ['BONUS_20', 'BONUS_10', 'NEUTRAL', 'MALUS_25', 'MALUS_50'] as const;
 
 // The only fields this form actually renders an inline error next to. If a
 // `fieldErrors` response names anything outside this set, the error would be
 // stored but never shown - fall back to the generic message so the user
 // always sees something instead of a submit that silently did nothing.
-const KNOWN_FIELDS = new Set(['driverAge', 'regionCode', 'engineCc', 'installments']);
+const KNOWN_FIELDS = new Set([
+  'driverAge',
+  'regionCode',
+  'engineCc',
+  'installments',
+  'bonusMalusClass',
+]);
 
 
 /**
@@ -67,6 +82,9 @@ export function QuoteForm() {
   const [regionCode, setRegionCode] = useState('');
   const [engineCc, setEngineCc] = useState('');
   const [installments, setInstallments] = useState('');
+  // Defaults to NEUTRAL (factor 1.000) - the neutral position, not first
+  // alphabetically (UX EXPERIENCE.md, Interaction Primitives).
+  const [bonusMalusClass, setBonusMalusClass] = useState('NEUTRAL');
   const [phase, setPhase] = useState<FormPhase>('editing');
   const [formFailure, setFormFailure] = useState<FormFailure>(null);
   const [fieldFailure, setFieldFailure] = useState<FieldFailure>(null);
@@ -97,6 +115,7 @@ export function QuoteForm() {
       regionCode,
       engineCc: Number(engineCc),
       installments: Number(installments),
+      bonusMalusClass,
     };
 
     try {
@@ -216,6 +235,28 @@ export function QuoteForm() {
             invalid={Boolean(fieldErrors.installments)}
           />
         </FormField>
+        <FormField
+          label={t('quote.form.bonusMalusClass')}
+          error={fieldErrors.bonusMalusClass}
+          errorId="quote-bonusMalusClass-error"
+        >
+          <Select
+            id="quote-bonusMalusClass"
+            name="bonusMalusClass"
+            required
+            value={bonusMalusClass}
+            onChange={(event) => setBonusMalusClass(event.target.value)}
+            disabled={submitting}
+            invalid={Boolean(fieldErrors.bonusMalusClass)}
+          >
+            {BONUS_MALUS_CLASSES.map((bmClass) => (
+              <option key={bmClass} value={bmClass}>
+                {t(`quote.form.bonusMalusClasses.${bmClass}`)}
+              </option>
+            ))}
+          </Select>
+        </FormField>
+        <p className="text-xs text-text-muted">{t('quote.form.bonusMalusNote')}</p>
         {formError && (
           <Alert variant="danger" data-testid="quote-error">
             {formError}

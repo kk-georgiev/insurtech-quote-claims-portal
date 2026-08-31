@@ -253,6 +253,7 @@ describe('Bulgarian pass — no English static copy left on any screen', () => {
         quote={{
           id: 'q1', createdAt: '2026-08-29T00:00:00Z', driverAge: 30, regionCode: 'CB',
           engineCc: 1600, zoneId: 3, zoneName: 'Zone 3', basePremium: 100, ageSurcharge: 10,
+          bonusMalusClass: 'NEUTRAL', bonusMalusFactor: 1,
           oneTimePremium: 110, installments: 2, installmentFee: 5, totalPremium: 115,
           installmentAmount: 57.5, currency: 'BGN',
         }}

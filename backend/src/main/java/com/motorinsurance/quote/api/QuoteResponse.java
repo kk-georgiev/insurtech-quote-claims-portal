@@ -25,6 +25,10 @@ public record QuoteResponse(
         String zoneName,
         BigDecimal basePremium,
         BigDecimal ageSurcharge,
+        // Story 6.1 - grows the response additively (Architecture Spine
+        // AD-13): every field above keeps its name, type, and meaning.
+        String bonusMalusClass,
+        BigDecimal bonusMalusFactor,
         BigDecimal oneTimePremium,
         int installments,
         BigDecimal installmentFee,

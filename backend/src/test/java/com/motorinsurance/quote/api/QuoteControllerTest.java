@@ -93,13 +93,83 @@ class QuoteControllerTest {
         assertThat(response.getBody()).contains("\"totalPremium\":179.12");
         assertThat(response.getBody()).contains("\"installmentAmount\":89.56");
         assertThat(response.getBody()).contains("\"currency\":\"EUR\"");
+        assertThat(response.getBody()).contains("\"bonusMalusClass\":\"NEUTRAL\"");
+        assertThat(response.getBody()).contains("\"bonusMalusFactor\":1.000");
         assertThat(response.getBody()).containsPattern("\"createdAt\":\"[^\"]+\"");
+    }
+
+    @Test
+    void clientRole_bonusClass_reducesOneTimePremiumBeforeInstallmentFee() {
+        // Story 6.1: BONUS_20 (factor 0.800) applies to (base + age surcharge)
+        // only - the installment fee is untouched, per the fixed order of
+        // operations (Architecture Spine AD-8, M3). Same KH/1500cc/age 20
+        // inputs as the known-inputs case above: base 141.12 + surcharge
+        // 36.00 = 177.12; x0.800 = 141.696, HALF_UP to 141.70; + fee 2.00 =
+        // 143.70; /2 = 71.85.
+        String clientToken = jwtService.issueToken(registerClient(), Role.CLIENT);
+        String body =
+                "{\"driverAge\":20,\"regionCode\":\"KH\",\"engineCc\":1500,\"installments\":2,\"bonusMalusClass\":\"BONUS_20\"}";
+
+        ResponseEntity<String> response = postJson(body, clientToken);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(response.getBody()).contains("\"basePremium\":141.12");
+        assertThat(response.getBody()).contains("\"ageSurcharge\":36.00");
+        assertThat(response.getBody()).contains("\"bonusMalusClass\":\"BONUS_20\"");
+        assertThat(response.getBody()).contains("\"bonusMalusFactor\":0.800");
+        assertThat(response.getBody()).contains("\"oneTimePremium\":141.70");
+        assertThat(response.getBody()).contains("\"installmentFee\":2.00");
+        assertThat(response.getBody()).contains("\"totalPremium\":143.70");
+        assertThat(response.getBody()).contains("\"installmentAmount\":71.85");
+    }
+
+    @Test
+    void clientRole_malusClass_increasesOneTimePremiumBeforeInstallmentFee() {
+        // MALUS_50 (factor 1.500): 177.12 x1.500 = 265.68; + fee 2.00 =
+        // 267.68; /2 = 133.84.
+        String clientToken = jwtService.issueToken(registerClient(), Role.CLIENT);
+        String body =
+                "{\"driverAge\":20,\"regionCode\":\"KH\",\"engineCc\":1500,\"installments\":2,\"bonusMalusClass\":\"MALUS_50\"}";
+
+        ResponseEntity<String> response = postJson(body, clientToken);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(response.getBody()).contains("\"bonusMalusClass\":\"MALUS_50\"");
+        assertThat(response.getBody()).contains("\"bonusMalusFactor\":1.500");
+        assertThat(response.getBody()).contains("\"oneTimePremium\":265.68");
+        assertThat(response.getBody()).contains("\"totalPremium\":267.68");
+        assertThat(response.getBody()).contains("\"installmentAmount\":133.84");
+    }
+
+    @Test
+    void clientRole_unknownBonusMalusClass_returnsFieldLevelError() {
+        String clientToken = jwtService.issueToken(UUID.randomUUID(), Role.CLIENT);
+        String body =
+                "{\"driverAge\":30,\"regionCode\":\"KH\",\"engineCc\":1000,\"installments\":1,\"bonusMalusClass\":\"NOT_A_CLASS\"}";
+
+        ResponseEntity<String> response = postJson(body, clientToken);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody()).contains("\"code\":\"PRICING_UNKNOWN_BONUS_MALUS_CLASS\"");
+        assertThat(response.getBody()).contains("\"field\":\"bonusMalusClass\"");
+    }
+
+    @Test
+    void clientRole_blankBonusMalusClass_returnsFieldLevelValidationError() {
+        String clientToken = jwtService.issueToken(UUID.randomUUID(), Role.CLIENT);
+        String body = "{\"driverAge\":30,\"regionCode\":\"KH\",\"engineCc\":1000,\"installments\":1,\"bonusMalusClass\":\"\"}";
+
+        ResponseEntity<String> response = postJson(body, clientToken);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody()).contains("\"code\":\"SHARED_VALIDATION_ERROR\"");
+        assertThat(response.getBody()).contains("\"field\":\"bonusMalusClass\"");
     }
 
     @Test
     void clientRole_regionCodeLowercase_isNormalizedAndStillSucceeds() {
         String clientToken = jwtService.issueToken(registerClient(), Role.CLIENT);
-        String body = "{\"driverAge\":20,\"regionCode\":\"kh\",\"engineCc\":1500,\"installments\":2}";
+        String body = "{\"driverAge\":20,\"regionCode\":\"kh\",\"engineCc\":1500,\"installments\":2,\"bonusMalusClass\":\"NEUTRAL\"}";
 
         ResponseEntity<String> response = postJson(body, clientToken);
 
@@ -119,7 +189,7 @@ class QuoteControllerTest {
         // plan without this bound) - both are values @Max(4) rejects the
         // same way, before PricingService's own narrowing cast ever runs.
         String clientToken = jwtService.issueToken(UUID.randomUUID(), Role.CLIENT);
-        String body = "{\"driverAge\":30,\"regionCode\":\"KH\",\"engineCc\":1000,\"installments\":65540}";
+        String body = "{\"driverAge\":30,\"regionCode\":\"KH\",\"engineCc\":1000,\"installments\":65540,\"bonusMalusClass\":\"NEUTRAL\"}";
 
         ResponseEntity<String> response = postJson(body, clientToken);
 
@@ -131,7 +201,7 @@ class QuoteControllerTest {
     @Test
     void clientRole_unknownRegionCode_returnsFieldLevelError() {
         String clientToken = jwtService.issueToken(UUID.randomUUID(), Role.CLIENT);
-        String body = "{\"driverAge\":30,\"regionCode\":\"ZZ\",\"engineCc\":1000,\"installments\":1}";
+        String body = "{\"driverAge\":30,\"regionCode\":\"ZZ\",\"engineCc\":1000,\"installments\":1,\"bonusMalusClass\":\"NEUTRAL\"}";
 
         ResponseEntity<String> response = postJson(body, clientToken);
 
@@ -143,7 +213,7 @@ class QuoteControllerTest {
     @Test
     void clientRole_unsupportedInstallmentCount_returnsFieldLevelError() {
         String clientToken = jwtService.issueToken(UUID.randomUUID(), Role.CLIENT);
-        String body = "{\"driverAge\":30,\"regionCode\":\"KH\",\"engineCc\":1000,\"installments\":3}";
+        String body = "{\"driverAge\":30,\"regionCode\":\"KH\",\"engineCc\":1000,\"installments\":3,\"bonusMalusClass\":\"NEUTRAL\"}";
 
         ResponseEntity<String> response = postJson(body, clientToken);
 
@@ -155,7 +225,7 @@ class QuoteControllerTest {
     @Test
     void clientRole_driverAgeUnderEighteen_returnsFieldLevelValidationError() {
         String clientToken = jwtService.issueToken(UUID.randomUUID(), Role.CLIENT);
-        String body = "{\"driverAge\":17,\"regionCode\":\"KH\",\"engineCc\":1000,\"installments\":1}";
+        String body = "{\"driverAge\":17,\"regionCode\":\"KH\",\"engineCc\":1000,\"installments\":1,\"bonusMalusClass\":\"NEUTRAL\"}";
 
         ResponseEntity<String> response = postJson(body, clientToken);
 
@@ -166,7 +236,7 @@ class QuoteControllerTest {
     @Test
     void clientRole_engineCcBelowEightHundred_returnsFieldLevelValidationError() {
         String clientToken = jwtService.issueToken(UUID.randomUUID(), Role.CLIENT);
-        String body = "{\"driverAge\":30,\"regionCode\":\"KH\",\"engineCc\":700,\"installments\":1}";
+        String body = "{\"driverAge\":30,\"regionCode\":\"KH\",\"engineCc\":700,\"installments\":1,\"bonusMalusClass\":\"NEUTRAL\"}";
 
         ResponseEntity<String> response = postJson(body, clientToken);
 
@@ -180,7 +250,7 @@ class QuoteControllerTest {
         // tariff's open-ended 86+ band, so this must still price (201), not
         // be rejected. spec-quote-input-bounds.md I/O matrix.
         String clientToken = jwtService.issueToken(registerClient(), Role.CLIENT);
-        String body = "{\"driverAge\":100,\"regionCode\":\"KH\",\"engineCc\":1500,\"installments\":2}";
+        String body = "{\"driverAge\":100,\"regionCode\":\"KH\",\"engineCc\":1500,\"installments\":2,\"bonusMalusClass\":\"NEUTRAL\"}";
 
         ResponseEntity<String> response = postJson(body, clientToken);
 
@@ -208,7 +278,7 @@ class QuoteControllerTest {
         // Reproduces the originally-reported bug (driverAge=100000 silently
         // priced) at a tighter boundary just above the new @Max(100) ceiling.
         String clientToken = jwtService.issueToken(UUID.randomUUID(), Role.CLIENT);
-        String body = "{\"driverAge\":101,\"regionCode\":\"KH\",\"engineCc\":1500,\"installments\":2}";
+        String body = "{\"driverAge\":101,\"regionCode\":\"KH\",\"engineCc\":1500,\"installments\":2,\"bonusMalusClass\":\"NEUTRAL\"}";
 
         ResponseEntity<String> response = postJson(body, clientToken);
 
@@ -222,7 +292,7 @@ class QuoteControllerTest {
         // engineCc=8000 is the new @Max ceiling itself - still within the
         // tariff's open-ended 2501+ band, so this must still price (201).
         String clientToken = jwtService.issueToken(registerClient(), Role.CLIENT);
-        String body = "{\"driverAge\":30,\"regionCode\":\"KH\",\"engineCc\":8000,\"installments\":2}";
+        String body = "{\"driverAge\":30,\"regionCode\":\"KH\",\"engineCc\":8000,\"installments\":2,\"bonusMalusClass\":\"NEUTRAL\"}";
 
         ResponseEntity<String> response = postJson(body, clientToken);
 
@@ -250,7 +320,7 @@ class QuoteControllerTest {
         // Reproduces the originally-reported bug (engineCc=10000000 silently
         // priced) at a tighter boundary just above the new @Max(8000) ceiling.
         String clientToken = jwtService.issueToken(UUID.randomUUID(), Role.CLIENT);
-        String body = "{\"driverAge\":30,\"regionCode\":\"KH\",\"engineCc\":8001,\"installments\":2}";
+        String body = "{\"driverAge\":30,\"regionCode\":\"KH\",\"engineCc\":8001,\"installments\":2,\"bonusMalusClass\":\"NEUTRAL\"}";
 
         ResponseEntity<String> response = postJson(body, clientToken);
 
@@ -267,7 +337,7 @@ class QuoteControllerTest {
         // a priced quote. The boundary tests above (101/8001) cover the
         // ceiling edge; this covers the literal reported values themselves.
         String clientToken = jwtService.issueToken(UUID.randomUUID(), Role.CLIENT);
-        String body = "{\"driverAge\":100000,\"regionCode\":\"KH\",\"engineCc\":10000000,\"installments\":2}";
+        String body = "{\"driverAge\":100000,\"regionCode\":\"KH\",\"engineCc\":10000000,\"installments\":2,\"bonusMalusClass\":\"NEUTRAL\"}";
 
         ResponseEntity<String> response = postJson(body, clientToken);
 
@@ -279,7 +349,7 @@ class QuoteControllerTest {
     @Test
     void clientRole_malformedRequestBody_isBadRequestNotServerError() {
         String clientToken = jwtService.issueToken(UUID.randomUUID(), Role.CLIENT);
-        String malformed = "{\"driverAge\":\"not-a-number\",\"regionCode\":\"KH\",\"engineCc\":1000,\"installments\":1}";
+        String malformed = "{\"driverAge\":\"not-a-number\",\"regionCode\":\"KH\",\"engineCc\":1000,\"installments\":1,\"bonusMalusClass\":\"NEUTRAL\"}";
 
         ResponseEntity<String> response = postJson(malformed, clientToken);
 
@@ -401,7 +471,7 @@ class QuoteControllerTest {
     }
 
     private String validRequestBody() {
-        return "{\"driverAge\":20,\"regionCode\":\"KH\",\"engineCc\":1500,\"installments\":2}";
+        return "{\"driverAge\":20,\"regionCode\":\"KH\",\"engineCc\":1500,\"installments\":2,\"bonusMalusClass\":\"NEUTRAL\"}";
     }
 
     /**

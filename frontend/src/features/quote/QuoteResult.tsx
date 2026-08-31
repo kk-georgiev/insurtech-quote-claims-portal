@@ -36,6 +36,14 @@ export function QuoteResult({ quote }: QuoteResultProps) {
             {quote.ageSurcharge} {quote.currency}
           </dd>
 
+          <dt className="text-text-muted">{t('quote.result.bonusMalusFactor')}</dt>
+          <dd data-testid="quote-bonusMalusFactor" className="text-right">
+            {t(`quote.form.bonusMalusClasses.${quote.bonusMalusClass}`, {
+              defaultValue: quote.bonusMalusClass,
+            })}{' '}
+            (&times;{quote.bonusMalusFactor})
+          </dd>
+
           <dt className="text-text-muted">{t('quote.result.oneTimePremium')}</dt>
           <dd data-testid="quote-oneTimePremium" className="text-right">
             {quote.oneTimePremium} {quote.currency}

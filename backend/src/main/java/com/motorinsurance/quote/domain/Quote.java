@@ -6,6 +6,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.UUID;
 
 /**
@@ -19,6 +20,13 @@ import java.util.UUID;
  * reference-data tables: a persisted quote must keep showing exactly what
  * the customer was quoted at calculation time, unaffected by any later
  * change to the tariff (Story 1.6 Design Notes).
+ *
+ * <p>Carries no {@code status} column (Architecture Spine AD-3, Story 6.2) -
+ * {@link #status} derives it on every call from {@link #validUntil} and
+ * {@link #acceptedAt}, which is the one place this milestone's status rule
+ * is implemented. {@code acceptedAt} stays {@code null} through every story
+ * before 8.1 (Accept a Quote and Issue a Policy) - no code path in this
+ * milestone's Epic 6 sets it.
  */
 @Entity
 @Table(name = "quotes")
@@ -78,6 +86,12 @@ public class Quote {
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
+    @Column(name = "valid_until", nullable = false)
+    private LocalDate validUntil;
+
+    @Column(name = "accepted_at")
+    private Instant acceptedAt;
+
     /** JPA-only. */
     protected Quote() {
     }
@@ -98,7 +112,8 @@ public class Quote {
             BigDecimal installmentFee,
             BigDecimal totalPremium,
             BigDecimal installmentAmount,
-            String currency) {
+            String currency,
+            LocalDate validUntil) {
         this.id = UUID.randomUUID();
         this.customerId = customerId;
         this.driverAge = driverAge;
@@ -117,6 +132,9 @@ public class Quote {
         this.installmentAmount = installmentAmount;
         this.currency = currency;
         this.createdAt = Instant.now();
+        this.validUntil = validUntil;
+        // acceptedAt stays null - no constructor path in this milestone
+        // accepts a quote at creation time (Story 8.1's job).
     }
 
     public UUID getId() {
@@ -189,5 +207,36 @@ public class Quote {
 
     public Instant getCreatedAt() {
         return createdAt;
+    }
+
+    public LocalDate getValidUntil() {
+        return validUntil;
+    }
+
+    public Instant getAcceptedAt() {
+        return acceptedAt;
+    }
+
+    /**
+     * Derives this quote's status as of {@code today} (Architecture Spine
+     * AD-3, AD-6) - the one place this rule is implemented; every read path
+     * calls this rather than re-deriving it. {@code today} is the caller's
+     * responsibility to resolve from the injected {@code Clock} in the
+     * business zone (never {@code LocalDate.now()} directly) - this method
+     * itself stays a pure function of its arguments, which is what makes it
+     * testable without a Spring context or a fixed clock bean.
+     *
+     * <p>The {@code validUntil} boundary is inclusive: a quote is still
+     * {@link QuoteStatus#CALCULATED}, not {@link QuoteStatus#EXPIRED}, on
+     * {@code validUntil} itself.
+     */
+    public QuoteStatus status(LocalDate today) {
+        if (acceptedAt != null) {
+            return QuoteStatus.ACCEPTED;
+        }
+        if (today.isAfter(validUntil)) {
+            return QuoteStatus.EXPIRED;
+        }
+        return QuoteStatus.CALCULATED;
     }
 }

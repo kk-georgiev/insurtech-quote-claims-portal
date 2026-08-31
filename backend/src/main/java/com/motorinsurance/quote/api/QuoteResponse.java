@@ -1,7 +1,9 @@
 package com.motorinsurance.quote.api;
 
+import com.motorinsurance.quote.domain.QuoteStatus;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.UUID;
 
 /**
@@ -34,5 +36,11 @@ public record QuoteResponse(
         BigDecimal installmentFee,
         BigDecimal totalPremium,
         BigDecimal installmentAmount,
-        String currency) {
+        String currency,
+        // Story 6.2 - also additive (AD-13). `status` is derived, never
+        // stored (AD-3); `acceptedAt` stays null through this milestone's
+        // Epic 6 (see Quote's javadoc) and is only ever set by Story 8.1.
+        LocalDate validUntil,
+        QuoteStatus status,
+        Instant acceptedAt) {
 }

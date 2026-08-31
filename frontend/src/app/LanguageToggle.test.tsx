@@ -256,6 +256,7 @@ describe('Bulgarian pass — no English static copy left on any screen', () => {
           bonusMalusClass: 'NEUTRAL', bonusMalusFactor: 1,
           oneTimePremium: 110, installments: 2, installmentFee: 5, totalPremium: 115,
           installmentAmount: 57.5, currency: 'BGN',
+          validUntil: '2026-09-12', status: 'CALCULATED', acceptedAt: null,
         }}
       />,
     );

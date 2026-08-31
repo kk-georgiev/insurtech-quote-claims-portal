@@ -22,6 +22,15 @@ interface CreateQuoteRequest {
   bonusMalusClass: string;
 }
 
+/**
+ * Mirrors the backend's `quote.domain.QuoteStatus` enum (Story 6.2). Never
+ * chosen by this frontend - always read off a `QuoteResponse`, derived
+ * server-side (Architecture Spine AD-3). `CANCELLED` is reserved: no
+ * response can carry it yet (no producer this milestone), but the type
+ * already accounts for it so a later story doesn't widen this union.
+ */
+export type QuoteStatus = 'CALCULATED' | 'ACCEPTED' | 'EXPIRED' | 'CANCELLED';
+
 /** Mirrors the backend's `QuoteResponse` (READ-ONLY, quote/api) field for field. */
 export interface QuoteResponse {
   id: string;
@@ -41,6 +50,12 @@ export interface QuoteResponse {
   totalPremium: number;
   installmentAmount: number;
   currency: string;
+  // Story 6.2 - additive (Architecture Spine AD-13). `acceptedAt` stays
+  // `null` through this milestone's Epic 6 - only Story 8.1's acceptance
+  // endpoint ever sets it.
+  validUntil: string;
+  status: QuoteStatus;
+  acceptedAt: string | null;
 }
 
 type FormPhase = 'editing' | 'submitting';

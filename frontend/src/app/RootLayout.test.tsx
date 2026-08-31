@@ -64,6 +64,21 @@ describe('RootLayout nav — auth awareness (Story 2.5)', () => {
     },
   );
 
+  it('shows anonymous nav (Register/Login), not Logout, for an expired token (Story 7.1, FR-M3-11)', async () => {
+    // A stored-but-expired token bounces the guarded route to /login
+    // (router.test.tsx covers that); this asserts the header chrome itself
+    // — rendered on every route including the /login a guard bounce lands
+    // on — reads the session as dead too, not just the route.
+    seedToken('CLIENT', { exp: Math.floor(Date.now() / 1000) - 60 });
+    renderAt('/');
+
+    expect(await screen.findByRole('heading', { name: bg.auth.login.heading })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: bg.app.nav.register })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: bg.app.nav.login })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: bg.app.nav.logout })).toBeNull();
+    expect(screen.queryByRole('link', { name: bg.app.nav.myQuotes })).toBeNull();
+  });
+
   it('clears the token, redirects to /login, and flips the nav immediately on Logout click, with no reload', async () => {
     mockedApiFetch.mockResolvedValue({ status: 'UP' } as { status: string });
     const user = userEvent.setup();

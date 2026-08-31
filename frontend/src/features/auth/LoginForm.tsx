@@ -3,8 +3,8 @@ import type { FormEvent } from 'react';
 import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { apiFetch, ApiRequestError } from '../../api/client';
-import { saveToken, decodeToken } from '../../api/authToken';
-import { isRole, roleHome } from '../../app/roleHome';
+import { saveToken } from '../../api/authToken';
+import { getCurrentRole, roleHome } from '../../app/roleHome';
 import { resolveFieldErrors, resolveFormError } from '../../i18n/errorMessages';
 import type { FieldFailure, FormFailure } from '../../i18n/errorMessages';
 import { Alert } from '../../components/ui/Alert';
@@ -23,16 +23,16 @@ type FormPhase = 'editing' | 'submitting';
 
 
 /**
- * Login screen (Story 1.3, routing added Story 2.2). On success: decode the
- * JWT, validate its `role` against the typed `Role` set, and only then
- * persist the token and navigate to that role's home route via React Router
- * (`useNavigate`, never `window.location` — AD-10).
+ * Login screen (Story 1.3, routing added Story 2.2). On success: validate
+ * the returned token through `app/roleHome.ts`'s `getCurrentRole` (Story
+ * 7.1), and only then persist it and navigate to that role's home route via
+ * React Router (`useNavigate`, never `window.location` — AD-10).
  *
- * A 200 whose token does not decode or whose role is not an `isRole` match
- * is a controlled failure at this call site (spec Boundaries & Constraints):
- * it is handled exactly like a failed login — generic error, form stays
- * editable, and the token is NOT written to `localStorage`. `roleHome` never
- * sees an unknown role.
+ * A 200 whose token does not decode, whose role is not an `isRole` match,
+ * or that is already expired is a controlled failure at this call site
+ * (spec Boundaries & Constraints): it is handled exactly like a failed
+ * login — generic error, form stays editable, and the token is NOT written
+ * to `localStorage`. `roleHome` never sees an unknown role.
  *
  * The frontend role check is a UX convenience, not a security boundary
  * (AD-4): this story adds no access enforcement — that is Story 2.4.
@@ -73,11 +73,17 @@ export function LoginForm() {
       });
       if (cancelledRef.current) return;
 
-      // Order matters (spec Boundaries & Constraints): decode -> isRole
-      // guard -> only then saveToken. A token that does not decode or whose
-      // role is unrecognized is treated exactly like a failed login.
-      const decoded = decodeToken(response.token);
-      if (!decoded || !isRole(decoded.role)) {
+      // Order matters (spec Boundaries & Constraints): validate -> only
+      // then saveToken. Story 7.1 routes this through the same
+      // `getCurrentRole` every other role check in the app uses (Epic 2
+      // retro item 14 / Epic 3 retro item 35 - stop re-implementing
+      // decode+isRole inline here) - passed the just-received token
+      // directly rather than reading it back from storage, since it is not
+      // saved yet. A token that does not decode, whose role is
+      // unrecognized, or that is already expired is treated exactly like a
+      // failed login.
+      const role = getCurrentRole(response.token);
+      if (!role) {
         setPhase('editing');
         // Not a backend error - the request succeeded and the token came back
         // unusable - so there is no `code` to resolve. Same generic copy the
@@ -93,7 +99,7 @@ export function LoginForm() {
       // error. `replace: true` keeps `/login` out of history so Back after a
       // post-auth redirect doesn't land on the login form again.
       setPhase('editing');
-      navigate(roleHome(decoded.role), { replace: true });
+      navigate(roleHome(role), { replace: true });
     } catch (error) {
       if (cancelledRef.current) return;
 

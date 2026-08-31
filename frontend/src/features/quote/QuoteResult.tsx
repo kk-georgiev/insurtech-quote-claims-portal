@@ -1,5 +1,6 @@
 import type { QuoteResponse } from './QuoteForm';
 import { useTranslation } from 'react-i18next';
+import { Card } from '../../components/ui/Card';
 
 interface QuoteResultProps {
   quote: QuoteResponse;
@@ -15,49 +16,57 @@ export function QuoteResult({ quote }: QuoteResultProps) {
   const { t } = useTranslation();
 
   return (
-    <section data-testid="quote-result" aria-label={t('quote.result.label')}>
-      <h3>{t('quote.result.heading')}</h3>
-      <dl>
-        <dt>{t('quote.result.zone')}</dt>
-        <dd data-testid="quote-zoneName">
-          {t(`quote.result.zones.${quote.zoneId}`, {
-            defaultValue: t('quote.result.zoneFallback', { zoneId: quote.zoneId }),
-          })}
-        </dd>
+    <section data-testid="quote-result" aria-label={t('quote.result.label')} className="mt-6">
+      <Card title={t('quote.result.heading')} titleAs="h3">
+        <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+          <dt className="text-text-muted">{t('quote.result.zone')}</dt>
+          <dd data-testid="quote-zoneName" className="text-right">
+            {t(`quote.result.zones.${quote.zoneId}`, {
+              defaultValue: t('quote.result.zoneFallback', { zoneId: quote.zoneId }),
+            })}
+          </dd>
 
-        <dt>{t('quote.result.basePremium')}</dt>
-        <dd data-testid="quote-basePremium">
-          {quote.basePremium} {quote.currency}
-        </dd>
+          <dt className="text-text-muted">{t('quote.result.basePremium')}</dt>
+          <dd data-testid="quote-basePremium" className="text-right">
+            {quote.basePremium} {quote.currency}
+          </dd>
 
-        <dt>{t('quote.result.ageSurcharge')}</dt>
-        <dd data-testid="quote-ageSurcharge">
-          {quote.ageSurcharge} {quote.currency}
-        </dd>
+          <dt className="text-text-muted">{t('quote.result.ageSurcharge')}</dt>
+          <dd data-testid="quote-ageSurcharge" className="text-right">
+            {quote.ageSurcharge} {quote.currency}
+          </dd>
 
-        <dt>{t('quote.result.oneTimePremium')}</dt>
-        <dd data-testid="quote-oneTimePremium">
-          {quote.oneTimePremium} {quote.currency}
-        </dd>
+          <dt className="text-text-muted">{t('quote.result.oneTimePremium')}</dt>
+          <dd data-testid="quote-oneTimePremium" className="text-right">
+            {quote.oneTimePremium} {quote.currency}
+          </dd>
 
-        <dt>{t('quote.result.installments')}</dt>
-        <dd data-testid="quote-installments">{quote.installments}</dd>
+          <dt className="text-text-muted">{t('quote.result.installments')}</dt>
+          <dd data-testid="quote-installments" className="text-right">
+            {quote.installments}
+          </dd>
 
-        <dt>{t('quote.result.installmentFee')}</dt>
-        <dd data-testid="quote-installmentFee">
-          {quote.installmentFee} {quote.currency}
-        </dd>
+          <dt className="text-text-muted">{t('quote.result.installmentFee')}</dt>
+          <dd data-testid="quote-installmentFee" className="text-right">
+            {quote.installmentFee} {quote.currency}
+          </dd>
 
-        <dt>{t('quote.result.totalPremium')}</dt>
-        <dd data-testid="quote-totalPremium">
-          {quote.totalPremium} {quote.currency}
-        </dd>
+          <dt className="col-span-2 mt-2 border-t border-border pt-2 text-base font-semibold text-text">
+            {t('quote.result.totalPremium')}
+          </dt>
+          <dd
+            data-testid="quote-totalPremium"
+            className="col-span-2 text-right text-base font-semibold text-text"
+          >
+            {quote.totalPremium} {quote.currency}
+          </dd>
 
-        <dt>{t('quote.result.installmentAmount')}</dt>
-        <dd data-testid="quote-installmentAmount">
-          {quote.installmentAmount} {quote.currency}
-        </dd>
-      </dl>
+          <dt className="text-text-muted">{t('quote.result.installmentAmount')}</dt>
+          <dd data-testid="quote-installmentAmount" className="text-right">
+            {quote.installmentAmount} {quote.currency}
+          </dd>
+        </dl>
+      </Card>
     </section>
   );
 }

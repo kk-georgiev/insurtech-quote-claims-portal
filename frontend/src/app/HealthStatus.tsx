@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { apiFetch, ApiRequestError } from '../api/client';
+import { Alert } from '../components/ui/Alert';
+import { Card } from '../components/ui/Card';
+import { Spinner } from '../components/ui/Spinner';
 
 interface ActuatorHealthResponse {
   status: string;
@@ -52,15 +55,26 @@ export function HealthStatus() {
   }, []);
 
   return (
-    <section>
-      <h2>{t('app.health.heading')}</h2>
-      {health.phase === 'checking' && <p>{t('app.health.checking')}</p>}
+    <Card title={t('app.health.heading')} titleAs="h2">
+      {health.phase === 'checking' && (
+        <p className="flex items-center gap-2 text-sm text-text-muted">
+          <Spinner />
+          {t('app.health.checking')}
+        </p>
+      )}
       {health.phase === 'reachable' && (
-        <p data-testid="health-status">{t('app.health.reachable')}</p>
+        <p data-testid="health-status" className="text-sm text-text">
+          {t('app.health.reachable')}
+        </p>
       )}
+      {/* Only the failure is a banner. "Reachable" renders on load and is not
+          an error, so wrapping it in `role="alert"` would make assistive tech
+          announce a non-event assertively every time the screen opens. */}
       {health.phase === 'unreachable' && (
-        <p data-testid="health-status">{t('app.health.unreachable')}</p>
+        <Alert variant="danger" data-testid="health-status">
+          {t('app.health.unreachable')}
+        </Alert>
       )}
-    </section>
+    </Card>
   );
 }

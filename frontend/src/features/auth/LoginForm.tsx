@@ -7,6 +7,12 @@ import { saveToken, decodeToken } from '../../api/authToken';
 import { isRole, roleHome } from '../../app/roleHome';
 import { resolveFieldErrors, resolveFormError } from '../../i18n/errorMessages';
 import type { FieldFailure, FormFailure } from '../../i18n/errorMessages';
+import { Alert } from '../../components/ui/Alert';
+import { Button } from '../../components/ui/Button';
+import { Card } from '../../components/ui/Card';
+import { FormField } from '../../components/ui/FormField';
+import { Input } from '../../components/ui/Input';
+import { Spinner } from '../../components/ui/Spinner';
 
 interface LoginResponse {
   token: string;
@@ -119,12 +125,10 @@ export function LoginForm() {
   const submitting = phase === 'submitting';
 
   return (
-    <section>
-      <h2>{t('auth.login.heading')}</h2>
-      <form onSubmit={handleSubmit} noValidate>
-        <div>
-          <label htmlFor="login-email">{t('auth.login.email')}</label>
-          <input
+    <Card title={t('auth.login.heading')} titleAs="h2">
+      <form onSubmit={handleSubmit} noValidate className="space-y-4">
+        <FormField label={t('auth.login.email')} error={fieldErrors.email} errorId="login-email-error">
+          <Input
             id="login-email"
             name="email"
             type="email"
@@ -133,18 +137,15 @@ export function LoginForm() {
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             disabled={submitting}
-            aria-invalid={fieldErrors.email ? true : undefined}
-            aria-describedby={fieldErrors.email ? 'login-email-error' : undefined}
+            invalid={Boolean(fieldErrors.email)}
           />
-          {fieldErrors.email && (
-            <p role="alert" id="login-email-error">
-              {fieldErrors.email}
-            </p>
-          )}
-        </div>
-        <div>
-          <label htmlFor="login-password">{t('auth.login.password')}</label>
-          <input
+        </FormField>
+        <FormField
+          label={t('auth.login.password')}
+          error={fieldErrors.password}
+          errorId="login-password-error"
+        >
+          <Input
             id="login-password"
             name="password"
             type="password"
@@ -153,24 +154,25 @@ export function LoginForm() {
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             disabled={submitting}
-            aria-invalid={fieldErrors.password ? true : undefined}
-            aria-describedby={fieldErrors.password ? 'login-password-error' : undefined}
+            invalid={Boolean(fieldErrors.password)}
           />
-          {fieldErrors.password && (
-            <p role="alert" id="login-password-error">
-              {fieldErrors.password}
-            </p>
-          )}
-        </div>
+        </FormField>
         {formError && (
-          <p role="alert" data-testid="login-error">
+          <Alert variant="danger" data-testid="login-error">
             {formError}
-          </p>
+          </Alert>
         )}
-        <button type="submit" disabled={submitting}>
-          {submitting ? t('auth.login.submitting') : t('auth.login.submit')}
-        </button>
+        <Button type="submit" disabled={submitting}>
+          {submitting ? (
+            <>
+              <Spinner className="mr-2" />
+              {t('auth.login.submitting')}
+            </>
+          ) : (
+            t('auth.login.submit')
+          )}
+        </Button>
       </form>
-    </section>
+    </Card>
   );
 }

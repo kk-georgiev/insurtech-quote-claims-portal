@@ -5,6 +5,12 @@ import { apiFetch, ApiRequestError } from '../../api/client';
 import { QuoteResult } from './QuoteResult';
 import { resolveFieldErrors, resolveFormError } from '../../i18n/errorMessages';
 import type { FieldFailure, FormFailure } from '../../i18n/errorMessages';
+import { Alert } from '../../components/ui/Alert';
+import { Button } from '../../components/ui/Button';
+import { Card } from '../../components/ui/Card';
+import { FormField } from '../../components/ui/FormField';
+import { Input } from '../../components/ui/Input';
+import { Spinner } from '../../components/ui/Spinner';
 
 /** Mirrors the backend's `CreateQuoteRequest` (READ-ONLY, quote/api). */
 interface CreateQuoteRequest {
@@ -134,12 +140,14 @@ export function QuoteForm() {
   const submitting = phase === 'submitting';
 
   return (
-    <section>
-      <h2>{t('quote.form.heading')}</h2>
-      <form onSubmit={handleSubmit} noValidate>
-        <div>
-          <label htmlFor="quote-driverAge">{t('quote.form.driverAge')}</label>
-          <input
+    <Card title={t('quote.form.heading')} titleAs="h2">
+      <form onSubmit={handleSubmit} noValidate className="space-y-4">
+        <FormField
+          label={t('quote.form.driverAge')}
+          error={fieldErrors.driverAge}
+          errorId="quote-driverAge-error"
+        >
+          <Input
             id="quote-driverAge"
             name="driverAge"
             type="number"
@@ -151,18 +159,15 @@ export function QuoteForm() {
             value={driverAge}
             onChange={(event) => setDriverAge(event.target.value)}
             disabled={submitting}
-            aria-invalid={fieldErrors.driverAge ? true : undefined}
-            aria-describedby={fieldErrors.driverAge ? 'quote-driverAge-error' : undefined}
+            invalid={Boolean(fieldErrors.driverAge)}
           />
-          {fieldErrors.driverAge && (
-            <p role="alert" id="quote-driverAge-error">
-              {fieldErrors.driverAge}
-            </p>
-          )}
-        </div>
-        <div>
-          <label htmlFor="quote-regionCode">{t('quote.form.regionCode')}</label>
-          <input
+        </FormField>
+        <FormField
+          label={t('quote.form.regionCode')}
+          error={fieldErrors.regionCode}
+          errorId="quote-regionCode-error"
+        >
+          <Input
             id="quote-regionCode"
             name="regionCode"
             type="text"
@@ -170,18 +175,15 @@ export function QuoteForm() {
             value={regionCode}
             onChange={(event) => setRegionCode(event.target.value)}
             disabled={submitting}
-            aria-invalid={fieldErrors.regionCode ? true : undefined}
-            aria-describedby={fieldErrors.regionCode ? 'quote-regionCode-error' : undefined}
+            invalid={Boolean(fieldErrors.regionCode)}
           />
-          {fieldErrors.regionCode && (
-            <p role="alert" id="quote-regionCode-error">
-              {fieldErrors.regionCode}
-            </p>
-          )}
-        </div>
-        <div>
-          <label htmlFor="quote-engineCc">{t('quote.form.engineCc')}</label>
-          <input
+        </FormField>
+        <FormField
+          label={t('quote.form.engineCc')}
+          error={fieldErrors.engineCc}
+          errorId="quote-engineCc-error"
+        >
+          <Input
             id="quote-engineCc"
             name="engineCc"
             type="number"
@@ -193,18 +195,15 @@ export function QuoteForm() {
             value={engineCc}
             onChange={(event) => setEngineCc(event.target.value)}
             disabled={submitting}
-            aria-invalid={fieldErrors.engineCc ? true : undefined}
-            aria-describedby={fieldErrors.engineCc ? 'quote-engineCc-error' : undefined}
+            invalid={Boolean(fieldErrors.engineCc)}
           />
-          {fieldErrors.engineCc && (
-            <p role="alert" id="quote-engineCc-error">
-              {fieldErrors.engineCc}
-            </p>
-          )}
-        </div>
-        <div>
-          <label htmlFor="quote-installments">{t('quote.form.installments')}</label>
-          <input
+        </FormField>
+        <FormField
+          label={t('quote.form.installments')}
+          error={fieldErrors.installments}
+          errorId="quote-installments-error"
+        >
+          <Input
             id="quote-installments"
             name="installments"
             type="number"
@@ -214,25 +213,26 @@ export function QuoteForm() {
             value={installments}
             onChange={(event) => setInstallments(event.target.value)}
             disabled={submitting}
-            aria-invalid={fieldErrors.installments ? true : undefined}
-            aria-describedby={fieldErrors.installments ? 'quote-installments-error' : undefined}
+            invalid={Boolean(fieldErrors.installments)}
           />
-          {fieldErrors.installments && (
-            <p role="alert" id="quote-installments-error">
-              {fieldErrors.installments}
-            </p>
-          )}
-        </div>
+        </FormField>
         {formError && (
-          <p role="alert" data-testid="quote-error">
+          <Alert variant="danger" data-testid="quote-error">
             {formError}
-          </p>
+          </Alert>
         )}
-        <button type="submit" disabled={submitting}>
-          {submitting ? t('quote.form.submitting') : t('quote.form.submit')}
-        </button>
+        <Button type="submit" disabled={submitting}>
+          {submitting ? (
+            <>
+              <Spinner className="mr-2" />
+              {t('quote.form.submitting')}
+            </>
+          ) : (
+            t('quote.form.submit')
+          )}
+        </Button>
       </form>
       {quote && <QuoteResult quote={quote} />}
-    </section>
+    </Card>
   );
 }

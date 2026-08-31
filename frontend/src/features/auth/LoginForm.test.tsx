@@ -26,11 +26,14 @@ const INVALID_CREDENTIALS = bg.errors.codes.AUTH_INVALID_CREDENTIALS;
 const EMAIL = 'someone@example.com';
 const PASSWORD = 'DemoPass123!';
 
-/** Builds a well-formed `header.payload.signature` JWT string for `role`. */
-function makeToken(role: string): string {
+/**
+ * Builds a well-formed `header.payload.signature` JWT string for `role`.
+ * `extra` (Story 7.1) merges additional payload claims, e.g. `{ exp: ... }`.
+ */
+function makeToken(role: string, extra: Record<string, unknown> = {}): string {
   const encode = (value: unknown) =>
     btoa(JSON.stringify(value)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-  return `${encode({ alg: 'HS256', typ: 'JWT' })}.${encode({ sub: 'user-1', role })}.sig`;
+  return `${encode({ alg: 'HS256', typ: 'JWT' })}.${encode({ sub: 'user-1', role, ...extra })}.sig`;
 }
 
 function renderLogin() {
@@ -87,6 +90,24 @@ describe('LoginForm role-based post-login routing', () => {
 
   it('treats a token with an unrecognized role as a failed login and leaves the form editable', async () => {
     mockedApiFetch.mockResolvedValue({ token: makeToken('SUPERUSER') });
+
+    const { router, user } = renderLogin();
+    await fillAndSubmit(user);
+
+    expect(await screen.findByTestId('login-error')).toHaveTextContent(GENERIC_ERROR);
+    expect(router.state.location.pathname).toBe('/login');
+    expect(getToken()).toBeNull();
+    expect(loginButton()).toBeEnabled();
+  });
+
+  it('treats an already-expired token as a failed login (Story 7.1) and never persists it', async () => {
+    // Degenerate/unlikely (clock skew, a very short-lived test token) but
+    // now reachable through the same getCurrentRole path every other check
+    // uses - the token is well-formed and its role is real, only `exp` is
+    // already in the past.
+    mockedApiFetch.mockResolvedValue({
+      token: makeToken('CLIENT', { exp: Math.floor(Date.now() / 1000) - 60 }),
+    });
 
     const { router, user } = renderLogin();
     await fillAndSubmit(user);

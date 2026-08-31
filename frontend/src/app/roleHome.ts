@@ -51,16 +51,35 @@ export function roleHome(role: Role): string {
  * The current visitor's role, derived only from the stored JWT
  * (`getToken` + `decodeToken`, `api/authToken.ts`) — never from props or
  * global state (Story 2.4, AD-10). Returns `null` for "no valid role":
- * no token saved, an unparseable/malformed token, or a token whose `role`
- * claim isn't one of {@link ROLES}. Callers (`RoleGuard`) treat `null` as
- * "not logged in" and route to `/login`, same as a decode failure.
+ * no token saved, an unparseable/malformed token, a token whose `role`
+ * claim isn't one of {@link ROLES}, or — Story 7.1, FR-M3-11 — a token
+ * whose `exp` claim has already passed. Callers (`RoleGuard`, `RootLayout`)
+ * treat `null` as "not logged in" uniformly, so an expired-but-still-stored
+ * token reads as a dead session everywhere this is called, not just on the
+ * next navigation. This reads `exp` only — it never verifies the token's
+ * signature, which stays the backend's job (`auth.config.JwtAuthenticationFilter`);
+ * a request against an expired-but-signature-valid token is independently
+ * rejected server-side regardless of what this function returns (AD-4).
+ *
+ * Takes an explicit `token` (defaulting to the stored one) so `LoginForm`
+ * can validate a just-received token *before* deciding whether to persist
+ * it, through this same one code path, instead of re-implementing
+ * decode+`isRole`+expiry inline (Epic 2 retro item 14, Epic 3 retro item 35).
  */
-export function getCurrentRole(): Role | null {
-  const token = getToken();
+export function getCurrentRole(token: string | null = getToken()): Role | null {
   if (!token) return null;
 
   const decoded = decodeToken(token);
   if (!decoded || !isRole(decoded.role)) return null;
+
+  // `exp` is UNIX seconds (JWT spec); Date.now() is milliseconds. A token
+  // with no `exp` claim at all is treated as never-expiring here — this
+  // backend's tokens always carry one (JwtService), so an absent `exp`
+  // only ever occurs in a forged/malformed token, which the signature
+  // check server-side would reject anyway.
+  if (typeof decoded.exp === 'number' && decoded.exp * 1000 <= Date.now()) {
+    return null;
+  }
 
   return decoded.role;
 }

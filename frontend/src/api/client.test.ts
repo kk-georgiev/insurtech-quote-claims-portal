@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { apiFetch } from './client';
-import { saveToken } from './authToken';
+import { saveToken, getToken } from './authToken';
+import { onSessionExpired } from './sessionExpiry';
 
 // Unit-tests the `authenticated` option added in Story 1.7 - the first
 // authenticated call path in this codebase (spec Boundaries & Constraints:
@@ -50,5 +51,68 @@ describe('apiFetch authenticated option', () => {
     await apiFetch('/api/v1/auth/login', { method: 'POST', body: { email: 'a@example.com', password: 'x' } });
 
     expect(headersOf(fetchMock).Authorization).toBeUndefined();
+  });
+});
+
+// Story 7.1, FR-M3-12: "a 401 ends the session cleanly" - handled once,
+// here, never per screen. `onSessionExpired` is reset in `afterEach` below
+// so one test's spy never leaks into the next.
+describe('apiFetch session-expiry handling (Story 7.1)', () => {
+  afterEach(() => {
+    onSessionExpired(() => {});
+  });
+
+  it('clears the stored token and notifies session-expiry on a 401 from an authenticated call', async () => {
+    saveToken('a-jwt-token');
+    const handler = vi.fn();
+    onSessionExpired(handler);
+    stubFetch(401, { status: 401, code: 'AUTH_UNAUTHENTICATED' });
+
+    await expect(
+      apiFetch('/api/v1/quotes', { authenticated: true }),
+    ).rejects.toThrow();
+
+    expect(getToken()).toBeNull();
+    expect(handler).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not clear the token or notify on a 401 from a non-authenticated call (e.g. a failed login)', async () => {
+    saveToken('a-jwt-token');
+    const handler = vi.fn();
+    onSessionExpired(handler);
+    stubFetch(401, { status: 401, code: 'AUTH_INVALID_CREDENTIALS' });
+
+    await expect(
+      apiFetch('/api/v1/auth/login', { method: 'POST', body: { email: 'a@example.com', password: 'x' } }),
+    ).rejects.toThrow();
+
+    // A wrong-password 401 on the login endpoint (never sent with
+    // `authenticated: true`) is a completely different, expected case with
+    // no session to end - it must not clear an unrelated stored session or
+    // bounce the visitor away from the login screen they are already on.
+    expect(getToken()).toBe('a-jwt-token');
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  it('does not clear the token or notify on a non-401 error from an authenticated call', async () => {
+    saveToken('a-jwt-token');
+    const handler = vi.fn();
+    onSessionExpired(handler);
+    stubFetch(403, { status: 403, code: 'AUTH_FORBIDDEN' });
+
+    await expect(apiFetch('/api/v1/quotes', { authenticated: true })).rejects.toThrow();
+
+    expect(getToken()).toBe('a-jwt-token');
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  it('still throws ApiRequestError with the 401 status after clearing the session, so callers can still branch if they need to', async () => {
+    saveToken('a-jwt-token');
+    stubFetch(401, { status: 401, code: 'AUTH_UNAUTHENTICATED' });
+
+    await expect(apiFetch('/api/v1/quotes', { authenticated: true })).rejects.toMatchObject({
+      status: 401,
+      code: 'AUTH_UNAUTHENTICATED',
+    });
   });
 });

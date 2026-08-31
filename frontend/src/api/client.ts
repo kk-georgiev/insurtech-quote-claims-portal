@@ -3,7 +3,8 @@
 // goes through this module; the backend origin always comes from
 // VITE_API_URL and is never hardcoded (AD-9/AD-10).
 
-import { getToken } from './authToken';
+import { getToken, clearToken } from './authToken';
+import { notifySessionExpired } from './sessionExpiry';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -89,6 +90,19 @@ export async function apiFetch<TResponse>(
   }
 
   if (!response.ok) {
+    // Story 7.1, FR-M3-12: a 401 on an *authenticated* call means the
+    // session this client thought it had is dead server-side (expired,
+    // revoked, or otherwise rejected by the JWT filter) - clear the stale
+    // token and let whatever is listening (the real app's router, wired in
+    // `app/browserRouter.ts`) take the visitor back to `/login`. Handled
+    // exactly once, here, not per screen. Scoped to `authenticated` calls
+    // only: a 401 from `POST /api/v1/auth/login` on a wrong password is a
+    // completely different, expected case with no session to clear.
+    if (response.status === 401 && authenticated) {
+      clearToken();
+      notifySessionExpired();
+    }
+
     // Backend errors are shaped as the AD-7 envelope ({status, code, message,
     // fieldErrors}); parse it out so callers can branch on `code`/`fieldErrors`
     // instead of guessing from the HTTP status alone. Deliberately does NOT

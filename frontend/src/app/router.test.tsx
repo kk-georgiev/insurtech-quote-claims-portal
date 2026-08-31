@@ -119,4 +119,17 @@ describe('RoleGuard', () => {
       expect(router.state.location.pathname).toBe('/login');
     },
   );
+
+  it.each([...ROLES])(
+    "an expired token (Story 7.1, FR-M3-11) on %s's route redirects to /login, same as no token at all",
+    async (role) => {
+      // A well-formed, correctly-roled token whose exp has passed - the
+      // third branch of getCurrentRole's "no valid role" contract, distinct
+      // from malformed and unrecognized-role above.
+      seedToken(role, { exp: Math.floor(Date.now() / 1000) - 60 });
+      const router = renderAt(roleHome(role));
+      expect(await screen.findByRole('heading', { name: bg.auth.login.heading })).toBeInTheDocument();
+      expect(router.state.location.pathname).toBe('/login');
+    },
+  );
 });

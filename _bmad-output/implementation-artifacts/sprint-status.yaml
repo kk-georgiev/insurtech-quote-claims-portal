@@ -29,7 +29,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 08-23-2026 17:25
-last_updated: 08-31-2026 18:00
+last_updated: 08-31-2026 17:41
 project: Motor Insurance Quote & Claims Portal
 project_key: NOKEY
 tracking_system: file-system
@@ -73,6 +73,28 @@ development_status:
   5-5-responsive-layout: done
   5-6-loading-error-state-polish-should-have: done
   epic-5-retrospective: done
+
+  epic-6: backlog
+  6-1-bonus-malus-rating-factor: backlog
+  6-2-offer-validity-and-quote-status: backlog
+  6-3-my-quotes-list-and-detail: backlog
+  epic-6-retrospective: optional
+
+  epic-7: backlog
+  7-1-server-validated-authentication-state: backlog
+  7-2-authenticated-visitors-skip-the-auth-screens: backlog
+  epic-7-retrospective: optional
+
+  epic-8: backlog
+  8-1-accept-a-quote-and-issue-a-policy-backend: backlog
+  8-2-accepting-a-quote-from-the-detail-screen: backlog
+  8-3-my-policies-list-and-detail: backlog
+  epic-8-retrospective: optional
+
+  epic-9: backlog
+  9-1-openapi-documentation-should-have: backlog
+  9-2-documentation-and-legacy-css-cleanup-should-have: backlog
+  epic-9-retrospective: optional
 action_items:
   - id: "epic-1-retro-item-1-add-auth-module-test-coverage-registrati"
     epic: 1

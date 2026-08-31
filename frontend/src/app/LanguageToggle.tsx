@@ -53,7 +53,7 @@ export function LanguageToggle() {
           lang={language}
           aria-pressed={language === active}
           onClick={() => select(language)}
-          className="rounded-full bg-transparent px-2.5 py-0.5 text-xs font-medium text-white/70 transition-colors hover:bg-white/10 hover:text-white aria-pressed:bg-white aria-pressed:text-primary aria-pressed:hover:bg-white aria-pressed:hover:text-primary"
+          className="inline-flex min-h-11 items-center rounded-full bg-transparent px-3 py-0.5 text-xs font-medium text-white/70 transition-colors hover:bg-white/10 hover:text-white aria-pressed:bg-white aria-pressed:text-primary aria-pressed:hover:bg-white aria-pressed:hover:text-primary sm:min-h-0 sm:px-2.5"
         >
           {t(`app.language.${language}`)}
         </button>

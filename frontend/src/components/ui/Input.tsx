@@ -4,8 +4,12 @@ import { cn } from './cn';
 
 // `invalid` drives visual styling only (border/ring color) — it never
 // renders error text itself. `FormField` owns the message (AD-5).
+// `text-base` below `sm` is deliberate (Story 5.5): iOS Safari auto-zooms the
+// viewport when a focused input's font-size is under 16px, which pans the page
+// sideways and leaves content cut off — the exact failure FR-8 rules out. The
+// desktop size is restored at `sm:`.
 const inputVariants = cva(
-  'w-full rounded-md border bg-surface px-3 py-2 text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-2 disabled:bg-surface-muted disabled:text-text-muted',
+  'w-full rounded-md border bg-surface px-3 py-2 text-base text-text placeholder:text-text-muted focus:outline-none focus:ring-2 disabled:bg-surface-muted disabled:text-text-muted sm:text-sm',
   {
     variants: {
       invalid: {

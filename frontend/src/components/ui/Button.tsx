@@ -16,9 +16,13 @@ const buttonVariants = cva(
         secondary: 'bg-transparent border border-primary text-primary hover:bg-surface-muted',
         ghost: 'bg-transparent text-white hover:bg-white/10',
       },
+      // Story 5.5: both sizes clear a 44px tap target below `sm` and drop
+      // back to their original desktop proportions at `sm:`. The rule lives
+      // here, in the component's own variant definition (AD-2), so no screen
+      // has to re-derive it through a `className` override.
       size: {
-        md: 'px-4 py-2 text-sm',
-        sm: 'px-3 py-1.5 text-xs',
+        md: 'min-h-11 px-4 py-2 text-sm sm:min-h-0',
+        sm: 'min-h-11 px-3 py-1.5 text-xs sm:min-h-0',
       },
     },
     defaultVariants: { variant: 'primary', size: 'md' },

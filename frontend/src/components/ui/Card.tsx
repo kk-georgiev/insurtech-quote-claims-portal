@@ -26,7 +26,14 @@ export function Card({ className, title, titleAs = 'h3', footer, children, ...pr
   const Heading = titleAs;
   return (
     <div
-      className={cn('rounded-lg border border-border bg-surface p-6 shadow-sm', className)}
+      className={cn(
+        // Story 5.5: padding steps down on phones. A Card nested in a Card
+        // (QuoteResult inside QuoteForm) otherwise spends 96px of a 375px
+        // viewport on padding alone, squeezing the breakdown's two columns
+        // to ~106px so nearly every Bulgarian label wraps.
+        'rounded-lg border border-border bg-surface p-4 shadow-sm sm:p-6',
+        className,
+      )}
       {...props}
     >
       {title && <Heading className="mb-4 mt-0 text-base font-semibold text-text">{title}</Heading>}

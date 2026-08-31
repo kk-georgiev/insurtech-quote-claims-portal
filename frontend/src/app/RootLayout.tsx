@@ -45,15 +45,24 @@ export function RootLayout() {
     navigate('/login', { replace: true });
   }
 
-  const navLinkClass = 'text-sm font-medium text-white/80 transition-colors hover:text-white';
+  // `min-h-11` (44px) only below `sm`: a bare inline link is ~20px tall, too
+  // small to hit reliably on a phone (Story 5.5). The links carry no
+  // background, so the extra height is invisible — and it is dropped again at
+  // `sm:` so the desktop header keeps its original proportions.
+  const navLinkClass =
+    'inline-flex min-h-11 items-center text-sm font-medium text-white/80 transition-colors hover:text-white sm:min-h-0';
 
   return (
     <div className="flex min-h-screen flex-col bg-surface-muted font-sans text-text">
       <header className="bg-primary text-white">
-        <div className="mx-auto flex w-full max-w-5xl flex-wrap items-center justify-between gap-4 px-6 py-4">
-          <h1 className="text-lg font-semibold tracking-tight">{t('app.title')}</h1>
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
-            <nav className="flex flex-wrap items-center gap-x-5 gap-y-2">
+        {/* Stays `max-w-5xl` (wider than `<main>`'s `max-w-2xl`): narrowing it
+            to match the content column makes the long Bulgarian title wrap on
+            desktop and doubles the header's height. The resulting left-edge
+            misalignment is cosmetic and stays deferred. */}
+        <div className="mx-auto flex w-full max-w-5xl flex-wrap items-center justify-between gap-4 px-4 py-3 sm:px-6 sm:py-4">
+          <h1 className="text-base font-semibold tracking-tight sm:text-lg">{t('app.title')}</h1>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 sm:gap-x-6 sm:gap-y-3">
+            <nav className="flex flex-wrap items-center gap-x-4 gap-y-2 sm:gap-x-5">
               {currentRole ? (
                 <Button variant="ghost" size="sm" onClick={handleLogout}>
                   {t('app.nav.logout')}
@@ -76,7 +85,7 @@ export function RootLayout() {
           </div>
         </div>
       </header>
-      <main className="mx-auto my-0 w-full max-w-2xl flex-1 px-6 py-10">
+      <main className="mx-auto my-0 w-full max-w-2xl flex-1 px-4 py-6 sm:px-6 sm:py-10">
         <Outlet />
       </main>
     </div>

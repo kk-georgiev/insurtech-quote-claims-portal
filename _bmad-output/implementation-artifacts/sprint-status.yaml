@@ -70,7 +70,7 @@ development_status:
   5-2-auth-screens-visual-pass: review
   5-3-quote-flow-visual-pass: review
   5-4-navigation-role-shells-visual-pass: review
-  5-5-responsive-layout: backlog
+  5-5-responsive-layout: review
   5-6-loading-error-state-polish-should-have: backlog
   epic-5-retrospective: optional
 action_items:

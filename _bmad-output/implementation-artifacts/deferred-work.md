@@ -359,3 +359,9 @@ Append-only. Entries collected from bmad-build review loopbacks. Do not modify e
 - source_spec: `_bmad-output/implementation-artifacts/spec-5-4-navigation-role-shells-visual-pass.md`
   summary: The restyled header's inner container is `max-w-5xl` while `<main>` is `max-w-2xl`, so the `<h1>`/nav left edge does not line up with the body content column below it.
   evidence: Focused implementation review. Deliberately not tuned here — Story 5.5 (Responsive Layout) "applies to whatever Stories 5.2–5.4 produce" and owns the layout/breakpoint pass; header width vs. content-column alignment is a natural item for it. Purely cosmetic, no behaviour impact.
+
+## Deferred from: Story 5.5 review (2026-08-31)
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-5-5-responsive-layout.md`
+  summary: Header/content left-edge misalignment (header `max-w-5xl` vs `<main>` `max-w-2xl`) — carried over from Story 5.4's deferral and deliberately NOT taken by Story 5.5.
+  evidence: Attempted during 5.5 and reverted with measurements: narrowing the header container to `max-w-2xl` wraps the long Bulgarian app title on desktop and doubles header height (84px -> 130px). Trading a real desktop regression for cosmetic alignment is a bad deal. A proper fix needs a shorter header title or a wider content column — a design decision, not a layout tweak. Mobile is unaffected (both containers are full-width under `sm`).

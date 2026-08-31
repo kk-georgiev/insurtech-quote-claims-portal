@@ -29,7 +29,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 08-23-2026 17:25
-last_updated: 08-31-2026
+last_updated: 08-31-2026 18:00
 project: Motor Insurance Quote & Claims Portal
 project_key: NOKEY
 tracking_system: file-system
@@ -65,14 +65,14 @@ development_status:
   4-3-local-dev-workflow-preserved-alongside-docker: done
   epic-4-retrospective: done
 
-  epic-5: in-progress
-  5-1-design-tokens-base-component-library: review
-  5-2-auth-screens-visual-pass: review
-  5-3-quote-flow-visual-pass: review
-  5-4-navigation-role-shells-visual-pass: review
-  5-5-responsive-layout: review
-  5-6-loading-error-state-polish-should-have: review
-  epic-5-retrospective: optional
+  epic-5: done
+  5-1-design-tokens-base-component-library: done
+  5-2-auth-screens-visual-pass: done
+  5-3-quote-flow-visual-pass: done
+  5-4-navigation-role-shells-visual-pass: done
+  5-5-responsive-layout: done
+  5-6-loading-error-state-polish-should-have: done
+  epic-5-retrospective: done
 action_items:
   - id: "epic-1-retro-item-1-add-auth-module-test-coverage-registrati"
     epic: 1
@@ -319,3 +319,71 @@ action_items:
     owner: "unassigned"
     status: open
     ref: "_bmad-output/implementation-artifacts/epic-3-retro-2026-08-30.md"
+  - id: "epic-5-retro-item-36-fix-the-stale-index-css-legacy-layer-com"
+    epic: 5
+    action: "Fix the stale index.css legacy-layer comment (lines ~83-90): no screen
+      is unmigrated after Story 5.6; state what the block actually still provides
+      (box-sizing reset, body, dt font-weight, the quote-result divider)."
+    owner: "Viktor"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-5-retro-2026-08-31.md"
+  - id: "epic-5-retro-item-37-finish-the-legacy-css-retirement-in-fron"
+    epic: 5
+    action: "Finish the legacy-CSS retirement in frontend/src/index.css: delete every
+      @layer legacy rule with no live consumer, and migrate the four survivors (dt
+      font-weight to a utility on QuoteResult dt; [data-testid=quote-result] padding-top/border-top
+      to tokens or a Card prop; keep only box-sizing + body)."
+    owner: "Viktor"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-5-retro-2026-08-31.md"
+  - id: "epic-5-retro-item-38-reconcile-epic-5-fr-1-either-amend-epics"
+    epic: 5
+    action: "Reconcile Epic 5 FR-1: either amend epics-milestone-2.md to state FR-1
+      means no hardcoded hex in authored components/screens (legacy CSS excepted pending
+      the retirement), or treat the legacy-CSS retirement as the FR-1 completion gate.
+      A #e2e8f0 border-top still renders above the quote breakdown card via the legacy
+      [data-testid=quote-result] rule."
+    owner: "Viktor"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-5-retro-2026-08-31.md"
+  - id: "epic-5-retro-item-39-add-a-loading-prop-to-components-ui-butt"
+    epic: 5
+    action: "Add a loading prop to components/ui/Button (render the Spinner, keep
+      the label, force disabled) and collapse the three verbatim submit-button ternaries
+      in LoginForm/RegisterForm/QuoteForm onto it."
+    owner: "Viktor"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-5-retro-2026-08-31.md"
+  - id: "epic-5-retro-item-40-add-a-story-merge-step-that-moves-a-stor"
+    epic: 5
+    action: "Add a story-merge step that moves a story sprint-status key to done when
+      its PR merges, so sprint-status.yaml never lags the branch for a whole epic
+      again (Epic 5 ran entirely with 5.1-5.6 stuck at review)."
+    owner: "Viktor"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-5-retro-2026-08-31.md"
+  - id: "epic-5-retro-item-41-before-a-styling-only-epic-enumerate-the"
+    epic: 5
+    action: "Before a styling-only epic, enumerate the open action items sitting in
+      every file it will touch and decide per file: fold the fix into the story or
+      explicitly log why not. Epic 5 rewrote LanguageToggle/LoginForm/RegisterForm/QuoteForm/HealthStatus
+      and addressed none of their 5 open items."
+    owner: "Viktor"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-5-retro-2026-08-31.md"
+  - id: "epic-5-retro-item-42-remove-spinner-size-md-from-components-u"
+    epic: 5
+    action: "Remove Spinner size=md from components/ui/Spinner until a consumer needs
+      it (no caller uses it). Leave Button variant=secondary and Card footer as accepted
+      design-system surface."
+    owner: "Viktor"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-5-retro-2026-08-31.md"
+  - id: "epic-5-retro-item-43-carry-epic-3-retro-item-34-forward-with"
+    epic: 5
+    action: "Carry epic-3-retro-item-34 forward with raised priority: HealthStatus.tsx
+      has zero test coverage and Story 5.6 rewrote its render logic; add checking
+      / reachable / unreachable / console.error assertions."
+    owner: "Viktor"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-5-retro-2026-08-31.md"

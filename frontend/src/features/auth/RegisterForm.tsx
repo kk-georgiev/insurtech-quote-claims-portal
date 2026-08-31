@@ -4,10 +4,12 @@ import { useTranslation } from 'react-i18next';
 import { apiFetch, ApiRequestError } from '../../api/client';
 import { resolveFieldErrors, resolveFormError } from '../../i18n/errorMessages';
 import type { FieldFailure, FormFailure } from '../../i18n/errorMessages';
+import { Alert } from '../../components/ui/Alert';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { FormField } from '../../components/ui/FormField';
 import { Input } from '../../components/ui/Input';
+import { Spinner } from '../../components/ui/Spinner';
 
 interface RegisterResponse {
   id: string;
@@ -89,9 +91,12 @@ export function RegisterForm() {
   if (phase === 'success') {
     return (
       <Card title={t('auth.register.success')} titleAs="h2">
-        <p data-testid="register-success">
+        {/* Same shared banner as the failure path, in its success variant —
+            the legacy `[data-testid='register-success']` colour rule in
+            index.css is what this replaces. */}
+        <Alert variant="success" data-testid="register-success">
           {t('auth.register.successBody')}
-        </p>
+        </Alert>
       </Card>
     );
   }
@@ -146,12 +151,19 @@ export function RegisterForm() {
           />
         </FormField>
         {formError && (
-          <p role="alert" data-testid="register-error" className="text-sm text-danger">
+          <Alert variant="danger" data-testid="register-error">
             {formError}
-          </p>
+          </Alert>
         )}
         <Button type="submit" disabled={submitting}>
-          {submitting ? t('auth.register.submitting') : t('auth.register.submit')}
+          {submitting ? (
+            <>
+              <Spinner className="mr-2" />
+              {t('auth.register.submitting')}
+            </>
+          ) : (
+            t('auth.register.submit')
+          )}
         </Button>
       </form>
     </Card>

@@ -7,10 +7,12 @@ import { saveToken, decodeToken } from '../../api/authToken';
 import { isRole, roleHome } from '../../app/roleHome';
 import { resolveFieldErrors, resolveFormError } from '../../i18n/errorMessages';
 import type { FieldFailure, FormFailure } from '../../i18n/errorMessages';
+import { Alert } from '../../components/ui/Alert';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { FormField } from '../../components/ui/FormField';
 import { Input } from '../../components/ui/Input';
+import { Spinner } from '../../components/ui/Spinner';
 
 interface LoginResponse {
   token: string;
@@ -156,12 +158,19 @@ export function LoginForm() {
           />
         </FormField>
         {formError && (
-          <p role="alert" data-testid="login-error" className="text-sm text-danger">
+          <Alert variant="danger" data-testid="login-error">
             {formError}
-          </p>
+          </Alert>
         )}
         <Button type="submit" disabled={submitting}>
-          {submitting ? t('auth.login.submitting') : t('auth.login.submit')}
+          {submitting ? (
+            <>
+              <Spinner className="mr-2" />
+              {t('auth.login.submitting')}
+            </>
+          ) : (
+            t('auth.login.submit')
+          )}
         </Button>
       </form>
     </Card>

@@ -5,10 +5,12 @@ import { apiFetch, ApiRequestError } from '../../api/client';
 import { QuoteResult } from './QuoteResult';
 import { resolveFieldErrors, resolveFormError } from '../../i18n/errorMessages';
 import type { FieldFailure, FormFailure } from '../../i18n/errorMessages';
+import { Alert } from '../../components/ui/Alert';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { FormField } from '../../components/ui/FormField';
 import { Input } from '../../components/ui/Input';
+import { Spinner } from '../../components/ui/Spinner';
 
 /** Mirrors the backend's `CreateQuoteRequest` (READ-ONLY, quote/api). */
 interface CreateQuoteRequest {
@@ -215,12 +217,19 @@ export function QuoteForm() {
           />
         </FormField>
         {formError && (
-          <p role="alert" data-testid="quote-error" className="text-sm text-danger">
+          <Alert variant="danger" data-testid="quote-error">
             {formError}
-          </p>
+          </Alert>
         )}
         <Button type="submit" disabled={submitting}>
-          {submitting ? t('quote.form.submitting') : t('quote.form.submit')}
+          {submitting ? (
+            <>
+              <Spinner className="mr-2" />
+              {t('quote.form.submitting')}
+            </>
+          ) : (
+            t('quote.form.submit')
+          )}
         </Button>
       </form>
       {quote && <QuoteResult quote={quote} />}

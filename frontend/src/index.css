@@ -203,23 +203,14 @@
     cursor: not-allowed;
   }
 
-  /* Errors — every field-level and form-level error uses role="alert"
-     (LoginForm, RegisterForm, QuoteForm). Bottom margin (not just top) so a
-     form-level error — a direct child of <form>, not wrapped in a field div —
-     doesn't sit flush against the submit button right after it. */
-
-  [role='alert'] {
-    color: #dc2626;
-    font-size: 0.875rem;
-    margin: 0.25rem 0 0.75rem;
-  }
-
-  /* Success feedback (e.g. RegisterForm's post-registration message) */
-
-  [data-testid='register-success'] {
-    color: #16a34a;
-    font-weight: 600;
-  }
+  /* The `[role='alert']` and `[data-testid='register-success']` rules that
+     lived here were removed by Story 5.6, which gave every form- and
+     screen-level message one shared owner (`components/ui/Alert`). The
+     colour/size half was already being overridden by that component's
+     utilities, but the `margin` half was not — it leaked into the shared
+     banner from outside, so the component did not actually own its own
+     spacing. Callers now space their messages with the surrounding
+     `space-y-*` flow like any other block. */
 
   /* Quote breakdown (QuoteResult's dl/dt/dd) */
 

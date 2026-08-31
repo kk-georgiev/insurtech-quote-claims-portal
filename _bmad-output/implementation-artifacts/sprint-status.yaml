@@ -71,7 +71,7 @@ development_status:
   5-3-quote-flow-visual-pass: review
   5-4-navigation-role-shells-visual-pass: review
   5-5-responsive-layout: review
-  5-6-loading-error-state-polish-should-have: backlog
+  5-6-loading-error-state-polish-should-have: review
   epic-5-retrospective: optional
 action_items:
   - id: "epic-1-retro-item-1-add-auth-module-test-coverage-registrati"

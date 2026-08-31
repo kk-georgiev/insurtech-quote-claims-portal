@@ -80,71 +80,14 @@
     line-height: 1.5;
   }
 
-  /* Header / nav (RootLayout) */
-
-  header {
-    background: #1f2937;
-    color: #fff;
-    padding: 1rem 1.5rem;
-  }
-
-  header h1 {
-    margin: 0 0 0.5rem;
-    font-size: 1.25rem;
-  }
-
-  header nav {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
-  }
-
-  header nav a {
-    color: #cbd5e1;
-    text-decoration: none;
-    font-size: 0.9rem;
-  }
-
-  header nav a:hover {
-    color: #fff;
-    text-decoration: underline;
-  }
-
-  /* Language toggle (LanguageToggle, Story 3.1). `aria-pressed` already tells
-     assistive tech which language is active; these rules give sighted users
-     the same information, which two identically-styled buttons do not. Quieter
-     and smaller than the base `button` rule below, because this is header
-     chrome rather than a primary action.
-
-     Hooked off the existing `data-testid` and `aria-pressed` attributes, like
-     the `[data-testid='quote-result']` and `[data-testid='register-success']`
-     rules further down — this file deliberately adds no classNames. */
-
-  [data-testid='language-toggle'] {
-    display: flex;
-    gap: 0.5rem;
-    margin-top: 0.5rem;
-  }
-
-  [data-testid='language-toggle'] button {
-    background: transparent;
-    border: 1px solid #475569;
-    color: #cbd5e1;
-    padding: 0.25rem 0.6rem;
-    font-size: 0.8rem;
-  }
-
-  [data-testid='language-toggle'] button:hover:not(:disabled) {
-    background: #334155;
-    color: #fff;
-  }
-
-  [data-testid='language-toggle'] button[aria-pressed='true'] {
-    background: #2563eb;
-    border-color: #2563eb;
-    color: #fff;
-    font-weight: 600;
-  }
+  /* Header / nav (RootLayout) and the language toggle (LanguageToggle) were
+     styled here by element/attribute selectors until Story 5.4 rebuilt both
+     with the Milestone 2 design system (Tailwind tokens + the `Button`
+     component). Those legacy rules are now dead — `<header>` and
+     `[data-testid='language-toggle']` render only in those two components —
+     and have been removed. Everything below (`main`, `main > section`,
+     forms, `button`, `[role='alert']`, `dl`) is still load-bearing for
+     screens not yet migrated (e.g. `HealthStatus`). */
 
   /* Content container */
 

@@ -52,13 +52,23 @@
       "regionCode": "Region code",
       "engineCc": "Engine size (cc)",
       "installments": "Number of installments",
+      "bonusMalusClass": "Bonus-malus class",
+      "bonusMalusNote": "This project's own demo scale — not official tariff values.",
+      "bonusMalusClasses": {
+        "BONUS_20": "Bonus 20%",
+        "BONUS_10": "Bonus 10%",
+        "NEUTRAL": "Neutral",
+        "MALUS_25": "Malus 25%",
+        "MALUS_50": "Malus 50%"
+      },
       "submit": "Get quote",
       "submitting": "Calculating…",
       "fieldErrors": {
         "driverAge": "The driver age must be a whole number between 18 and 100.",
         "regionCode": "Enter a region code from the registration plate, for example \"CA\".",
         "engineCc": "The engine size must be a whole number between 800 and 8000 cc.",
-        "installments": "The number of installments must be 1, 2 or 4."
+        "installments": "The number of installments must be 1, 2 or 4.",
+        "bonusMalusClass": "Choose a bonus-malus class."
       }
     },
     "result": {
@@ -67,6 +77,7 @@
       "zone": "Zone",
       "basePremium": "Base premium",
       "ageSurcharge": "Age surcharge",
+      "bonusMalusFactor": "Bonus-malus factor",
       "oneTimePremium": "One-time premium",
       "installments": "Installments",
       "installmentFee": "Installment fee",
@@ -108,6 +119,7 @@
       "AUTH_EMAIL_TAKEN": "An account with this email already exists.",
       "PRICING_UNKNOWN_REGION": "Unknown region code. Use the code from the registration plate, for example \"CA\" or \"CB\".",
       "PRICING_UNSUPPORTED_INSTALLMENTS": "The selected number of installments is not supported. Choose 1, 2 or 4.",
+      "PRICING_UNKNOWN_BONUS_MALUS_CLASS": "Unknown bonus-malus class. Choose a value from the list.",
       "QUOTE_NOT_FOUND": "Quote not found.",
       "SHARED_VALIDATION_ERROR": "Please check the details you entered.",
       "SHARED_NOT_FOUND": "Not found.",

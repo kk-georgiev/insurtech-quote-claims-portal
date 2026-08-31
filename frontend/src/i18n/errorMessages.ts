@@ -59,6 +59,7 @@ export type FieldFailure = { fieldErrors: ApiFieldError[]; code?: string } | nul
 const FIELD_SPECIFIC_CODES: Record<string, string> = {
   PRICING_UNKNOWN_REGION: 'regionCode',
   PRICING_UNSUPPORTED_INSTALLMENTS: 'installments',
+  PRICING_UNKNOWN_BONUS_MALUS_CLASS: 'bonusMalusClass',
 };
 
 /**

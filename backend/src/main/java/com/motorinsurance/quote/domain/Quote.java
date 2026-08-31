@@ -51,6 +51,12 @@ public class Quote {
     @Column(name = "age_surcharge", nullable = false)
     private BigDecimal ageSurcharge;
 
+    @Column(name = "bonus_malus_code", nullable = false)
+    private String bonusMalusCode;
+
+    @Column(name = "bonus_malus_factor", nullable = false)
+    private BigDecimal bonusMalusFactor;
+
     @Column(name = "one_time_premium", nullable = false)
     private BigDecimal oneTimePremium;
 
@@ -85,6 +91,8 @@ public class Quote {
             String zoneName,
             BigDecimal basePremium,
             BigDecimal ageSurcharge,
+            String bonusMalusCode,
+            BigDecimal bonusMalusFactor,
             BigDecimal oneTimePremium,
             int installments,
             BigDecimal installmentFee,
@@ -100,6 +108,8 @@ public class Quote {
         this.zoneName = zoneName;
         this.basePremium = basePremium;
         this.ageSurcharge = ageSurcharge;
+        this.bonusMalusCode = bonusMalusCode;
+        this.bonusMalusFactor = bonusMalusFactor;
         this.oneTimePremium = oneTimePremium;
         this.installments = (short) installments;
         this.installmentFee = installmentFee;
@@ -143,6 +153,14 @@ public class Quote {
 
     public BigDecimal getAgeSurcharge() {
         return ageSurcharge;
+    }
+
+    public String getBonusMalusCode() {
+        return bonusMalusCode;
+    }
+
+    public BigDecimal getBonusMalusFactor() {
+        return bonusMalusFactor;
     }
 
     public BigDecimal getOneTimePremium() {

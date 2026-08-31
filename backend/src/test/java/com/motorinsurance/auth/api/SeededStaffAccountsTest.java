@@ -156,7 +156,8 @@ class SeededStaffAccountsTest {
         // Epic 1's @PreAuthorize("hasRole('CLIENT')") still governs now that
         // non-CLIENT accounts genuinely exist. All three roles, so no seeded
         // account can quietly acquire CLIENT authority.
-        String quoteBody = "{\"driverAge\":20,\"regionCode\":\"KH\",\"engineCc\":1500,\"installments\":2}";
+        String quoteBody =
+                "{\"driverAge\":20,\"regionCode\":\"KH\",\"engineCc\":1500,\"installments\":2,\"bonusMalusClass\":\"NEUTRAL\"}";
 
         for (SeededAccount account : STAFF_ACCOUNTS) {
             String staffToken = tokenFromLogin(account.email(), DEMO_PASSWORD);

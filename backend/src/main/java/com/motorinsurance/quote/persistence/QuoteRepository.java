@@ -1,6 +1,7 @@
 package com.motorinsurance.quote.persistence;
 
 import com.motorinsurance.quote.domain.Quote;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -15,4 +16,11 @@ public interface QuoteRepository extends JpaRepository<Quote, UUID> {
      * {@code QuoteService} - not a 403, which would confirm the id is real.
      */
     Optional<Quote> findByIdAndCustomerId(UUID id, UUID customerId);
+
+    /**
+     * Owner-scoped list, newest first (Story 6.3, Architecture Spine AD-10/
+     * AD-12) - the query itself excludes every other customer's quotes; no
+     * caller fetches broadly and filters in Java.
+     */
+    List<Quote> findAllByCustomerIdOrderByCreatedAtDesc(UUID customerId);
 }

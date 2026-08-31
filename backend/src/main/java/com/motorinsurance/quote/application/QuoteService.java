@@ -8,6 +8,7 @@ import com.motorinsurance.quote.domain.Quote;
 import com.motorinsurance.quote.persistence.QuoteRepository;
 import java.time.Clock;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -107,6 +108,18 @@ public class QuoteService {
                 .orElseThrow(() -> new QuoteNotFoundException(id));
 
         return toResponse(quote);
+    }
+
+    /**
+     * Owner-scoped list, newest first (Story 6.3, Architecture Spine AD-10/
+     * AD-12) - the same {@link QuoteResponse} shape {@link #getById} returns,
+     * not a slimmed-down summary DTO.
+     */
+    @Transactional(readOnly = true)
+    public List<QuoteResponse> listForCustomer(UUID customerId) {
+        return quoteRepository.findAllByCustomerIdOrderByCreatedAtDesc(customerId).stream()
+                .map(this::toResponse)
+                .toList();
     }
 
     private QuoteResponse toResponse(Quote quote) {

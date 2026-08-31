@@ -2,6 +2,7 @@ package com.motorinsurance.quote.api;
 
 import com.motorinsurance.quote.application.QuoteService;
 import jakarta.validation.Valid;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -55,6 +56,17 @@ public class QuoteController {
     @PreAuthorize("hasRole('CLIENT')")
     public QuoteResponse getById(@PathVariable("id") UUID id, Authentication authentication) {
         return quoteService.getById(id, currentUserId(authentication));
+    }
+
+    /**
+     * Story 6.3 - a bare, ordered JSON array of the same {@link QuoteResponse}
+     * shape {@link #getById} returns (Architecture Spine AD-12): no envelope,
+     * no pagination this milestone.
+     */
+    @GetMapping
+    @PreAuthorize("hasRole('CLIENT')")
+    public List<QuoteResponse> list(Authentication authentication) {
+        return quoteService.listForCustomer(currentUserId(authentication));
     }
 
     private UUID currentUserId(Authentication authentication) {

@@ -5,6 +5,8 @@ import { RoleGuard } from './RoleGuard';
 import { RegisterForm } from '../features/auth/RegisterForm';
 import { LoginForm } from '../features/auth/LoginForm';
 import { ClientShell } from '../features/shells/client/ClientShell';
+import { MyQuotes } from '../features/quote/MyQuotes';
+import { QuoteDetail } from '../features/quote/QuoteDetail';
 import { AgentShell } from '../features/shells/agent/AgentShell';
 import { LiquidatorShell } from '../features/shells/liquidator/LiquidatorShell';
 import { AdministratorShell } from '../features/shells/administrator/AdministratorShell';
@@ -26,8 +28,15 @@ export const routes: RouteObject[] = [
     element: <RootLayout />,
     children: [
       {
+        // Story 6.3: /quotes and /quotes/:id join the client shell under
+        // the same CLIENT-only guard - no new guard logic (UX EXPERIENCE.md,
+        // Information Architecture).
         element: <RoleGuard role="CLIENT" />,
-        children: [{ index: true, element: <ClientShell /> }],
+        children: [
+          { index: true, element: <ClientShell /> },
+          { path: 'quotes', element: <MyQuotes /> },
+          { path: 'quotes/:id', element: <QuoteDetail /> },
+        ],
       },
       { path: 'health', element: <HealthStatus /> },
       {

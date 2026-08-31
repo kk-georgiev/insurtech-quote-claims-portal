@@ -29,7 +29,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 08-23-2026 17:25
-last_updated: 08-31-2026 17:41
+last_updated: 08-31-2026 19:30
 project: Motor Insurance Quote & Claims Portal
 project_key: NOKEY
 tracking_system: file-system
@@ -74,11 +74,11 @@ development_status:
   5-6-loading-error-state-polish-should-have: done
   epic-5-retrospective: done
 
-  epic-6: backlog
-  6-1-bonus-malus-rating-factor: backlog
-  6-2-offer-validity-and-quote-status: backlog
-  6-3-my-quotes-list-and-detail: backlog
-  epic-6-retrospective: optional
+  epic-6: done
+  6-1-bonus-malus-rating-factor: done
+  6-2-offer-validity-and-quote-status: done
+  6-3-my-quotes-list-and-detail: done
+  epic-6-retrospective: done
 
   epic-7: backlog
   7-1-server-validated-authentication-state: backlog
@@ -409,3 +409,38 @@ action_items:
     owner: "Viktor"
     status: open
     ref: "_bmad-output/implementation-artifacts/epic-5-retro-2026-08-31.md"
+  - id: "epic-6-retro-item-44-confirm-story-8-2s-form-hook-extraction"
+    epic: 6
+    action: "Confirm Story 8.2s form-hook extraction scope covers MyQuotes.tsx/QuoteDetail.tsx,
+      not only the three form components its AC names literally - split out a follow-up
+      if it does not."
+    owner: "Viktor"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-6-retro-2026-08-31.md"
+  - id: "epic-6-retro-item-45-split-quotecontrollertest-java-by-endpoi"
+    epic: 6
+    action: "Split QuoteControllerTest.java by endpoint concern (calculate / getById
+      / list) before or during Epic 8, when the accept endpoints tests would otherwise
+      land in the same 644-line file."
+    owner: "Viktor"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-6-retro-2026-08-31.md"
+  - id: "epic-6-retro-item-46-add-timezone-utc-to-frontend-src-i18n-fo"
+    epic: 6
+    action: "Add timeZone: UTC to frontend/src/i18n/formatDate.ts so a rendered date
+      (e.g. a quotes validUntil) is independent of the viewers local timezone - a
+      bare LocalDate string parses as UTC midnight and Intl.DateTimeFormat without
+      an explicit timeZone renders in the viewers local zone, shifting the displayed
+      date for negative-UTC-offset viewers."
+    owner: "Viktor"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-6-retro-2026-08-31.md"
+  - id: "epic-6-retro-item-47-escalate-epic-5-retro-item-40-sprint-sta"
+    epic: 6
+    action: "Escalate epic-5-retro-item-40: sprint-status.yaml lagged the merged PRs
+      for all three Epic 6 stories again, recurring across two consecutive epics.
+      Consider moving the sprint-status update into the PR-merge step itself rather
+      than relying on the next retrospective to catch it."
+    owner: "Viktor"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-6-retro-2026-08-31.md"

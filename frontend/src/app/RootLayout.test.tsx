@@ -47,6 +47,23 @@ describe('RootLayout nav — auth awareness (Story 2.5)', () => {
     expect(screen.queryByRole('link', { name: bg.app.nav.login })).toBeNull();
   });
 
+  it('shows "My quotes" only for a logged-in CLIENT, not for staff roles (Story 6.3)', async () => {
+    seedToken('CLIENT');
+    renderAt('/');
+    expect(await screen.findByTestId('client-shell')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: bg.app.nav.myQuotes })).toBeInTheDocument();
+  });
+
+  it.each([...ROLES.filter((role) => role !== 'CLIENT')])(
+    'does not show "My quotes" for a logged-in %s',
+    async (role) => {
+      seedToken(role);
+      renderAt(`/${role.toLowerCase()}`);
+      expect(await screen.findByTestId(`${role.toLowerCase()}-shell`)).toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: bg.app.nav.myQuotes })).toBeNull();
+    },
+  );
+
   it('clears the token, redirects to /login, and flips the nav immediately on Logout click, with no reload', async () => {
     mockedApiFetch.mockResolvedValue({ status: 'UP' } as { status: string });
     const user = userEvent.setup();

@@ -5,7 +5,8 @@
       "register": "Register",
       "login": "Login",
       "logout": "Logout",
-      "health": "Health"
+      "health": "Health",
+      "myQuotes": "My quotes"
     },
     "language": {
       "label": "Language",
@@ -91,6 +92,36 @@
         "5": "Zone 5"
       },
       "zoneFallback": "Zone {{zoneId}}"
+    }
+  },
+  "quotes": {
+    "list": {
+      "heading": "My quotes",
+      "loading": "Loading your quotes…",
+      "empty": {
+        "title": "You have no quotes yet",
+        "cta": "Calculate your first quote"
+      },
+      "error": "Your quotes could not be loaded.",
+      "retry": "Try again",
+      "vehicleSummary": "{{engineCc}} cc · {{zone}}"
+    },
+    "status": {
+      "validUntil": "Valid until {{date}}",
+      "expiresInDays_one": "Expires in {{count}} day",
+      "expiresInDays_other": "Expires in {{count}} days",
+      "expiresToday": "Expires today",
+      "accepted": "Accepted",
+      "expiredOn": "Expired on {{date}}",
+      "cancelled": "Cancelled"
+    },
+    "detail": {
+      "heading": "Quote details",
+      "backToList": "Back to my quotes",
+      "notFound": "This quote could not be found.",
+      "expiredNotice": "This offer expired on {{date}} and can no longer be accepted.",
+      "newQuoteCta": "Calculate a new quote",
+      "acceptedNotice": "This quote has already been accepted."
     }
   },
   "shells": {

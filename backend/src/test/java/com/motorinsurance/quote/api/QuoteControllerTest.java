@@ -7,6 +7,8 @@ import com.motorinsurance.auth.domain.Role;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -481,6 +483,96 @@ class QuoteControllerTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(response.getBody()).contains("\"code\":\"SHARED_VALIDATION_ERROR\"");
         assertThat(response.getBody()).contains("\"field\":\"id\"");
+    }
+
+    // --- Story 6.3: GET /api/v1/quotes (list) ---
+
+    @Test
+    void clientRole_listQuotes_returnsOnlyOwnQuotesNewestFirst() {
+        String ownerToken = jwtService.issueToken(registerClient(), Role.CLIENT);
+        String otherToken = jwtService.issueToken(registerClient(), Role.CLIENT);
+
+        UUID first = extractId(postJson(validRequestBody(), ownerToken).getBody());
+        UUID second = extractId(postJson(validRequestBody(), ownerToken).getBody());
+        // Belongs to a different customer - must never appear in the owner's list.
+        postJson(validRequestBody(), otherToken);
+
+        ResponseEntity<String> response = getWithBearer(QUOTES_PATH, ownerToken);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        // Bare JSON array (Architecture Spine AD-12) - not an envelope object.
+        assertThat(response.getBody()).startsWith("[").endsWith("]");
+        List<UUID> ids = extractAllIds(response.getBody());
+        assertThat(ids).containsExactly(second, first); // newest first
+    }
+
+    @Test
+    void clientRole_listQuotes_ownerScopedEvenAgainstManyOtherCustomers() {
+        String ownerToken = jwtService.issueToken(registerClient(), Role.CLIENT);
+        jwtService.issueToken(registerClient(), Role.CLIENT); // another customer, no quotes of their own here
+        String otherToken = jwtService.issueToken(registerClient(), Role.CLIENT);
+        postJson(validRequestBody(), otherToken);
+        postJson(validRequestBody(), otherToken);
+
+        ResponseEntity<String> response = getWithBearer(QUOTES_PATH, ownerToken);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isEqualTo("[]");
+    }
+
+    @Test
+    void clientRole_listQuotes_noQuotesYet_returnsEmptyArrayNotError() {
+        String clientToken = jwtService.issueToken(registerClient(), Role.CLIENT);
+
+        ResponseEntity<String> response = getWithBearer(QUOTES_PATH, clientToken);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isEqualTo("[]");
+    }
+
+    @Test
+    void clientRole_listQuotes_eachEntryCarriesTheFullBreakdownShape() {
+        // The list endpoint returns the same DTO the detail endpoint does
+        // (AD-12) - not a slimmed summary. Spot-checks one field from each
+        // area of the response (input, breakdown, lifecycle) rather than
+        // repeating the full-body assertion already covered elsewhere.
+        String clientToken = jwtService.issueToken(registerClient(), Role.CLIENT);
+        postJson(validRequestBody(), clientToken);
+
+        ResponseEntity<String> response = getWithBearer(QUOTES_PATH, clientToken);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).contains("\"regionCode\":\"KH\"");
+        assertThat(response.getBody()).contains("\"totalPremium\":179.12");
+        assertThat(response.getBody()).contains("\"status\":\"CALCULATED\"");
+        assertThat(response.getBody()).contains("\"acceptedAt\":null");
+    }
+
+    @Test
+    void noToken_onList_isRejectedUnauthenticated() {
+        ResponseEntity<String> response = getWithBearer(QUOTES_PATH, null);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        assertThat(response.getBody()).contains("\"code\":\"AUTH_UNAUTHENTICATED\"");
+    }
+
+    @Test
+    void nonClientRole_onList_isRejectedForbidden() {
+        String agentToken = jwtService.issueToken(UUID.randomUUID(), Role.AGENT);
+
+        ResponseEntity<String> response = getWithBearer(QUOTES_PATH, agentToken);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        assertThat(response.getBody()).contains("\"code\":\"AUTH_FORBIDDEN\"");
+    }
+
+    private static List<UUID> extractAllIds(String responseBody) {
+        Matcher matcher = Pattern.compile("\"id\":\"([0-9a-fA-F-]{36})\"").matcher(responseBody);
+        List<UUID> ids = new ArrayList<>();
+        while (matcher.find()) {
+            ids.add(UUID.fromString(matcher.group(1)));
+        }
+        return ids;
     }
 
     private String validRequestBody() {

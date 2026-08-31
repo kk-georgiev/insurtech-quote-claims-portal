@@ -5,7 +5,8 @@
       "register": "Регистрация",
       "login": "Вход",
       "logout": "Изход",
-      "health": "Състояние"
+      "health": "Състояние",
+      "myQuotes": "Моите оферти"
     },
     "language": {
       "label": "Език",
@@ -91,6 +92,36 @@
         "5": "Зона 5"
       },
       "zoneFallback": "Зона {{zoneId}}"
+    }
+  },
+  "quotes": {
+    "list": {
+      "heading": "Моите оферти",
+      "loading": "Зареждане на офертите ви…",
+      "empty": {
+        "title": "Все още нямате оферти",
+        "cta": "Изчислете първата си оферта"
+      },
+      "error": "Офертите не можаха да бъдат заредени.",
+      "retry": "Опитайте отново",
+      "vehicleSummary": "{{engineCc}} куб. см · {{zone}}"
+    },
+    "status": {
+      "validUntil": "Валидна до {{date}}",
+      "expiresInDays_one": "Изтича след {{count}} ден",
+      "expiresInDays_other": "Изтича след {{count}} дни",
+      "expiresToday": "Изтича днес",
+      "accepted": "Приета",
+      "expiredOn": "Изтекла на {{date}}",
+      "cancelled": "Отменена"
+    },
+    "detail": {
+      "heading": "Детайли за офертата",
+      "backToList": "Обратно към моите оферти",
+      "notFound": "Тази оферта не е намерена.",
+      "expiredNotice": "Тази оферта изтече на {{date}} и вече не може да бъде приета.",
+      "newQuoteCta": "Изчислете нова оферта",
+      "acceptedNotice": "Тази оферта вече е приета."
     }
   },
   "shells": {

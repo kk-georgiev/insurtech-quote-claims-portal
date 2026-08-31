@@ -34,6 +34,18 @@ describe('Button', () => {
     expect(secondaryOnly.length).toBeGreaterThan(0);
   });
 
+  it('renders the ghost variant as a real <button> with its own color treatment', () => {
+    const { unmount } = render(<Button variant="primary">Primary</Button>);
+    const primaryClasses = screen.getByRole('button').className.split(' ');
+    unmount();
+
+    render(<Button variant="ghost">Ghost</Button>);
+    const ghost = screen.getByRole('button', { name: 'Ghost' });
+    expect(ghost.tagName).toBe('BUTTON');
+    const ghostOnly = ghost.className.split(' ').filter((c) => !primaryClasses.includes(c));
+    expect(ghostOnly.length).toBeGreaterThan(0);
+  });
+
   it('merges a className override without dropping the variant classes', () => {
     render(<Button className="mt-4">Click me</Button>);
     const button = screen.getByRole('button');

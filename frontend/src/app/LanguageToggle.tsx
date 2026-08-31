@@ -20,6 +20,14 @@ import { SUPPORTED_LANGUAGES, saveLanguage, type Language } from '../i18n/langua
  * pressed state is what tells a screen-reader user which one is active. The
  * `lang` attribute on each button stops a screen reader from reading
  * "Български" with an English voice.
+ *
+ * Story 5.4 styles this as a segmented pill control that sits on the navy
+ * header. It is a two-option toggle, not one of the four base primitives
+ * (Button/Input/FormField/Card), so per the Milestone 2 architecture its
+ * native `<button>`s are styled directly with semantic-token utilities —
+ * the active pill is driven off the same `aria-pressed` state, via the
+ * `aria-pressed:` Tailwind variant, so sighted and AT users get one source
+ * of truth.
  */
 export function LanguageToggle() {
   const { t, i18n } = useTranslation();
@@ -32,7 +40,12 @@ export function LanguageToggle() {
   }
 
   return (
-    <div role="group" aria-label={t('app.language.label')} data-testid="language-toggle">
+    <div
+      role="group"
+      aria-label={t('app.language.label')}
+      data-testid="language-toggle"
+      className="flex items-center gap-1 rounded-full border border-white/20 p-1"
+    >
       {SUPPORTED_LANGUAGES.map((language) => (
         <button
           key={language}
@@ -40,6 +53,7 @@ export function LanguageToggle() {
           lang={language}
           aria-pressed={language === active}
           onClick={() => select(language)}
+          className="rounded-full bg-transparent px-2.5 py-0.5 text-xs font-medium text-white/70 transition-colors hover:bg-white/10 hover:text-white aria-pressed:bg-white aria-pressed:text-primary aria-pressed:hover:bg-white aria-pressed:hover:text-primary"
         >
           {t(`app.language.${language}`)}
         </button>

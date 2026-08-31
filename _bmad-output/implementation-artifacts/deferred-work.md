@@ -353,3 +353,9 @@ Append-only. Entries collected from bmad-build review loopbacks. Do not modify e
 - source_spec: `_bmad-output/implementation-artifacts/spec-2-5-logout-action-and-authenticated-navigation.md`
   summary: Clicking Logout navigates via `navigate('/login', { replace: true })` with no focus management — focus is left wherever it was rather than moved to the login screen's heading or main content.
   evidence: Review-loop finding (blind-hunter). A real accessibility regression for keyboard/screen-reader users compared to a full page navigation, but accessibility/focus management is not a stated requirement anywhere in this milestone's epics or PRD (visual polish and mobile/responsive layout are explicit non-goals in the Epic 2 context), so it wasn't treated as in-scope for this story. Worth addressing if an accessibility pass is ever scoped for this project.
+
+## Deferred from: Story 5.4 review (2026-08-31)
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-5-4-navigation-role-shells-visual-pass.md`
+  summary: The restyled header's inner container is `max-w-5xl` while `<main>` is `max-w-2xl`, so the `<h1>`/nav left edge does not line up with the body content column below it.
+  evidence: Focused implementation review. Deliberately not tuned here — Story 5.5 (Responsive Layout) "applies to whatever Stories 5.2–5.4 produce" and owns the layout/breakpoint pass; header width vs. content-column alignment is a natural item for it. Purely cosmetic, no behaviour impact.

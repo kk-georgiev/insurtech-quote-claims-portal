@@ -6,9 +6,12 @@ import com.motorinsurance.quote.api.CreateQuoteRequest;
 import com.motorinsurance.quote.api.QuoteResponse;
 import com.motorinsurance.quote.domain.Quote;
 import com.motorinsurance.quote.persistence.QuoteRepository;
+import java.time.Clock;
+import java.time.LocalDate;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +22,12 @@ import org.springframework.transaction.annotation.Transactional;
  * immediately as part of calculation (Story 1.6 AC - there is no separate
  * "save" step) and supports retrieving it back by id, scoped to the
  * requesting customer.
+ *
+ * <p>Story 6.2 adds offer validity: {@code clock} is the one injected,
+ * business-zone {@code Clock} (Architecture Spine AD-6, {@code
+ * shared.config.ClockConfig}) - {@code LocalDate.now(clock)} is called
+ * exactly here, never inside {@link Quote} itself, so {@link Quote#status}
+ * stays a pure function testable without a Spring context.
  */
 @Service
 public class QuoteService {
@@ -27,10 +36,18 @@ public class QuoteService {
 
     private final PricingService pricingService;
     private final QuoteRepository quoteRepository;
+    private final Clock clock;
+    private final long offerValidityDays;
 
-    public QuoteService(PricingService pricingService, QuoteRepository quoteRepository) {
+    public QuoteService(
+            PricingService pricingService,
+            QuoteRepository quoteRepository,
+            Clock clock,
+            @Value("${quote.offer-validity-days}") long offerValidityDays) {
         this.pricingService = pricingService;
         this.quoteRepository = quoteRepository;
+        this.clock = clock;
+        this.offerValidityDays = offerValidityDays;
     }
 
     @Transactional
@@ -58,7 +75,8 @@ public class QuoteService {
                 result.installmentFee(),
                 result.totalPremium(),
                 result.installmentAmount(),
-                result.currency());
+                result.currency(),
+                LocalDate.now(clock).plusDays(offerValidityDays));
 
         Quote saved;
         try {
@@ -109,6 +127,9 @@ public class QuoteService {
                 quote.getInstallmentFee(),
                 quote.getTotalPremium(),
                 quote.getInstallmentAmount(),
-                quote.getCurrency());
+                quote.getCurrency(),
+                quote.getValidUntil(),
+                quote.status(LocalDate.now(clock)),
+                quote.getAcceptedAt());
     }
 }

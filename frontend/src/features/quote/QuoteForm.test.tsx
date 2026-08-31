@@ -38,6 +38,9 @@ const SAMPLE_QUOTE: QuoteResponse = {
   totalPremium: 315,
   installmentAmount: 157.5,
   currency: 'BGN',
+  validUntil: '2026-09-11',
+  status: 'CALCULATED',
+  acceptedAt: null,
 };
 
 function renderForm() {

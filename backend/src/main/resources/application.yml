@@ -19,6 +19,13 @@ jwt:
   secret: ${JWT_SECRET:insecure-dev-only-default-jwt-secret-do-not-use-in-any-real-deployment-override-via-JWT_SECRET}
   expiration-hours: 8
 
+# Offer validity (Story 6.2, Architecture Spine AD-6/FR-M3-02): the single
+# configured source for how many days a calculated quote stays acceptable.
+# QuoteService reads this - never a literal `14` at the call site - so the
+# value is a configuration change, not a code change.
+quote:
+  offer-validity-days: 14
+
 spring:
   application:
     name: motor-insurance-backend

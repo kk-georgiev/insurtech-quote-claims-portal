@@ -5,6 +5,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.motorinsurance.auth.application.JwtService;
 import com.motorinsurance.auth.domain.Role;
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -37,6 +39,10 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 class QuoteControllerTest {
 
     private static final String QUOTES_PATH = "/api/v1/quotes";
+    // Mirrors shared.config.ClockConfig's business zone (Story 6.2, AD-6) -
+    // used only to compute the *expected* validUntil in these assertions,
+    // never to drive the app itself.
+    private static final ZoneId SOFIA_ZONE = ZoneId.of("Europe/Sofia");
 
     @Container
     @ServiceConnection
@@ -96,6 +102,13 @@ class QuoteControllerTest {
         assertThat(response.getBody()).contains("\"bonusMalusClass\":\"NEUTRAL\"");
         assertThat(response.getBody()).contains("\"bonusMalusFactor\":1.000");
         assertThat(response.getBody()).containsPattern("\"createdAt\":\"[^\"]+\"");
+        // Story 6.2: a freshly-calculated quote is CALCULATED, valid for the
+        // configured offer-validity window (quote.offer-validity-days: 14),
+        // and not yet accepted.
+        assertThat(response.getBody()).contains("\"status\":\"CALCULATED\"");
+        assertThat(response.getBody()).contains("\"acceptedAt\":null");
+        assertThat(response.getBody())
+                .containsPattern("\"validUntil\":\"" + LocalDate.now(SOFIA_ZONE).plusDays(14) + "\"");
     }
 
     @Test

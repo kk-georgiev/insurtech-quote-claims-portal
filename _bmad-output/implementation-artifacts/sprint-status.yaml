@@ -29,7 +29,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 08-23-2026 17:25
-last_updated: 09-01-2026 21:10
+last_updated: 09-01-2026 20:47
 project: Motor Insurance Quote & Claims Portal
 project_key: NOKEY
 tracking_system: file-system
@@ -91,10 +91,10 @@ development_status:
   8-3-my-policies-list-and-detail: done
   epic-8-retrospective: done
 
-  epic-9: in-progress
+  epic-9: done
   9-1-openapi-documentation-should-have: done
-  9-2-documentation-and-legacy-css-cleanup-should-have: review
-  epic-9-retrospective: optional
+  9-2-documentation-and-legacy-css-cleanup-should-have: done
+  epic-9-retrospective: done
 action_items:
   - id: "epic-1-retro-item-1-add-auth-module-test-coverage-registrati"
     epic: 1
@@ -458,7 +458,7 @@ action_items:
       call (escalating Epic 6 item 46 - now touches 5 call sites across quote and
       policy screens)."
     owner: "unassigned"
-    status: open
+    status: done
     ref: "_bmad-output/implementation-artifacts/epic-8-retro-2026-09-01.md"
   - id: "epic-8-retro-item-50-de-duplicate-currentuserid-authenticatio"
     epic: 8
@@ -490,3 +490,11 @@ action_items:
     owner: "Konstantin"
     status: open
     ref: "_bmad-output/implementation-artifacts/epic-8-retro-2026-09-01.md"
+  - id: "epic-9-retro-item-54-escalate-the-sprint-status-lag-fix-from"
+    epic: 9
+    action: "Escalate the sprint-status-lag fix from documentation to enforcement
+      (a git hook or CI check) - the doc-only fix from Epic 8 item 1 did not survive
+      its first two PRs (#68, #69)."
+    owner: "Konstantin"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-9-retro-2026-09-01.md"

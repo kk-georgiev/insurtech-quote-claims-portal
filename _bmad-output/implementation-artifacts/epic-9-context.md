@@ -4,7 +4,7 @@
 
 ## Goal
 
-This is a should-have epic that closes out Milestone 3 by making the project legible to a reviewer: it adds generated API documentation and brings the README and stylesheet in line with what actually exists. It also closes an open acceptance gap from Milestone 2, where FR-1 ("no hardcoded hex on any touched screen") was satisfied in JSX/className but not in the shared CSS the screens still import. Neither story is release-blocking; if time runs short, this epic yields first (sequenced last, after Epics 6-8).
+This epic closes out two cleanups that make the milestone legible to a reviewer rather than adding new product surface. Neither story is release-blocking — the epic is should-have and yields first if time runs short, and sequences after Epics 6-8. It has two independent purposes: give the REST API browsable, generated documentation (since the API surface roughly triples across Milestones 3-4, making this cheaper now than retrofitted later), and bring the repository's own documentation and stylesheet in line with reality — fixing a root README status section that is several epics stale, and closing an acceptance gap Milestone 2 left open (its own FR-1, "no hardcoded hex on a touched screen," is not literally true today).
 
 ## Stories
 
@@ -13,36 +13,21 @@ This is a should-have epic that closes out Milestone 3 by making the project leg
 
 ## Requirements & Constraints
 
-- Every `/api/v1` endpoint must appear in generated OpenAPI documentation with request and response shapes, once a compatible `springdoc-openapi` release exists.
-- If no `springdoc-openapi` release is compatible with the current Spring Boot version, the OpenAPI story is deferred rather than pinning the framework backwards — this is not optional-effort scope, it's a hard go/no-go check done first.
-- Wherever the bonus-malus coefficient scale is surfaced to a reader — OpenAPI description, README, UI — it must carry an explicit statement that it is the project's own demo/illustrative data, not official or regulatorily determined Bulgarian market values. This is a binding provenance constraint, not a stylistic preference.
-- The root README's "Status" section must be updated to reflect the real, current state of the project (it is currently stale by three epics).
-- The README must record that driving experience (стаж) is deliberately excluded as a rating factor — a documented team choice, not an oversight.
-- Every `@layer legacy` rule in `frontend/src/index.css` with no live consumer must be deleted; surviving rules must be migrated to design tokens or component props rather than left as raw CSS.
-- The stale legacy-layer comment (currently claims rules are still load-bearing for unmigrated screens, which is no longer true — all screens have migrated) must be corrected to describe what the block actually still provides.
-- This cleanup must not change behavior: the full existing test suite must pass unmodified after the CSS cleanup.
+- The API documentation must cover every `/api/v1` endpoint with accurate request/response shapes, generated rather than hand-written.
+- Adding the OpenAPI tooling dependency is conditional: its compatibility with the project's Spring Boot version must be verified against the current release, not assumed. If no compatible release exists, the story defers rather than pinning the framework backwards — it's a should-have precisely so it can't hold up the milestone.
+- Provenance constraint (binding, product owner-level): wherever the bonus-malus rating scale is surfaced to a reader — seed migration comment, README, OpenAPI description, UI — it must carry an explicit note that the coefficients are the project's own internal demo model, inherited from the team's prototype, and are not official, actuarially derived, or regulatorily mandated values for the Bulgarian insurance market. This applies directly to the OpenAPI description work in Story 9.1 and the README work in Story 9.2.
+- The root README's "Status" section must be updated to reflect the real project state (it currently reads several epics stale).
+- The README must record that driving experience (стаж) is deliberately excluded from the rating model — a documented choice, not an oversight.
+- The claims/FNOL feature (when documented) must not be described as a full implementation of the legal motor third-party-liability process — it is out of scope for this project; this is a general documentation-accuracy constraint worth keeping in mind if the README touches claims language.
 
 ## Technical Decisions
 
-- Stack has no changes for this epic other than the candidate addition of `springdoc-openapi` (Java 21, Spring Boot 4.1.1, Maven backend; React 19/TypeScript 6/Vite 8/Tailwind v4 frontend — all unchanged).
-- Before adding `springdoc-openapi`, verify its current release line is actually compatible with Spring Boot 4.1.x — don't assume compatibility just because Spring Boot 4 is recent.
-- Errors and other cross-cutting conventions (money as `BigDecimal`/`NUMERIC` HALF_UP, ownership scoped in the query, the AD-7 error envelope, AD-8 i18n) are inherited unchanged and are not themselves in scope for this epic's stories.
-
-### Legacy CSS specifics (frontend/src/index.css)
-
-Per Epic 5 retro items F1-F3 (retro items 36-38), the `@layer legacy` block (originally lines ~63-232) is ~90% dead. Only four rules still have a live consumer as of the retro:
-- `box-sizing` reset — keep.
-- `body` (color/background/fallback font) — keep.
-- `dt { font-weight: 600 }` — `QuoteResult`'s `<dt>` has no weight utility; migrate to a utility class on that element.
-- `[data-testid='quote-result']` rule supplying `padding-top` and `border-top: 1px solid #e2e8f0` — the element's `className="mt-6"` only overrides `margin-top`, so this legacy rule still renders a hardcoded-hex divider line above the quote breakdown card on a live screen. Migrate this to tokens or a `Card` prop.
-
-All other element-selector rules in the block (`main`, `main > section`, `form div|label|input|select|textarea`, `button` and its states, remaining `dl`/`dt` color rules, etc.) have no live consumer — every screen that once used them now renders through `components/ui/` primitives that override them — and should be deleted outright.
-
-The existing comment in the block (written during Story 5.4) claims the rules are "still load-bearing for screens not yet migrated (e.g. `HealthStatus`)" — this is stale; `HealthStatus` was migrated in Story 5.6 and no screen remains unmigrated. Replace it with an accurate statement of what the retained block actually provides.
-
-Completing this migration makes Milestone 2's FR-1 ("no hardcoded hex in touched screens") literally true, since the `#e2e8f0` hex was rendering via imported CSS rather than authored component code — closing that milestone's open acceptance gap.
+- Story 9.1 depends on adding `springdoc-openapi` (or equivalent) as a new dependency, gated on a real compatibility check against the current Spring Boot release rather than an assumption.
+- Story 9.2 targets `frontend/src/index.css`'s surviving `@layer legacy` block. After prior cleanup passes, only four legacy rules still have a live consumer: the `box-sizing` reset, the `body` rule (color/background/fallback font), a `dt { font-weight: 600 }` rule (QuoteResult's `<dt>` has no weight utility yet), and a `[data-testid='quote-result']` rule supplying `padding-top` and `border-top: 1px solid #e2e8f0` above the quote breakdown card (that screen's own `className="mt-6"` only overrides `margin-top`, so the hardcoded hex still renders). Everything else in the legacy block is dead — no screen still depends on it.
+- The cleanup should delete every legacy rule with no live consumer, and migrate the four survivors to tokens/utilities: the `dt` font-weight becomes a utility class on `QuoteResult`'s `<dt>`; the quote-result `padding-top`/`border-top` divider becomes a token-based utility or a `Card` prop rather than a raw hex value. Only `box-sizing` and `body` are expected to remain as genuinely global, non-component-specific rules.
+- Completing this migration is what closes Milestone 2's own open acceptance gap: FR-1 ("no hardcoded hex in any screen touched by that milestone") is satisfied in JSX/className but violated via this legacy stylesheet import, and the fix is what makes FR-1 literally true.
 
 ## Cross-Story Dependencies
 
-- Story 9.1 has an internal go/no-go gate: it depends on a `springdoc-openapi` release actually being compatible with Spring Boot 4.1.1. If not, the story is deferred rather than attempted with a downgraded framework — this has no dependency on Story 9.2.
-- Story 9.2's CSS cleanup and README update are independent of Story 9.1 and of each other's acceptance criteria, but both stories share the provenance-note requirement for the bonus-malus scale (each must carry the demo-data disclaimer in its own surface — API docs for 9.1, README for 9.2).
+- Story 9.1 (OpenAPI documentation) has already been implemented on a separate, not-yet-merged branch; its scope does not overlap with Story 9.2's README/CSS cleanup work.
+- Story 9.2's README update should incorporate the same bonus-malus provenance disclosure language that Story 9.1 adds to the OpenAPI description, so the two stay consistent with each other and with the seed-migration comment.

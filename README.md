@@ -7,15 +7,23 @@ track a claim. Built as a Sirma Academy trainee project.
 
 ## Status
 
-**Milestone 1 — Epic 1 complete, Epic 2 in progress.** All six Epic 1
-stories are done: project scaffolding, client self-registration, login with
-a role-bearing JWT, the shared authentication gate, the quote engine with its
-transparent premium breakdown, and quote persistence and retrieval. Epic 2 is
-now building role-based access on top of that — staff accounts for the three
-non-client roles are seeded (see [Demo accounts](#demo-accounts)), with
-post-login routing, per-role screens, and route guards to follow. Claims
-handling comes later. See [Planning & progress](#planning--progress) below
-for the live per-story status.
+**Epics 1-8 complete, Epic 9 in progress.** The client quote flow (self-
+registration, login, the quote engine with its transparent premium
+breakdown, quote persistence/retrieval), role-based access for the three
+non-client roles (see [Demo accounts](#demo-accounts)), i18n (English/
+Bulgarian), Docker Compose deployment, quote validity windows and "My
+Quotes", server-validated session handling, and accepting a quote into an
+issued policy with "My Policies" are all built and tested. Epic 9
+(documentation and design-system hardening) is in progress. Claims handling
+comes later. See [Planning & progress](#planning--progress) below for the
+live per-story status.
+
+Two disclosures on the quote engine's pricing model: driving experience is
+deliberately excluded as a rating factor (only vehicle zone, engine size,
+driver age, and bonus-malus class feed the premium), and the bonus-malus
+scale is this project's own demo model, inherited from the team's
+prototype — not official or regulatorily determined Bulgarian market
+values.
 
 ## Tech stack
 

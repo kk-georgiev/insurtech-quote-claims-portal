@@ -29,5 +29,12 @@ public record CreateQuoteRequest(
         @NotNull @Min(18) @Max(100) Integer driverAge,
         @NotBlank String regionCode,
         @NotNull @Min(800) @Max(8000) Integer engineCc,
-        @NotNull @Min(1) @Max(4) Integer installments) {
+        @NotNull @Min(1) @Max(4) Integer installments,
+        // Story 6.1 - the assignment names bonus-malus as a rating
+        // parameter; the demo class scale is seeded reference data, not a
+        // fixed enum here, so a blank check is all this layer can do -
+        // {@code pricing.application.PricingService}'s bonus_malus_class
+        // lookup is the actual validity check, matching regionCode's own
+        // pattern immediately below.
+        @NotBlank String bonusMalusClass) {
 }

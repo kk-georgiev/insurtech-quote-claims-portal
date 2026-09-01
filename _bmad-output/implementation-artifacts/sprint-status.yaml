@@ -29,7 +29,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 08-23-2026 17:25
-last_updated: 08-31-2026 18:00
+last_updated: 09-01-2026 20:47
 project: Motor Insurance Quote & Claims Portal
 project_key: NOKEY
 tracking_system: file-system
@@ -73,6 +73,28 @@ development_status:
   5-5-responsive-layout: done
   5-6-loading-error-state-polish-should-have: done
   epic-5-retrospective: done
+
+  epic-6: done
+  6-1-bonus-malus-rating-factor: done
+  6-2-offer-validity-and-quote-status: done
+  6-3-my-quotes-list-and-detail: done
+  epic-6-retrospective: done
+
+  epic-7: done
+  7-1-server-validated-authentication-state: done
+  7-2-authenticated-visitors-skip-the-auth-screens: done
+  epic-7-retrospective: done
+
+  epic-8: done
+  8-1-accept-a-quote-and-issue-a-policy-backend: done
+  8-2-accepting-a-quote-from-the-detail-screen: done
+  8-3-my-policies-list-and-detail: done
+  epic-8-retrospective: done
+
+  epic-9: done
+  9-1-openapi-documentation-should-have: done
+  9-2-documentation-and-legacy-css-cleanup-should-have: done
+  epic-9-retrospective: done
 action_items:
   - id: "epic-1-retro-item-1-add-auth-module-test-coverage-registrati"
     epic: 1
@@ -387,3 +409,92 @@ action_items:
     owner: "Viktor"
     status: open
     ref: "_bmad-output/implementation-artifacts/epic-5-retro-2026-08-31.md"
+  - id: "epic-6-retro-item-44-confirm-story-8-2s-form-hook-extraction"
+    epic: 6
+    action: "Confirm Story 8.2s form-hook extraction scope covers MyQuotes.tsx/QuoteDetail.tsx,
+      not only the three form components its AC names literally - split out a follow-up
+      if it does not."
+    owner: "Viktor"
+    status: done
+    ref: "_bmad-output/implementation-artifacts/epic-6-retro-2026-08-31.md"
+  - id: "epic-6-retro-item-45-split-quotecontrollertest-java-by-endpoi"
+    epic: 6
+    action: "Split QuoteControllerTest.java by endpoint concern (calculate / getById
+      / list) before or during Epic 8, when the accept endpoints tests would otherwise
+      land in the same 644-line file."
+    owner: "Viktor"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-6-retro-2026-08-31.md"
+  - id: "epic-6-retro-item-46-add-timezone-utc-to-frontend-src-i18n-fo"
+    epic: 6
+    action: "Add timeZone: UTC to frontend/src/i18n/formatDate.ts so a rendered date
+      (e.g. a quotes validUntil) is independent of the viewers local timezone - a
+      bare LocalDate string parses as UTC midnight and Intl.DateTimeFormat without
+      an explicit timeZone renders in the viewers local zone, shifting the displayed
+      date for negative-UTC-offset viewers."
+    owner: "Viktor"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-6-retro-2026-08-31.md"
+  - id: "epic-6-retro-item-47-escalate-epic-5-retro-item-40-sprint-sta"
+    epic: 6
+    action: "Escalate epic-5-retro-item-40: sprint-status.yaml lagged the merged PRs
+      for all three Epic 6 stories again, recurring across two consecutive epics.
+      Consider moving the sprint-status update into the PR-merge step itself rather
+      than relying on the next retrospective to catch it."
+    owner: "Viktor"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-6-retro-2026-08-31.md"
+  - id: "epic-8-retro-item-48-fix-sprint-status-update-into-the-merge"
+    epic: 8
+    action: "Fix sprint-status update into the merge step itself, not left to the
+      next retro (escalating Epic 5 item 40 / Epic 6 item 47 - now a 3rd consecutive
+      epic)."
+    owner: "Konstantin"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-8-retro-2026-09-01.md"
+  - id: "epic-8-retro-item-49-add-timezone-utc-to-frontend-src-i18n-fo"
+    epic: 8
+    action: "Add timeZone: UTC to frontend/src/i18n/formatDate.ts intl.DateTimeFormat
+      call (escalating Epic 6 item 46 - now touches 5 call sites across quote and
+      policy screens)."
+    owner: "unassigned"
+    status: done
+    ref: "_bmad-output/implementation-artifacts/epic-8-retro-2026-09-01.md"
+  - id: "epic-8-retro-item-50-de-duplicate-currentuserid-authenticatio"
+    epic: 8
+    action: "De-duplicate currentUserId(Authentication) between QuoteController and
+      PolicyController into one shared helper before a third controller copies it
+      again."
+    owner: "unassigned"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-8-retro-2026-09-01.md"
+  - id: "epic-8-retro-item-51-route-quoteservice-policyidfor-single-qu"
+    epic: 8
+    action: "Route QuoteService.policyIdFor single-quote lookup through PolicyService.findByQuoteId
+      instead of the batch findPolicyIdsByQuoteIds."
+    owner: "unassigned"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-8-retro-2026-09-01.md"
+  - id: "epic-8-retro-item-52-resolve-policyservice-toview-per-row-clo"
+    epic: 8
+    action: "Resolve PolicyService.toView per-row clock read in listForCustomer -
+      compute LocalDate.now(clock) once per request, not once per row."
+    owner: "unassigned"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-8-retro-2026-09-01.md"
+  - id: "epic-8-retro-item-53-decide-whether-claude-launch-json-belong"
+    epic: 8
+    action: "Decide whether .claude/launch.json belongs in the repo (accidental commit
+      in Story 8.3s PR) - gitignore it or confirm it is an intentional shared dev-launch
+      config."
+    owner: "Konstantin"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-8-retro-2026-09-01.md"
+  - id: "epic-9-retro-item-54-escalate-the-sprint-status-lag-fix-from"
+    epic: 9
+    action: "Escalate the sprint-status-lag fix from documentation to enforcement
+      (a git hook or CI check) - the doc-only fix from Epic 8 item 1 did not survive
+      its first two PRs (#68, #69)."
+    owner: "Konstantin"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-9-retro-2026-09-01.md"

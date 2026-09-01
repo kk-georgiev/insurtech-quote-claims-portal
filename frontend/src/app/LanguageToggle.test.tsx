@@ -4,12 +4,37 @@ import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { routes } from './router';
 import { QuoteResult } from '../features/quote/QuoteResult';
+import type { QuoteResponse } from '../features/quote/QuoteForm';
 import { seedToken } from '../test/seedToken';
 import { getStoredLanguage } from '../i18n/language';
 import type { Role } from './roleHome';
 import { apiFetch } from '../api/client';
 import bg from '../i18n/bg.json';
 import en from '../i18n/en.json';
+
+const SAMPLE_QUOTE_FOR_SWEEP: QuoteResponse = {
+  id: '11111111-1111-1111-1111-111111111111',
+  createdAt: '2026-08-28T12:00:00Z',
+  driverAge: 30,
+  regionCode: 'KH',
+  engineCc: 1500,
+  zoneId: 1,
+  zoneName: 'Zone 1',
+  basePremium: 141.12,
+  ageSurcharge: 0,
+  bonusMalusClass: 'NEUTRAL',
+  bonusMalusFactor: 1,
+  oneTimePremium: 141.12,
+  installments: 2,
+  installmentFee: 2,
+  totalPremium: 143.12,
+  installmentAmount: 71.56,
+  currency: 'EUR',
+  validUntil: '2026-12-31',
+  status: 'CALCULATED',
+  acceptedAt: null,
+  policyId: null,
+};
 
 // `/health` mounts `HealthStatus`, whose effect calls `apiFetch` on load.
 // Mocked for the same reason `router.test.tsx` mocks it: this suite renders
@@ -25,8 +50,18 @@ const mockedApiFetch = vi.mocked(apiFetch);
 // default has to be re-established here rather than once at module scope.
 // Without it `HealthStatus` resolves `undefined` and trips its error
 // boundary — this suite is about the toggle, not about health-check states.
+// Path-aware (Story 6.3): `/quotes` and `/quotes/:id` also call `apiFetch`,
+// distinct from `/health`'s `{status}` shape. The list resolves empty so
+// the "no English copy" sweep below exercises the *empty* state's own
+// strings, which is the only `/quotes` state this file needs.
 beforeEach(() => {
-  mockedApiFetch.mockResolvedValue({ status: 'UP' } as { status: string });
+  mockedApiFetch.mockImplementation((path: unknown) => {
+    if (path === '/api/v1/quotes') return Promise.resolve([]);
+    if (typeof path === 'string' && path.startsWith('/api/v1/quotes/')) {
+      return Promise.resolve(SAMPLE_QUOTE_FOR_SWEEP);
+    }
+    return Promise.resolve({ status: 'UP' });
+  });
 });
 
 function renderAt(path: string) {
@@ -227,6 +262,10 @@ describe('Bulgarian pass — no English static copy left on any screen', () => {
       [en.shells.liquidator.heading, en.shells.liquidator.comingSoon]],
     ['/administrator', 'ADMINISTRATOR', bg.shells.administrator.heading,
       [en.shells.administrator.heading, en.shells.administrator.comingSoon]],
+    ['/quotes', 'CLIENT', bg.quotes.list.heading,
+      [en.quotes.list.heading, en.quotes.list.empty.title, en.quotes.list.empty.cta]],
+    ['/quotes/11111111-1111-1111-1111-111111111111', 'CLIENT', bg.quotes.detail.heading,
+      [en.quotes.detail.heading, en.quote.result.heading, en.quote.result.totalPremium]],
   ];
 
   it.each(SCREENS)(
@@ -251,8 +290,8 @@ describe('Bulgarian pass — no English static copy left on any screen', () => {
     render(
       <QuoteResult
         quote={{
-          id: 'q1', createdAt: '2026-08-29T00:00:00Z', driverAge: 30, regionCode: 'CB',
-          engineCc: 1600, zoneId: 3, zoneName: 'Zone 3', basePremium: 100, ageSurcharge: 10,
+          zoneId: 3, basePremium: 100, ageSurcharge: 10,
+          bonusMalusClass: 'NEUTRAL', bonusMalusFactor: 1,
           oneTimePremium: 110, installments: 2, installmentFee: 5, totalPremium: 115,
           installmentAmount: 57.5, currency: 'BGN',
         }}

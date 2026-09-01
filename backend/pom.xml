@@ -86,6 +86,18 @@
       <scope>runtime</scope>
     </dependency>
 
+    <!-- springdoc-openapi (Story 9.1, FR-M3-14) - generates the OpenAPI 3
+         document and Swagger UI from the existing Spring MVC controllers/DTOs
+         with zero controller changes. Pinned explicitly, same as jjwt-* above:
+         3.1.0 is not in the Spring Boot 4.1.1 BOM, and its release notes
+         state it targets Spring Boot 4.1.0 - this project's 4.1.1 is a patch
+         release in the same minor line, so compatibility holds. -->
+    <dependency>
+      <groupId>org.springdoc</groupId>
+      <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+      <version>3.1.0</version>
+    </dependency>
+
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>

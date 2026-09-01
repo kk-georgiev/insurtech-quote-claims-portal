@@ -365,3 +365,38 @@ Append-only. Entries collected from bmad-build review loopbacks. Do not modify e
 - source_spec: `_bmad-output/implementation-artifacts/spec-5-5-responsive-layout.md`
   summary: Header/content left-edge misalignment (header `max-w-5xl` vs `<main>` `max-w-2xl`) — carried over from Story 5.4's deferral and deliberately NOT taken by Story 5.5.
   evidence: Attempted during 5.5 and reverted with measurements: narrowing the header container to `max-w-2xl` wraps the long Bulgarian app title on desktop and doubles header height (84px -> 130px). Trading a real desktop regression for cosmetic alignment is a bad deal. A proper fix needs a shorter header title or a wider content column — a design decision, not a layout tweak. Mobile is unaffected (both containers are full-width under `sm`).
+
+## Deferred from: Story 8.1 review (2026-09-01)
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-8-1-accept-a-quote-and-issue-a-policy-backend.md`
+  summary: Nothing bounds how far ahead `coverageStart` may be — a client can issue a policy starting in 2050, and an absurd date (e.g. year 999999999) overflows the coverage-end arithmetic into a 500 instead of a field-level 400.
+  evidence: Edge-case review of the accept endpoint. Only the past side is rejected (FR-M3-04 says nothing about an upper bound), so this is a product decision — how far ahead may cover begin? — not an implementation slip. No data-integrity risk: the transaction rolls back, so no policy is created either way. Story 8.2 builds the date input and is the natural place to settle it.
+- source_spec: `_bmad-output/implementation-artifacts/spec-8-1-accept-a-quote-and-issue-a-policy-backend.md`
+  summary: A coverage period starting on a month-end or leap day is one day short — 29 Feb 2028 runs to 27 Feb 2029 (364 days) because `plusMonths` clamps before the inclusive `minusDays(1)`.
+  evidence: Edge-case review. This is exactly the formula the M3 architecture spine prescribes (`coverage_start.plusYears(1).minusDays(1)`), so the behaviour is implemented as designed rather than wrongly; it is now pinned by `coveragePeriod_startingOnALeapDay_endsUnderTheSameMonthArithmetic` so it cannot drift silently. Whether a leap-day policy *should* end 28 Feb is a product call for whoever owns the coverage rule.
+- source_spec: `_bmad-output/implementation-artifacts/spec-8-1-accept-a-quote-and-issue-a-policy-backend.md`
+  summary: The `policy` module's one-directional dependency on `quote` is enforced only by javadoc and review, not by a test — an ArchUnit (or equivalent) rule would make AD-1 a build failure rather than a convention.
+  evidence: Both review layers raised it independently, and the risk grew this story: `PolicyView` now travels into `quote.api`, which is exactly the shape that invites a reverse import. Adding an enforcement library is a project-wide decision beyond one story, and applies equally to every other module boundary the monolith already relies on convention for.
+- source_spec: `_bmad-output/implementation-artifacts/spec-8-1-accept-a-quote-and-issue-a-policy-backend.md`
+  summary: `PolicyService.violatesQuoteIdUniqueness`'s false branch — rethrowing an integrity violation that is not the `quote_id` uniqueness failure — has no test.
+  evidence: Verification-gap review. Reaching it needs a `DataIntegrityViolationException` from a different constraint during issuance (a bad `customer_id`, a violated vehicle-identity check), which the acceptance path validates away beforehand; it would need a direct-bean test with a hand-built command. Real but low-value while the only caller is the acceptance transaction; worth adding when Story 8.3 or the agent flow gives `policy.application` a second caller.
+
+## Decision taken on: Story 8.1 deferral (2026-09-01, product owner)
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-8-1-accept-a-quote-and-issue-a-policy-backend.md`
+  summary: RESOLVED for Story 8.2 — coverage may start at most **90 days ahead** of today in the business zone. Deliberately NOT added to Story 8.1, which ships with only the past-date rule.
+  evidence: Product-owner decision, 2026-09-01, in response to the "no upper bound on coverageStart" deferral above. Explicitly a **project-specific rule, not an official or legal requirement** — say so wherever it is surfaced to a reader, the same way the bonus-malus scale's provenance is stated (NFR-8). It must be enforced in **both** places: a backend field-level validation error on the accept endpoint (a frontend-only `max` on the date input is not sufficient, since the API is reachable without the form — M1 AD-4), and the native date input's own bounds so the client is stopped before submitting. The backend rule is the authority; the input bound is the courtesy.
+
+## Deferred from: Story 9.1 review (2026-09-01)
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-9-1-openapi-documentation.md`
+  summary: `OpenApiConfig` registers no `SecurityScheme`/`SecurityRequirement`, so the generated Swagger UI has no "Authorize" button and doesn't indicate which endpoints require a bearer token.
+  evidence: Review-loop finding (blind-hunter). Not required by this story's AC (which only asks that every endpoint appear with its request/response shapes and that the bonus-malus disclaimer be present) — reflection-based shape inference doesn't cover auth documentation, since that lives in `SecurityConfig`, not in any controller/DTO springdoc reads. Worth adding a `@SecurityScheme(type = HTTP, scheme = "bearer")` + global `SecurityRequirement` on the `OpenApiConfig` bean if API docs become a more actively used reviewer/onboarding tool.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-9-1-openapi-documentation.md`
+  summary: `OpenApiConfigTest` asserts the 7 known path keys (covering all 8 endpoints) by literal string match, with no reciprocal test asserting the *count* of documented operations matches the actual number of `@RequestMapping` endpoints in the codebase.
+  evidence: Review-loop finding (blind-hunter). A future new endpoint added to any controller wouldn't be caught by this test as "missing from the docs" — it would just be silently absent, since nothing regresses. Low value today (this story's own AC only pins the 8 endpoints known now), but worth a symbol-count-based assertion (e.g. reflectively counting `@RequestMapping`-annotated methods across `**/api/*.java` and comparing to `paths` key count) if API docs coverage becomes a thing future stories are expected to keep current.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-9-1-openapi-documentation.md`
+  summary: No `@Tag` grouping annotations on `AuthController`/`QuoteController`/`PolicyController`, so generated Swagger UI lists all operations ungrouped.
+  evidence: Review-loop finding (blind-hunter). Cosmetic navigation gap for the "reviewer/teammate" audience this story is built for — with only 3 controllers and 8 endpoints today it's not yet a real usability problem, but worth adding `@Tag(name = "...")` per controller once the controller count grows enough that an ungrouped list becomes hard to scan.

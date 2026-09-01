@@ -1,11 +1,13 @@
 package com.motorinsurance.pricing.application;
 
 import com.motorinsurance.pricing.domain.AgeSurcharge;
+import com.motorinsurance.pricing.domain.BonusMalusClass;
 import com.motorinsurance.pricing.domain.InstallmentPlan;
 import com.motorinsurance.pricing.domain.RegionZoneMap;
 import com.motorinsurance.pricing.domain.TariffRate;
 import com.motorinsurance.pricing.domain.TariffZone;
 import com.motorinsurance.pricing.persistence.AgeSurchargeRepository;
+import com.motorinsurance.pricing.persistence.BonusMalusClassRepository;
 import com.motorinsurance.pricing.persistence.InstallmentPlanRepository;
 import com.motorinsurance.pricing.persistence.RegionZoneMapRepository;
 import com.motorinsurance.pricing.persistence.TariffRateRepository;
@@ -45,21 +47,25 @@ public class PricingService {
     private final TariffRateRepository tariffRateRepository;
     private final AgeSurchargeRepository ageSurchargeRepository;
     private final InstallmentPlanRepository installmentPlanRepository;
+    private final BonusMalusClassRepository bonusMalusClassRepository;
 
     public PricingService(
             RegionZoneMapRepository regionZoneMapRepository,
             TariffZoneRepository tariffZoneRepository,
             TariffRateRepository tariffRateRepository,
             AgeSurchargeRepository ageSurchargeRepository,
-            InstallmentPlanRepository installmentPlanRepository) {
+            InstallmentPlanRepository installmentPlanRepository,
+            BonusMalusClassRepository bonusMalusClassRepository) {
         this.regionZoneMapRepository = regionZoneMapRepository;
         this.tariffZoneRepository = tariffZoneRepository;
         this.tariffRateRepository = tariffRateRepository;
         this.ageSurchargeRepository = ageSurchargeRepository;
         this.installmentPlanRepository = installmentPlanRepository;
+        this.bonusMalusClassRepository = bonusMalusClassRepository;
     }
 
-    public PricingResult calculate(int driverAge, String regionCode, int engineCc, int installments) {
+    public PricingResult calculate(
+            int driverAge, String regionCode, int engineCc, int installments, String bonusMalusClass) {
         // Seed data (V3__create_pricing_tables.sql) stores every code
         // uppercase; normalizing here means a lowercase but otherwise-valid
         // plate prefix isn't wrongly rejected as unknown (review-loop
@@ -99,9 +105,23 @@ public class PricingService {
                 .findById((short) installments)
                 .orElseThrow(() -> new UnsupportedInstallmentCountException(installments));
 
+        // Seed data (V6__create_bonus_malus_class_table.sql) stores every
+        // code uppercase; normalized the same way as regionCode above so a
+        // lowercase-but-otherwise-valid class isn't wrongly rejected.
+        String normalizedBonusMalusClass = bonusMalusClass.trim().toUpperCase(Locale.ROOT);
+        BonusMalusClass bonusMalus = bonusMalusClassRepository
+                .findById(normalizedBonusMalusClass)
+                .orElseThrow(() -> new UnknownBonusMalusClassException(normalizedBonusMalusClass));
+
         BigDecimal basePremium = rate.getBasePremium();
-        BigDecimal oneTimePremium =
-                basePremium.add(ageSurcharge.getSurcharge()).setScale(2, RoundingMode.HALF_UP);
+        // Order of operations is fixed (Architecture Spine AD-8, Story
+        // 6.1): the bonus-malus factor applies to (base + age surcharge)
+        // only - the installment fee is a flat administrative charge and is
+        // added afterward, untouched by the factor.
+        BigDecimal oneTimePremium = basePremium
+                .add(ageSurcharge.getSurcharge())
+                .multiply(bonusMalus.getFactor())
+                .setScale(2, RoundingMode.HALF_UP);
         BigDecimal totalPremium = oneTimePremium.add(plan.getFee()).setScale(2, RoundingMode.HALF_UP);
         BigDecimal installmentAmount =
                 totalPremium.divide(BigDecimal.valueOf(installments), 2, RoundingMode.HALF_UP);
@@ -112,6 +132,8 @@ public class PricingService {
                 normalizedRegionCode,
                 basePremium,
                 ageSurcharge.getSurcharge(),
+                normalizedBonusMalusClass,
+                bonusMalus.getFactor(),
                 oneTimePremium,
                 installments,
                 plan.getFee(),

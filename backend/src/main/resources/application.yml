@@ -19,6 +19,27 @@ jwt:
   secret: ${JWT_SECRET:insecure-dev-only-default-jwt-secret-do-not-use-in-any-real-deployment-override-via-JWT_SECRET}
   expiration-hours: 8
 
+# Offer validity (Story 6.2, Architecture Spine AD-6/FR-M3-02): the single
+# configured source for how many days a calculated quote stays acceptable.
+# QuoteService reads this - never a literal `14` at the call site - so the
+# value is a configuration change, not a code change.
+quote:
+  offer-validity-days: 14
+  # How far ahead cover may be scheduled at acceptance (Story 8.2). A
+  # project rule, not an official or legal requirement - stated as such
+  # wherever it is surfaced to a reader (NFR-8). Enforced in
+  # QuoteAcceptanceTransaction against the business-zone clock; the
+  # acceptance form's date input mirrors it as a courtesy, but the endpoint
+  # is reachable without the form, so this is the authority (M1 AD-4).
+  max-coverage-start-days-ahead: 90
+
+# Coverage period (Story 8.1, Architecture Spine AD-6/FR-M3-04): how many
+# months a policy covers from its coverage start date. PolicyService reads
+# this - never a literal `12` at a call site - and derives the (inclusive)
+# coverage end as start + this many months - 1 day.
+policy:
+  coverage-months: 12
+
 spring:
   application:
     name: motor-insurance-backend

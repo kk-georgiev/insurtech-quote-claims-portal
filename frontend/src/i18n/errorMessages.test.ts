@@ -17,7 +17,13 @@ const CODES = [
   'AUTH_EMAIL_TAKEN',
   'PRICING_UNKNOWN_REGION',
   'PRICING_UNSUPPORTED_INSTALLMENTS',
+  'PRICING_UNKNOWN_BONUS_MALUS_CLASS',
   'QUOTE_NOT_FOUND',
+  'QUOTE_EXPIRED',
+  'QUOTE_COVERAGE_START_IN_PAST',
+  'QUOTE_COVERAGE_START_TOO_FAR_AHEAD',
+  'QUOTE_VEHICLE_IDENTIFIER_REQUIRED',
+  'POLICY_NOT_FOUND',
   'SHARED_VALIDATION_ERROR',
   'SHARED_NOT_FOUND',
   'SHARED_INTERNAL_ERROR',
@@ -104,6 +110,24 @@ describe('resolveFieldErrors', () => {
 
     expect(map[field]).toBe(bg.errors.codes[code]);
     expect(map[field]).not.toBe(bg.quote.form.fieldErrors[field]);
+  });
+
+  // Story 8.1's two field-scoped acceptance codes. The form that renders
+  // them lands in Story 8.2, but the codes are registered with the catalog
+  // entries they belong to: an unregistered code falls through to a
+  // per-field key no namespace defines, and the specific sentence added to
+  // both catalogs would be replaced by the generic fallback.
+  it.each([
+    ['QUOTE_COVERAGE_START_IN_PAST', 'coverageStart'],
+    ['QUOTE_COVERAGE_START_TOO_FAR_AHEAD', 'coverageStart'],
+    ['QUOTE_VEHICLE_IDENTIFIER_REQUIRED', 'vehicleRegistration'],
+  ] as const)('prefers the specific %s over the generic fallback', (code, field) => {
+    const error = new ApiRequestError('dev', 400, code, [{ field, message: 'raw backend prose' }]);
+
+    const map = resolveFieldErrors(error.fieldErrors, 'quote.form', error.code, t);
+
+    expect(map[field]).toBe(bg.errors.codes[code]);
+    expect(map[field]).not.toBe(bg.errors.generic);
   });
 
   it('uses the per-field message for a general validation code', () => {

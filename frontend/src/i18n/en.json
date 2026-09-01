@@ -5,7 +5,9 @@
       "register": "Register",
       "login": "Login",
       "logout": "Logout",
-      "health": "Health"
+      "health": "Health",
+      "myQuotes": "My quotes",
+      "myPolicies": "My policies"
     },
     "language": {
       "label": "Language",
@@ -52,13 +54,23 @@
       "regionCode": "Region code",
       "engineCc": "Engine size (cc)",
       "installments": "Number of installments",
+      "bonusMalusClass": "Bonus-malus class",
+      "bonusMalusNote": "This project's own demo scale — not official tariff values.",
+      "bonusMalusClasses": {
+        "BONUS_20": "Bonus 20%",
+        "BONUS_10": "Bonus 10%",
+        "NEUTRAL": "Neutral",
+        "MALUS_25": "Malus 25%",
+        "MALUS_50": "Malus 50%"
+      },
       "submit": "Get quote",
       "submitting": "Calculating…",
       "fieldErrors": {
         "driverAge": "The driver age must be a whole number between 18 and 100.",
         "regionCode": "Enter a region code from the registration plate, for example \"CA\".",
         "engineCc": "The engine size must be a whole number between 800 and 8000 cc.",
-        "installments": "The number of installments must be 1, 2 or 4."
+        "installments": "The number of installments must be 1, 2 or 4.",
+        "bonusMalusClass": "Choose a bonus-malus class."
       }
     },
     "result": {
@@ -67,6 +79,7 @@
       "zone": "Zone",
       "basePremium": "Base premium",
       "ageSurcharge": "Age surcharge",
+      "bonusMalusFactor": "Bonus-malus factor",
       "oneTimePremium": "One-time premium",
       "installments": "Installments",
       "installmentFee": "Installment fee",
@@ -80,6 +93,54 @@
         "5": "Zone 5"
       },
       "zoneFallback": "Zone {{zoneId}}"
+    }
+  },
+  "quotes": {
+    "list": {
+      "heading": "My quotes",
+      "loading": "Loading your quotes…",
+      "empty": {
+        "title": "You have no quotes yet",
+        "cta": "Calculate your first quote"
+      },
+      "error": "Your quotes could not be loaded.",
+      "retry": "Try again",
+      "vehicleSummary": "{{engineCc}} cc · {{zone}}"
+    },
+    "status": {
+      "validUntil": "Valid until {{date}}",
+      "expiresInDays_one": "Expires in {{count}} day",
+      "expiresInDays_other": "Expires in {{count}} days",
+      "expiresToday": "Expires today",
+      "accepted": "Accepted",
+      "expiredOn": "Expired on {{date}}",
+      "cancelled": "Cancelled"
+    },
+    "detail": {
+      "heading": "Quote details",
+      "backToList": "Back to my quotes",
+      "notFound": "This quote could not be found.",
+      "expiredNotice": "This offer expired on {{date}} and can no longer be accepted.",
+      "newQuoteCta": "Calculate a new quote",
+      "acceptedNotice": "This quote has already been accepted.",
+      "viewPolicy": "View the policy this quote produced"
+    },
+    "accept": {
+      "heading": "Accept this quote",
+      "intro": "Tell us who the policy is for and when cover should begin. Nothing is issued until you press the button below.",
+      "holderName": "Policyholder name",
+      "vehicleRegistration": "Registration number",
+      "vehicleVin": "VIN",
+      "vehicleNote": "Fill in one of the two: the registration number, or the VIN if the vehicle is not yet registered.",
+      "coverageStart": "Cover starts on",
+      "horizonNote": "Cover can start today or up to {{days}} days from now. This is the portal's own scheduling rule, not an official or legal requirement.",
+      "submit": "Accept and issue the policy",
+      "fieldErrors": {
+        "holderName": "Enter the policyholder's name, between 2 and 120 characters.",
+        "vehicleRegistration": "Enter either a registration number or a VIN — one of the two, not both.",
+        "vehicleVin": "A VIN is exactly 17 characters and does not contain the letters I, O or Q.",
+        "coverageStart": "Choose a start date from today onwards, no more than 90 days ahead."
+      }
     }
   },
   "shells": {
@@ -108,10 +169,49 @@
       "AUTH_EMAIL_TAKEN": "An account with this email already exists.",
       "PRICING_UNKNOWN_REGION": "Unknown region code. Use the code from the registration plate, for example \"CA\" or \"CB\".",
       "PRICING_UNSUPPORTED_INSTALLMENTS": "The selected number of installments is not supported. Choose 1, 2 or 4.",
+      "PRICING_UNKNOWN_BONUS_MALUS_CLASS": "Unknown bonus-malus class. Choose a value from the list.",
       "QUOTE_NOT_FOUND": "Quote not found.",
+      "QUOTE_EXPIRED": "This offer has expired and can no longer be accepted. Calculate a new quote to continue.",
+      "QUOTE_COVERAGE_START_IN_PAST": "Coverage cannot start in the past. Choose today or a later date.",
+      "QUOTE_COVERAGE_START_TOO_FAR_AHEAD": "Cover cannot start more than 90 days from now. Choose an earlier date.",
+      "QUOTE_VEHICLE_IDENTIFIER_REQUIRED": "Enter either a registration number or a VIN — one of the two, not both.",
+      "POLICY_NOT_FOUND": "Policy not found.",
       "SHARED_VALIDATION_ERROR": "Please check the details you entered.",
       "SHARED_NOT_FOUND": "Not found.",
       "SHARED_INTERNAL_ERROR": "An unexpected error occurred. Please try again later."
+    }
+  },
+  "policies": {
+    "list": {
+      "heading": "My policies",
+      "loading": "Loading your policies…",
+      "empty": {
+        "fromQuotes": "You have no policies yet. Accept one of your quotes to get one.",
+        "fromQuotesCta": "Go to my quotes",
+        "noQuotes": "You have no policies yet, and no quotes to accept.",
+        "noQuotesCta": "Calculate your first quote"
+      },
+      "error": "Your policies could not be loaded.",
+      "retry": "Try again",
+      "vehicleSummary": "{{vehicle}} · {{engineCc}} cc"
+    },
+    "status": {
+      "scheduled": "Cover starts {{date}}",
+      "activeUntil": "Covered until {{date}}",
+      "expiredOn": "Cover ended on {{date}}",
+      "cancelled": "Cancelled"
+    },
+    "detail": {
+      "heading": "Policy details",
+      "backToList": "Back to my policies",
+      "notFound": "This policy could not be found.",
+      "policyNumber": "Policy number",
+      "coveragePeriod": "Cover period",
+      "coverageRange": "{{from}} – {{to}}",
+      "totalPremium": "Total premium",
+      "holderName": "Policyholder",
+      "vehicle": "Vehicle",
+      "issuedAt": "Issued on"
     }
   }
 }

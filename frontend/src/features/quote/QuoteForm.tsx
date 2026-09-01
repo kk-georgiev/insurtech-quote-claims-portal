@@ -1,15 +1,15 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { apiFetch, ApiRequestError } from '../../api/client';
+import { apiFetch } from '../../api/client';
 import { QuoteResult } from './QuoteResult';
-import { resolveFieldErrors, resolveFormError } from '../../i18n/errorMessages';
-import type { FieldFailure, FormFailure } from '../../i18n/errorMessages';
+import { useFormSubmission } from '../../hooks/useFormSubmission';
 import { Alert } from '../../components/ui/Alert';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { FormField } from '../../components/ui/FormField';
 import { Input } from '../../components/ui/Input';
+import { Select } from '../../components/ui/Select';
 import { Spinner } from '../../components/ui/Spinner';
 
 /** Mirrors the backend's `CreateQuoteRequest` (READ-ONLY, quote/api). */
@@ -18,7 +18,17 @@ interface CreateQuoteRequest {
   regionCode: string;
   engineCc: number;
   installments: number;
+  bonusMalusClass: string;
 }
+
+/**
+ * Mirrors the backend's `quote.domain.QuoteStatus` enum (Story 6.2). Never
+ * chosen by this frontend - always read off a `QuoteResponse`, derived
+ * server-side (Architecture Spine AD-3). `CANCELLED` is reserved: no
+ * response can carry it yet (no producer this milestone), but the type
+ * already accounts for it so a later story doesn't widen this union.
+ */
+export type QuoteStatus = 'CALCULATED' | 'ACCEPTED' | 'EXPIRED' | 'CANCELLED';
 
 /** Mirrors the backend's `QuoteResponse` (READ-ONLY, quote/api) field for field. */
 export interface QuoteResponse {
@@ -31,22 +41,42 @@ export interface QuoteResponse {
   zoneName: string;
   basePremium: number;
   ageSurcharge: number;
+  bonusMalusClass: string;
+  bonusMalusFactor: number;
   oneTimePremium: number;
   installments: number;
   installmentFee: number;
   totalPremium: number;
   installmentAmount: number;
   currency: string;
+  // Story 6.2 - additive (Architecture Spine AD-13). `acceptedAt` stays
+  // `null` through this milestone's Epic 6 - only Story 8.1's acceptance
+  // endpoint ever sets it.
+  validUntil: string;
+  status: QuoteStatus;
+  acceptedAt: string | null;
+  // Story 8.3 - additive (AD-13). Null unless this quote has been accepted;
+  // it is how an accepted quote's screen links to the policy it produced.
+  policyId: string | null;
 }
 
-type FormPhase = 'editing' | 'submitting';
-
+// Story 6.1 - the five classes seeded in `bonus_malus_class`. Fixed here
+// alongside the form rather than fetched: same pattern the existing
+// `installments` field already uses (a small, backend-defined enum
+// rendered as a closed set of options, not free text).
+const BONUS_MALUS_CLASSES = ['BONUS_20', 'BONUS_10', 'NEUTRAL', 'MALUS_25', 'MALUS_50'] as const;
 
 // The only fields this form actually renders an inline error next to. If a
 // `fieldErrors` response names anything outside this set, the error would be
 // stored but never shown - fall back to the generic message so the user
 // always sees something instead of a submit that silently did nothing.
-const KNOWN_FIELDS = new Set(['driverAge', 'regionCode', 'engineCc', 'installments']);
+const KNOWN_FIELDS = new Set([
+  'driverAge',
+  'regionCode',
+  'engineCc',
+  'installments',
+  'bonusMalusClass',
+]);
 
 
 /**
@@ -67,77 +97,40 @@ export function QuoteForm() {
   const [regionCode, setRegionCode] = useState('');
   const [engineCc, setEngineCc] = useState('');
   const [installments, setInstallments] = useState('');
-  const [phase, setPhase] = useState<FormPhase>('editing');
-  const [formFailure, setFormFailure] = useState<FormFailure>(null);
-  const [fieldFailure, setFieldFailure] = useState<FieldFailure>(null);
+  // Defaults to NEUTRAL (factor 1.000) - the neutral position, not first
+  // alphabetically (UX EXPERIENCE.md, Interaction Primitives).
+  const [bonusMalusClass, setBonusMalusClass] = useState('NEUTRAL');
   const [quote, setQuote] = useState<QuoteResponse | null>(null);
 
-  // Unmount guard, same intent/rationale as LoginForm.tsx's cancelledRef:
-  // the request can resolve after the user navigates away mid-submit, and
-  // the mount effect must explicitly reset it to `false` so StrictMode's
-  // dev double-invoke doesn't leave a stale `true` behind after first mount.
-  const cancelledRef = useRef(false);
-  useEffect(() => {
-    cancelledRef.current = false;
-    return () => {
-      cancelledRef.current = true;
-    };
-  }, []);
+  // The phase machine, the double-submit guard, the unmount guard and the
+  // error routing are all shared now (Story 8.2, Epic 5 retro item 41) -
+  // this form keeps only what is its own: its inputs and its result.
+  const { submitting, formError, fieldErrors, submit } = useFormSubmission('quote.form', t, {
+    knownFields: KNOWN_FIELDS,
+  });
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (phase === 'submitting') return;
-    setPhase('submitting');
-    setFormFailure(null);
-    setFieldFailure(null);
-    setQuote(null);
 
     const body: CreateQuoteRequest = {
       driverAge: Number(driverAge),
       regionCode,
       engineCc: Number(engineCc),
       installments: Number(installments),
+      bonusMalusClass,
     };
 
-    try {
+    await submit(async (isCancelled) => {
+      setQuote(null);
       const response = await apiFetch<QuoteResponse>('/api/v1/quotes', {
         method: 'POST',
         authenticated: true,
         body,
       });
-      if (cancelledRef.current) return;
-
-      setPhase('editing');
+      if (isCancelled()) return;
       setQuote(response);
-    } catch (error) {
-      if (cancelledRef.current) return;
-
-      // Form stays editable after any error - never locked/cleared.
-      setPhase('editing');
-
-      if (error instanceof ApiRequestError && error.fieldErrors && error.fieldErrors.length > 0) {
-        setFieldFailure({ fieldErrors: error.fieldErrors, code: error.code });
-        // Checked against the raw field names rather than a resolved map:
-        // the decision is about which fields the backend named, which is
-        // language-neutral, so it must not depend on translation.
-        if (!error.fieldErrors.some((fieldError) => KNOWN_FIELDS.has(fieldError.field))) {
-          setFormFailure({ source: error });
-        }
-        return;
-      }
-      setFormFailure({ source: error });
-    }
+    });
   }
-
-  // Resolved during render, never stored resolved: an error already on
-  // screen must re-translate the instant the language changes, with no
-  // resubmit. `formFailure`/`fieldFailure` hold language-neutral sources.
-  const formError = formFailure ? resolveFormError(formFailure.source, t) : null;
-  const fieldErrors = fieldFailure
-    ? resolveFieldErrors(fieldFailure.fieldErrors, 'quote.form', fieldFailure.code, t)
-    : {};
-
-  const submitting = phase === 'submitting';
 
   return (
     <Card title={t('quote.form.heading')} titleAs="h2">
@@ -216,6 +209,28 @@ export function QuoteForm() {
             invalid={Boolean(fieldErrors.installments)}
           />
         </FormField>
+        <FormField
+          label={t('quote.form.bonusMalusClass')}
+          error={fieldErrors.bonusMalusClass}
+          errorId="quote-bonusMalusClass-error"
+        >
+          <Select
+            id="quote-bonusMalusClass"
+            name="bonusMalusClass"
+            required
+            value={bonusMalusClass}
+            onChange={(event) => setBonusMalusClass(event.target.value)}
+            disabled={submitting}
+            invalid={Boolean(fieldErrors.bonusMalusClass)}
+          >
+            {BONUS_MALUS_CLASSES.map((bmClass) => (
+              <option key={bmClass} value={bmClass}>
+                {t(`quote.form.bonusMalusClasses.${bmClass}`)}
+              </option>
+            ))}
+          </Select>
+        </FormField>
+        <p className="text-xs text-text-muted">{t('quote.form.bonusMalusNote')}</p>
         {formError && (
           <Alert variant="danger" data-testid="quote-error">
             {formError}

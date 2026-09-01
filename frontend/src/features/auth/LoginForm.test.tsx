@@ -4,9 +4,10 @@ import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { routes } from '../../app/router';
-import { getToken } from '../../api/authToken';
+import { getToken, decodeToken } from '../../api/authToken';
 import { ApiRequestError, apiFetch } from '../../api/client';
 import { ROLES, roleHome } from '../../app/roleHome';
+import { seedToken } from '../../test/seedToken';
 import bg from '../../i18n/bg.json';
 import en from '../../i18n/en.json';
 import i18n from '../../i18n';
@@ -26,11 +27,14 @@ const INVALID_CREDENTIALS = bg.errors.codes.AUTH_INVALID_CREDENTIALS;
 const EMAIL = 'someone@example.com';
 const PASSWORD = 'DemoPass123!';
 
-/** Builds a well-formed `header.payload.signature` JWT string for `role`. */
-function makeToken(role: string): string {
+/**
+ * Builds a well-formed `header.payload.signature` JWT string for `role`.
+ * `extra` (Story 7.1) merges additional payload claims, e.g. `{ exp: ... }`.
+ */
+function makeToken(role: string, extra: Record<string, unknown> = {}): string {
   const encode = (value: unknown) =>
     btoa(JSON.stringify(value)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-  return `${encode({ alg: 'HS256', typ: 'JWT' })}.${encode({ sub: 'user-1', role })}.sig`;
+  return `${encode({ alg: 'HS256', typ: 'JWT' })}.${encode({ sub: 'user-1', role, ...extra })}.sig`;
 }
 
 function renderLogin() {
@@ -87,6 +91,24 @@ describe('LoginForm role-based post-login routing', () => {
 
   it('treats a token with an unrecognized role as a failed login and leaves the form editable', async () => {
     mockedApiFetch.mockResolvedValue({ token: makeToken('SUPERUSER') });
+
+    const { router, user } = renderLogin();
+    await fillAndSubmit(user);
+
+    expect(await screen.findByTestId('login-error')).toHaveTextContent(GENERIC_ERROR);
+    expect(router.state.location.pathname).toBe('/login');
+    expect(getToken()).toBeNull();
+    expect(loginButton()).toBeEnabled();
+  });
+
+  it('treats an already-expired token as a failed login (Story 7.1) and never persists it', async () => {
+    // Degenerate/unlikely (clock skew, a very short-lived test token) but
+    // now reachable through the same getCurrentRole path every other check
+    // uses - the token is well-formed and its role is real, only `exp` is
+    // already in the past.
+    mockedApiFetch.mockResolvedValue({
+      token: makeToken('CLIENT', { exp: Math.floor(Date.now() / 1000) - 60 }),
+    });
 
     const { router, user } = renderLogin();
     await fillAndSubmit(user);
@@ -244,6 +266,29 @@ describe('LoginForm role-based post-login routing', () => {
     // setState-after-unmount, so that assertion proved nothing; this one
     // proves the guard actually did something).
     expect(getToken()).toBeNull();
+  });
+
+  it('identity swap: logging in as a different role than the expired one already stored lands on the new role\'s home, with no stale role left over (Epic 2 retro item 13)', async () => {
+    // A live session's own /login is unreachable under GuestGuard (Story
+    // 7.2) - this scenario is only real once the old session has actually
+    // died, which is exactly when GuestGuard lets the visitor back in to
+    // log in again, possibly as someone else on the same browser.
+    seedToken('AGENT', { exp: Math.floor(Date.now() / 1000) - 60 });
+    mockedApiFetch.mockResolvedValue({ token: makeToken('LIQUIDATOR') });
+
+    const { router, user } = renderLogin();
+    // GuestGuard already let this render through (the stored AGENT token is
+    // expired, so getCurrentRole reads it as no session) - the form is on
+    // screen to submit against, proving the old token didn't block re-entry.
+    await fillAndSubmit(user);
+
+    expect(await screen.findByTestId('liquidator-shell')).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe(roleHome('LIQUIDATOR'));
+    // The stored token now decodes to the new identity, not a merge of the
+    // two and not the old one surviving alongside it.
+    const stored = getToken();
+    expect(stored).not.toBeNull();
+    expect(decodeToken(stored!)?.role).toBe('LIQUIDATOR');
   });
 });
 

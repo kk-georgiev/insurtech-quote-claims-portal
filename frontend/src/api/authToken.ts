@@ -2,11 +2,13 @@
 // the simplest option that persists across reloads/tabs - hardening this
 // (httpOnly cookies, XSS mitigation) is explicitly out of scope this
 // milestone (see spec Design Notes). `decodeToken` never verifies the
-// signature - that's the backend's job (Story 1.4's validation filter) -
-// it only reads the payload back out for display purposes (e.g. showing
-// the role after login). No automatic `Authorization` header attachment
-// lives here yet (that's `client.ts`, Story 1.4 - nothing to test it
-// against until the validation filter exists).
+// signature - that's the backend's job (Story 1.4's validation filter,
+// independently enforced regardless of what this module returns, AD-4) -
+// it only reads the payload back out. Originally display-only (showing the
+// role after login); since Story 7.1 `app/roleHome.ts`'s `getCurrentRole`
+// also reads this decode's `exp` claim to decide whether a stored session
+// still counts as logged in - still not a trust decision, just a "is there
+// any point treating this as a session" one.
 
 const TOKEN_STORAGE_KEY = 'motorinsurance.auth.token';
 

@@ -6,6 +6,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -19,6 +21,14 @@ import java.util.UUID;
  * reference-data tables: a persisted quote must keep showing exactly what
  * the customer was quoted at calculation time, unaffected by any later
  * change to the tariff (Story 1.6 Design Notes).
+ *
+ * <p>Carries no {@code status} column (Architecture Spine AD-3, Story 6.2) -
+ * {@link #status} derives it on every call from {@link #validUntil} and
+ * {@link #acceptedAt}, which is the one place this milestone's status rule
+ * is implemented. {@code acceptedAt} is written by exactly one code path,
+ * {@link #accept} (Story 8.1 - Accept a Quote and Issue a Policy), and
+ * stays {@code null} for every quote nobody has accepted - the domain
+ * meaning that makes it the one nullable column AD-9 permits here.
  */
 @Entity
 @Table(name = "quotes")
@@ -51,6 +61,12 @@ public class Quote {
     @Column(name = "age_surcharge", nullable = false)
     private BigDecimal ageSurcharge;
 
+    @Column(name = "bonus_malus_code", nullable = false)
+    private String bonusMalusCode;
+
+    @Column(name = "bonus_malus_factor", nullable = false)
+    private BigDecimal bonusMalusFactor;
+
     @Column(name = "one_time_premium", nullable = false)
     private BigDecimal oneTimePremium;
 
@@ -72,6 +88,12 @@ public class Quote {
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
+    @Column(name = "valid_until", nullable = false)
+    private LocalDate validUntil;
+
+    @Column(name = "accepted_at")
+    private Instant acceptedAt;
+
     /** JPA-only. */
     protected Quote() {
     }
@@ -85,12 +107,15 @@ public class Quote {
             String zoneName,
             BigDecimal basePremium,
             BigDecimal ageSurcharge,
+            String bonusMalusCode,
+            BigDecimal bonusMalusFactor,
             BigDecimal oneTimePremium,
             int installments,
             BigDecimal installmentFee,
             BigDecimal totalPremium,
             BigDecimal installmentAmount,
-            String currency) {
+            String currency,
+            LocalDate validUntil) {
         this.id = UUID.randomUUID();
         this.customerId = customerId;
         this.driverAge = driverAge;
@@ -100,6 +125,8 @@ public class Quote {
         this.zoneName = zoneName;
         this.basePremium = basePremium;
         this.ageSurcharge = ageSurcharge;
+        this.bonusMalusCode = bonusMalusCode;
+        this.bonusMalusFactor = bonusMalusFactor;
         this.oneTimePremium = oneTimePremium;
         this.installments = (short) installments;
         this.installmentFee = installmentFee;
@@ -107,6 +134,9 @@ public class Quote {
         this.installmentAmount = installmentAmount;
         this.currency = currency;
         this.createdAt = Instant.now();
+        this.validUntil = validUntil;
+        // acceptedAt stays null - no constructor path in this milestone
+        // accepts a quote at creation time (Story 8.1's job).
     }
 
     public UUID getId() {
@@ -145,6 +175,14 @@ public class Quote {
         return ageSurcharge;
     }
 
+    public String getBonusMalusCode() {
+        return bonusMalusCode;
+    }
+
+    public BigDecimal getBonusMalusFactor() {
+        return bonusMalusFactor;
+    }
+
     public BigDecimal getOneTimePremium() {
         return oneTimePremium;
     }
@@ -171,5 +209,61 @@ public class Quote {
 
     public Instant getCreatedAt() {
         return createdAt;
+    }
+
+    public LocalDate getValidUntil() {
+        return validUntil;
+    }
+
+    public Instant getAcceptedAt() {
+        return acceptedAt;
+    }
+
+    /**
+     * Marks this quote accepted (Story 8.1) - the one state change this
+     * entity permits, and the reason it has a single intention-revealing
+     * mutator rather than a setter. Called only from the acceptance
+     * transaction in {@code quote.application}, which also issues the
+     * policy in the same unit of work, so an accepted quote and its policy
+     * are created together or not at all (Architecture Spine AD-5, M3).
+     *
+     * <p>Nothing else changes: {@link #status} starts returning {@link
+     * QuoteStatus#ACCEPTED} purely because {@code acceptedAt} is now set
+     * (AD-3), and no {@code status} column exists to keep in step with it.
+     *
+     * @param acceptedAt the acceptance instant, resolved from the injected
+     *     business-zone clock by the caller (AD-6), never here
+     */
+    public void accept(Instant acceptedAt) {
+        if (this.acceptedAt != null) {
+            // A quote already holding a policy must not have its acceptance
+            // instant quietly rewritten - the replay path returns the
+            // existing policy instead of coming back through here.
+            throw new IllegalStateException("Quote " + id + " is already accepted");
+        }
+        this.acceptedAt = Objects.requireNonNull(acceptedAt, "acceptedAt");
+    }
+
+    /**
+     * Derives this quote's status as of {@code today} (Architecture Spine
+     * AD-3, AD-6) - the one place this rule is implemented; every read path
+     * calls this rather than re-deriving it. {@code today} is the caller's
+     * responsibility to resolve from the injected {@code Clock} in the
+     * business zone (never {@code LocalDate.now()} directly) - this method
+     * itself stays a pure function of its arguments, which is what makes it
+     * testable without a Spring context or a fixed clock bean.
+     *
+     * <p>The {@code validUntil} boundary is inclusive: a quote is still
+     * {@link QuoteStatus#CALCULATED}, not {@link QuoteStatus#EXPIRED}, on
+     * {@code validUntil} itself.
+     */
+    public QuoteStatus status(LocalDate today) {
+        if (acceptedAt != null) {
+            return QuoteStatus.ACCEPTED;
+        }
+        if (today.isAfter(validUntil)) {
+            return QuoteStatus.EXPIRED;
+        }
+        return QuoteStatus.CALCULATED;
     }
 }

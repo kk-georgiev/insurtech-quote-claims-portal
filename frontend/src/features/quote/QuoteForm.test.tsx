@@ -30,12 +30,18 @@ const SAMPLE_QUOTE: QuoteResponse = {
   zoneName: 'Sofia',
   basePremium: 300,
   ageSurcharge: 0,
+  bonusMalusClass: 'NEUTRAL',
+  bonusMalusFactor: 1.0,
   oneTimePremium: 300,
   installments: 2,
   installmentFee: 15,
   totalPremium: 315,
   installmentAmount: 157.5,
   currency: 'BGN',
+  validUntil: '2026-09-11',
+  status: 'CALCULATED',
+  acceptedAt: null,
+  policyId: null,
 };
 
 function renderForm() {
@@ -65,8 +71,49 @@ async function fillAndSubmit(
 }
 
 const VALID_INPUT = { driverAge: '30', regionCode: 'SOF', engineCc: '1600', installments: '2' };
+const bonusMalusClassField = () => screen.getByLabelText(bg.quote.form.bonusMalusClass);
 
 describe('QuoteForm', () => {
+  it('defaults the bonus-malus class to NEUTRAL (Story 6.1)', () => {
+    renderForm();
+    expect(bonusMalusClassField()).toHaveValue('NEUTRAL');
+  });
+
+  it('sends the selected bonus-malus class and renders its factor in the breakdown', async () => {
+    mockedApiFetch.mockResolvedValue({ ...SAMPLE_QUOTE, bonusMalusClass: 'MALUS_50', bonusMalusFactor: 1.5 });
+
+    const { user } = renderForm();
+    await user.type(driverAgeField(), VALID_INPUT.driverAge);
+    await user.type(regionCodeField(), VALID_INPUT.regionCode);
+    await user.type(engineCcField(), VALID_INPUT.engineCc);
+    await user.type(installmentsField(), VALID_INPUT.installments);
+    await user.selectOptions(bonusMalusClassField(), 'MALUS_50');
+    await user.click(submitButton());
+
+    expect(await screen.findByTestId('quote-bonusMalusFactor')).toHaveTextContent('1.5');
+    expect(mockedApiFetch).toHaveBeenCalledWith(
+      '/api/v1/quotes',
+      expect.objectContaining({ body: expect.objectContaining({ bonusMalusClass: 'MALUS_50' }) }),
+    );
+  });
+
+  it('renders a field-level error on the bonus-malus select for an unknown class', async () => {
+    mockedApiFetch.mockRejectedValue(
+      new ApiRequestError('Request failed with status 400', 400, 'PRICING_UNKNOWN_BONUS_MALUS_CLASS', [
+        { field: 'bonusMalusClass', message: 'Unknown bonus-malus class: NOT_A_CLASS' },
+      ]),
+    );
+
+    const { user } = renderForm();
+    await fillAndSubmit(user, VALID_INPUT);
+
+    expect(
+      await screen.findByText(bg.errors.codes.PRICING_UNKNOWN_BONUS_MALUS_CLASS),
+    ).toBeInTheDocument();
+    expect(screen.queryByTestId('quote-error')).not.toBeInTheDocument();
+    expect(submitButton()).toBeEnabled();
+  });
+
   it('renders the driverAge/engineCc sanity ceilings as native max attributes', () => {
     // spec-quote-input-bounds.md: mirrors CreateQuoteRequest's @Max(100)/
     // @Max(8000) as native hints (additive only - noValidate still means
@@ -104,7 +151,13 @@ describe('QuoteForm', () => {
     expect(mockedApiFetch).toHaveBeenCalledWith('/api/v1/quotes', {
       method: 'POST',
       authenticated: true,
-      body: { driverAge: 30, regionCode: 'SOF', engineCc: 1600, installments: 2 },
+      body: {
+        driverAge: 30,
+        regionCode: 'SOF',
+        engineCc: 1600,
+        installments: 2,
+        bonusMalusClass: 'NEUTRAL',
+      },
     });
     expect(submitButton()).toBeEnabled();
   });

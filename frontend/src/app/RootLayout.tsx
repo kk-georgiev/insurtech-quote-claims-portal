@@ -55,14 +55,30 @@ export function RootLayout() {
   return (
     <div className="flex min-h-screen flex-col bg-surface-muted font-sans text-text">
       <header className="bg-primary text-white">
-        {/* Stays `max-w-5xl` (wider than `<main>`'s `max-w-2xl`): narrowing it
-            to match the content column makes the long Bulgarian title wrap on
-            desktop and doubles the header's height. The resulting left-edge
-            misalignment is cosmetic and stays deferred. */}
-        <div className="mx-auto flex w-full max-w-5xl flex-wrap items-center justify-between gap-4 px-4 py-3 sm:px-6 sm:py-4">
+        {/* Story 6.3 (UX-DR13): matches `<main>`'s `max-w-2xl` so the header
+            and content share a left edge - the misalignment Story 5.4/5.5
+            deferred. Previously `max-w-5xl`, to keep the long Bulgarian
+            title on one line; the existing `flex-wrap` already handles the
+            narrower container by wrapping the nav row below the title
+            rather than wrapping the title's own text, so the title itself
+            still never breaks mid-word. */}
+        <div className="mx-auto flex w-full max-w-2xl flex-wrap items-center justify-between gap-4 px-4 py-3 sm:px-6 sm:py-4">
           <h1 className="text-base font-semibold tracking-tight sm:text-lg">{t('app.title')}</h1>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 sm:gap-x-6 sm:gap-y-3">
             <nav className="flex flex-wrap items-center gap-x-4 gap-y-2 sm:gap-x-5">
+              {currentRole === 'CLIENT' && (
+                <>
+                  <Link className={navLinkClass} to="/quotes">
+                    {t('app.nav.myQuotes')}
+                  </Link>
+                  {/* Story 8.3. The nav wraps rather than collapsing behind
+                      a disclosure control, so a fourth entry costs a row on
+                      a phone, not a menu. */}
+                  <Link className={navLinkClass} to="/policies">
+                    {t('app.nav.myPolicies')}
+                  </Link>
+                </>
+              )}
               {currentRole ? (
                 <Button variant="ghost" size="sm" onClick={handleLogout}>
                   {t('app.nav.logout')}

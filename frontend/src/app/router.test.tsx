@@ -119,4 +119,63 @@ describe('RoleGuard', () => {
       expect(router.state.location.pathname).toBe('/login');
     },
   );
+
+  it.each([...ROLES])(
+    "an expired token (Story 7.1, FR-M3-11) on %s's route redirects to /login, same as no token at all",
+    async (role) => {
+      // A well-formed, correctly-roled token whose exp has passed - the
+      // third branch of getCurrentRole's "no valid role" contract, distinct
+      // from malformed and unrecognized-role above.
+      seedToken(role, { exp: Math.floor(Date.now() / 1000) - 60 });
+      const router = renderAt(roleHome(role));
+      expect(await screen.findByRole('heading', { name: bg.auth.login.heading })).toBeInTheDocument();
+      expect(router.state.location.pathname).toBe('/login');
+    },
+  );
+});
+
+// Story 7.2, FR-M3-13: the inverse of RoleGuard - an already-authenticated
+// visitor is sent away from /login and /register instead of seeing them.
+describe('GuestGuard', () => {
+  const authScreens: Array<['login' | 'register', string]> = [
+    ['login', bg.auth.login.heading],
+    ['register', bg.auth.register.heading],
+  ];
+
+  it.each(ROLES.flatMap((role) => authScreens.map((screenEntry): [Role, 'login' | 'register', string] => [role, screenEntry[0], screenEntry[1]])))(
+    'a logged-in %s visiting /%s is redirected to their own role home, never sees the form',
+    async (role, path) => {
+      seedToken(role);
+      const router = renderAt(`/${path}`);
+      expect(await screen.findByTestId(`${role.toLowerCase()}-shell`)).toBeInTheDocument();
+      expect(router.state.location.pathname).toBe(roleHome(role));
+    },
+  );
+
+  it.each(authScreens)('an anonymous visitor still reaches /%s normally', async (path, heading) => {
+    const router = renderAt(`/${path}`);
+    expect(await screen.findByRole('heading', { name: heading })).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe(`/${path}`);
+  });
+
+  it.each(authScreens)(
+    'a visitor whose stored token is already expired (Story 7.1) still reaches /%s normally',
+    async (path, heading) => {
+      // The case Story 7.1's expiry check and this guard compose to handle:
+      // a dead-but-still-stored session must not be mistaken for a live one
+      // here, the same as everywhere else getCurrentRole is read.
+      seedToken('CLIENT', { exp: Math.floor(Date.now() / 1000) - 60 });
+      const router = renderAt(`/${path}`);
+      expect(await screen.findByRole('heading', { name: heading })).toBeInTheDocument();
+      expect(router.state.location.pathname).toBe(`/${path}`);
+    },
+  );
+
+  it('/health stays reachable and unaffected for a logged-in visitor', async () => {
+    mockedApiFetch.mockResolvedValue({ status: 'UP' } as { status: string });
+    seedToken('CLIENT');
+    const router = renderAt('/health');
+    expect(await screen.findByTestId('health-status')).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/health');
+  });
 });

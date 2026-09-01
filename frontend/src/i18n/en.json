@@ -176,6 +176,9 @@
       "QUOTE_COVERAGE_START_TOO_FAR_AHEAD": "Cover cannot start more than 90 days from now. Choose an earlier date.",
       "QUOTE_VEHICLE_IDENTIFIER_REQUIRED": "Enter either a registration number or a VIN — one of the two, not both.",
       "POLICY_NOT_FOUND": "Policy not found.",
+      "ATTACHMENT_UNSUPPORTED_TYPE": "Only JPEG, PNG and WebP images can be attached. Remove the file that is not one of these and try again.",
+      "ATTACHMENT_TOO_LARGE": "One of the files is too large. Each photo must be smaller than 5 MB.",
+      "ATTACHMENT_TOO_MANY": "Too many files. Attach at most 10 photos.",
       "SHARED_VALIDATION_ERROR": "Please check the details you entered.",
       "SHARED_NOT_FOUND": "Not found.",
       "SHARED_INTERNAL_ERROR": "An unexpected error occurred. Please try again later."

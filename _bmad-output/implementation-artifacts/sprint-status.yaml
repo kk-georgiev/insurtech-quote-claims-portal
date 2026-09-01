@@ -29,7 +29,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 08-23-2026 17:25
-last_updated: 09-01-2026 20:47
+last_updated: 09-01-2026 23:04
 project: Motor Insurance Quote & Claims Portal
 project_key: NOKEY
 tracking_system: file-system
@@ -95,6 +95,29 @@ development_status:
   9-1-openapi-documentation-should-have: done
   9-2-documentation-and-legacy-css-cleanup-should-have: done
   epic-9-retrospective: done
+
+  epic-10: in-progress
+  10-1-attachment-storage-and-validated-upload: review
+  10-2-claim-submission-coverage-check-and-claim-number: backlog
+  10-3-the-fnol-form: backlog
+  10-4-my-claims-list-and-detail: backlog
+  epic-10-retrospective: optional
+
+  epic-11: backlog
+  11-1-transition-rules-status-history-and-optimistic-locking: backlog
+  11-2-the-liquidator-queue-and-claim-detail: backlog
+  11-3-the-four-decision-actions: backlog
+  epic-11-retrospective: optional
+
+  epic-12: backlog
+  12-1-the-notification-module-the-event-and-the-archunit-guard: backlog
+  12-2-in-app-notifications: backlog
+  epic-12-retrospective: optional
+
+  epic-13: backlog
+  13-1-sprint-status-ci-enforcement-should-have: backlog
+  13-2-playwright-end-to-end-scenario-should-have-yields-first: backlog
+  epic-13-retrospective: optional
 action_items:
   - id: "epic-1-retro-item-1-add-auth-module-test-coverage-registrati"
     epic: 1
@@ -185,14 +208,14 @@ action_items:
       to roleHome(currentRole)); add a test for the already-logged-in re-login identity-swap
       path"
     owner: "unassigned"
-    status: open
+    status: done
     ref: "_bmad-output/implementation-artifacts/epic-2-retro-2026-08-29.md"
   - id: "epic-2-retro-item-14-de-duplicate-token-role-validation-have"
     epic: 2
     action: "De-duplicate token/role validation: have LoginForm.tsx reuse roleHome.ts
       getCurrentRole() instead of re-implementing decodeToken+isRole inline"
     owner: "unassigned"
-    status: open
+    status: done
     ref: "_bmad-output/implementation-artifacts/epic-2-retro-2026-08-29.md"
   - id: "epic-2-retro-item-15-doc-cleanup-refresh-stale-no-guard-until"
     epic: 2
@@ -339,7 +362,7 @@ action_items:
     action: "Escalate epic-2-retro-item-14 (LoginForm token/role de-duplication) since
       Story 3.2b touched LoginForm.tsx again without fixing it"
     owner: "unassigned"
-    status: open
+    status: done
     ref: "_bmad-output/implementation-artifacts/epic-3-retro-2026-08-30.md"
   - id: "epic-5-retro-item-36-fix-the-stale-index-css-legacy-layer-com"
     epic: 5
@@ -347,7 +370,7 @@ action_items:
       is unmigrated after Story 5.6; state what the block actually still provides
       (box-sizing reset, body, dt font-weight, the quote-result divider)."
     owner: "Viktor"
-    status: open
+    status: done
     ref: "_bmad-output/implementation-artifacts/epic-5-retro-2026-08-31.md"
   - id: "epic-5-retro-item-37-finish-the-legacy-css-retirement-in-fron"
     epic: 5
@@ -356,7 +379,7 @@ action_items:
       font-weight to a utility on QuoteResult dt; [data-testid=quote-result] padding-top/border-top
       to tokens or a Card prop; keep only box-sizing + body)."
     owner: "Viktor"
-    status: open
+    status: done
     ref: "_bmad-output/implementation-artifacts/epic-5-retro-2026-08-31.md"
   - id: "epic-5-retro-item-38-reconcile-epic-5-fr-1-either-amend-epics"
     epic: 5
@@ -366,7 +389,7 @@ action_items:
       A #e2e8f0 border-top still renders above the quote breakdown card via the legacy
       [data-testid=quote-result] rule."
     owner: "Viktor"
-    status: open
+    status: done
     ref: "_bmad-output/implementation-artifacts/epic-5-retro-2026-08-31.md"
   - id: "epic-5-retro-item-39-add-a-loading-prop-to-components-ui-butt"
     epic: 5
@@ -433,7 +456,7 @@ action_items:
       an explicit timeZone renders in the viewers local zone, shifting the displayed
       date for negative-UTC-offset viewers."
     owner: "Viktor"
-    status: open
+    status: done
     ref: "_bmad-output/implementation-artifacts/epic-6-retro-2026-08-31.md"
   - id: "epic-6-retro-item-47-escalate-epic-5-retro-item-40-sprint-sta"
     epic: 6

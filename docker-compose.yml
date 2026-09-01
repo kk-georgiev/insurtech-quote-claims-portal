@@ -52,8 +52,21 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       JWT_SECRET: ${JWT_SECRET:-replace-with-a-long-random-secret-never-commit-a-real-one}
+      # Story 10.1: where the backend writes uploaded claim photos. A fixed
+      # container-internal path rather than ${STORAGE_DIR} on purpose - it
+      # must stay in lockstep with the attachment_data mount below, and the
+      # .env.example variable of that name is for native `mvn spring-boot:run`
+      # (a host-relative path), which would be meaningless in here.
+      STORAGE_DIR: /var/lib/motorinsurance/attachments
     ports:
       - '${BACKEND_PORT:-8080}:8080'
+    # Uploaded bytes are the one piece of state outside Postgres, so they
+    # need a volume of their own to survive a container restart or rebuild.
+    # The mount point is created (and chowned to the non-root `spring` user)
+    # in backend/Dockerfile, so a fresh named volume inherits that ownership
+    # instead of coming up root-owned and unwritable.
+    volumes:
+      - attachment_data:/var/lib/motorinsurance/attachments
     depends_on:
       postgres:
         condition: service_healthy
@@ -82,3 +95,6 @@ services:
 
 volumes:
   postgres_data:
+  # Story 10.1: claim attachment bytes written by the backend's
+  # LocalFilesystemStorage. Postgres holds only the metadata pointing at them.
+  attachment_data:

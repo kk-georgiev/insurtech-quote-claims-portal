@@ -24,6 +24,14 @@ const CODES = [
   'QUOTE_COVERAGE_START_TOO_FAR_AHEAD',
   'QUOTE_VEHICLE_IDENTIFIER_REQUIRED',
   'POLICY_NOT_FOUND',
+  // Story 10.1's upload rejections. The FNOL form that renders them lands in
+  // Story 10.3; the codes are registered with their catalog entries now,
+  // because the backend can emit them as soon as an endpoint calls the
+  // validator (Story 10.2) and an unregistered code renders as the generic
+  // fallback instead of the specific sentence added to both catalogs.
+  'ATTACHMENT_UNSUPPORTED_TYPE',
+  'ATTACHMENT_TOO_LARGE',
+  'ATTACHMENT_TOO_MANY',
   'SHARED_VALIDATION_ERROR',
   'SHARED_NOT_FOUND',
   'SHARED_INTERNAL_ERROR',

@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { createMemoryRouter, RouterProvider } from 'react-router';
 import { apiFetch, ApiRequestError } from '../../api/client';
 import type { PolicyResponse } from '../policy/policyTypes';
 import { AcceptQuoteForm } from './AcceptQuoteForm';
@@ -14,10 +15,11 @@ vi.mock('../../api/client', async (importOriginal) => {
 const mockedApiFetch = vi.mocked(apiFetch);
 
 const QUOTE_ID = '11111111-1111-1111-1111-111111111111';
+const POLICY_ID = '22222222-2222-2222-2222-222222222222';
 
 function samplePolicy(overrides: Partial<PolicyResponse> = {}): PolicyResponse {
   return {
-    id: '22222222-2222-2222-2222-222222222222',
+    id: POLICY_ID,
     policyNumber: 'MI-2026-00000042',
     quoteId: QUOTE_ID,
     issuedAt: '2026-09-01T09:00:00Z',
@@ -41,13 +43,30 @@ function samplePolicy(overrides: Partial<PolicyResponse> = {}): PolicyResponse {
     totalPremium: 143.12,
     installmentAmount: 71.56,
     currency: 'EUR',
+    status: 'ACTIVE',
     ...overrides,
   };
 }
 
+/**
+ * Mounted under a real router: since Story 8.3 a successful acceptance
+ * navigates to the new policy's screen, so "did it succeed" is a question
+ * about the location, not about anything still on screen. The policy route
+ * is stubbed here - `PolicyDetail` has its own tests.
+ */
 function renderForm(onQuoteExpired = vi.fn()) {
-  render(<AcceptQuoteForm quoteId={QUOTE_ID} onQuoteExpired={onQuoteExpired} />);
-  return { onQuoteExpired };
+  const router = createMemoryRouter(
+    [
+      {
+        path: '/quotes/:id',
+        element: <AcceptQuoteForm quoteId={QUOTE_ID} onQuoteExpired={onQuoteExpired} />,
+      },
+      { path: '/policies/:id', element: <p data-testid="policy-screen">policy</p> },
+    ],
+    { initialEntries: [`/quotes/${QUOTE_ID}`] },
+  );
+  render(<RouterProvider router={router} />);
+  return { router, onQuoteExpired };
 }
 
 async function fillIdentity(user: ReturnType<typeof userEvent.setup>) {
@@ -56,21 +75,18 @@ async function fillIdentity(user: ReturnType<typeof userEvent.setup>) {
 }
 
 describe('AcceptQuoteForm', () => {
-  it('submits what the client entered and replaces itself with the issued policy', async () => {
+  it('submits what the client entered and takes them to the issued policy', async () => {
     const user = userEvent.setup();
     mockedApiFetch.mockResolvedValue(samplePolicy());
 
-    renderForm();
+    const { router } = renderForm();
     await fillIdentity(user);
     await user.click(screen.getByRole('button', { name: bg.quotes.accept.submit }));
 
-    expect(await screen.findByTestId('accept-success')).toBeInTheDocument();
-    // The policy number rendered is the one the server returned, never a
-    // predicted value (UX-DR14).
-    expect(screen.getByTestId('accept-policy-number')).toHaveTextContent('MI-2026-00000042');
-    expect(screen.getByTestId('accept-total-premium')).toHaveTextContent('143.12');
-    // The form is gone - the section is replaced, not merely annotated.
-    expect(screen.queryByTestId('accept-form')).not.toBeInTheDocument();
+    // Not back to a list, and not a confirmation in place: the client lands
+    // on the contract they just bought.
+    expect(await screen.findByTestId('policy-screen')).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe(`/policies/${POLICY_ID}`);
 
     const [path, options] = mockedApiFetch.mock.calls[0];
     expect(path).toBe(`/api/v1/quotes/${QUOTE_ID}/accept`);
@@ -87,47 +103,45 @@ describe('AcceptQuoteForm', () => {
     await user.type(screen.getByLabelText(bg.quotes.accept.vehicleVin), 'WDB1234567N123456');
     await user.click(screen.getByRole('button', { name: bg.quotes.accept.submit }));
 
-    await screen.findByTestId('accept-success');
+    await screen.findByTestId('policy-screen');
     const body = mockedApiFetch.mock.calls[0][1]?.body as Record<string, unknown>;
     expect(body).not.toHaveProperty('vehicleRegistration');
     expect(body.vehicleVin).toBe('WDB1234567N123456');
   });
 
-  it('renders a replay the same way as a first acceptance', async () => {
+  it('treats a replay exactly like a first acceptance', async () => {
     const user = userEvent.setup();
     // The backend answers a repeat acceptance with 200 and the policy it
-    // already issued (AD-5). That is a success, not an error, and it must
-    // read identically here - the client cannot and need not tell the two
-    // apart, since apiFetch resolves on any 2xx.
-    mockedApiFetch.mockResolvedValue(samplePolicy({ policyNumber: 'MI-2026-00000007' }));
+    // already issued (AD-5). That is a success, not an error, and the client
+    // cannot tell the two apart - apiFetch resolves on any 2xx.
+    mockedApiFetch.mockResolvedValue(samplePolicy());
 
-    renderForm();
+    const { router } = renderForm();
     await fillIdentity(user);
     await user.click(screen.getByRole('button', { name: bg.quotes.accept.submit }));
 
-    expect(await screen.findByTestId('accept-success')).toBeInTheDocument();
-    expect(screen.getByTestId('accept-policy-number')).toHaveTextContent('MI-2026-00000007');
-    expect(screen.queryByTestId('accept-error')).not.toBeInTheDocument();
+    await screen.findByTestId('policy-screen');
+    expect(router.state.location.pathname).toBe(`/policies/${POLICY_ID}`);
   });
 
-  it('does not special-case an expired session - no success, nothing half-shown', async () => {
+  it('does not special-case an expired session - no navigation, nothing half-shown', async () => {
     const user = userEvent.setup();
     // Story 7.1 owns clearing the token and returning to login, in the
     // shared api client. This form's only duty is to not claim success and
     // not swallow the failure.
     mockedApiFetch.mockRejectedValue(new ApiRequestError('dev prose', 401, 'AUTH_UNAUTHENTICATED'));
 
-    renderForm();
+    const { router } = renderForm();
     await fillIdentity(user);
     await user.click(screen.getByRole('button', { name: bg.quotes.accept.submit }));
 
     expect(await screen.findByTestId('accept-error')).toHaveTextContent(
       bg.errors.codes.AUTH_UNAUTHENTICATED,
     );
-    expect(screen.queryByTestId('accept-success')).not.toBeInTheDocument();
+    expect(router.state.location.pathname).toBe(`/quotes/${QUOTE_ID}`);
   });
 
-  it('shows nothing as done while the request is in flight', async () => {
+  it('navigates nothing while the request is in flight', async () => {
     const user = userEvent.setup();
     let release: (policy: PolicyResponse) => void = () => {};
     mockedApiFetch.mockImplementation(
@@ -137,17 +151,17 @@ describe('AcceptQuoteForm', () => {
         }),
     );
 
-    renderForm();
+    const { router } = renderForm();
     await fillIdentity(user);
     await user.click(screen.getByRole('button', { name: bg.quotes.accept.submit }));
 
-    // No optimistic UI (UX-DR14): the success block appears only after the
-    // backend confirms. The button keeps its label and disables.
-    expect(screen.queryByTestId('accept-success')).not.toBeInTheDocument();
+    // No optimistic UI (UX-DR14): the client is moved only once the backend
+    // confirms. The button keeps its label and disables meanwhile.
+    expect(router.state.location.pathname).toBe(`/quotes/${QUOTE_ID}`);
     expect(screen.getByRole('button', { name: bg.quotes.accept.submit })).toBeDisabled();
 
     release(samplePolicy());
-    expect(await screen.findByTestId('accept-success')).toBeInTheDocument();
+    expect(await screen.findByTestId('policy-screen')).toBeInTheDocument();
   });
 
   it('sends one request when the button is pressed twice before the response resolves', async () => {
@@ -168,7 +182,7 @@ describe('AcceptQuoteForm', () => {
 
     expect(mockedApiFetch).toHaveBeenCalledTimes(1);
     release(samplePolicy());
-    await screen.findByTestId('accept-success');
+    await screen.findByTestId('policy-screen');
   });
 
   it.each([

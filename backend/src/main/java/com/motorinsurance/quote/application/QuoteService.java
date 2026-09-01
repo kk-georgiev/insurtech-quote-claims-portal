@@ -1,5 +1,6 @@
 package com.motorinsurance.quote.application;
 
+import com.motorinsurance.policy.application.PolicyService;
 import com.motorinsurance.pricing.application.PricingResult;
 import com.motorinsurance.pricing.application.PricingService;
 import com.motorinsurance.quote.api.CreateQuoteRequest;
@@ -9,6 +10,7 @@ import com.motorinsurance.quote.persistence.QuoteRepository;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,16 +39,19 @@ public class QuoteService {
 
     private final PricingService pricingService;
     private final QuoteRepository quoteRepository;
+    private final PolicyService policyService;
     private final Clock clock;
     private final long offerValidityDays;
 
     public QuoteService(
             PricingService pricingService,
             QuoteRepository quoteRepository,
+            PolicyService policyService,
             Clock clock,
             @Value("${quote.offer-validity-days}") long offerValidityDays) {
         this.pricingService = pricingService;
         this.quoteRepository = quoteRepository;
+        this.policyService = policyService;
         this.clock = clock;
         this.offerValidityDays = offerValidityDays;
     }
@@ -98,7 +103,8 @@ public class QuoteService {
             throw new QuoteCustomerNotFoundException(customerId);
         }
 
-        return toResponse(saved);
+        // A freshly calculated quote cannot have a policy yet.
+        return toResponse(saved, null);
     }
 
     @Transactional(readOnly = true)
@@ -107,7 +113,7 @@ public class QuoteService {
                 .findByIdAndCustomerId(id, customerId)
                 .orElseThrow(() -> new QuoteNotFoundException(id));
 
-        return toResponse(quote);
+        return toResponse(quote, policyIdFor(quote, customerId));
     }
 
     /**
@@ -117,12 +123,36 @@ public class QuoteService {
      */
     @Transactional(readOnly = true)
     public List<QuoteResponse> listForCustomer(UUID customerId) {
-        return quoteRepository.findAllByCustomerIdOrderByCreatedAtDesc(customerId).stream()
-                .map(this::toResponse)
+        List<Quote> quotes = quoteRepository.findAllByCustomerIdOrderByCreatedAtDesc(customerId);
+        // One lookup for the whole list, never one per row (Story 8.3):
+        // only the accepted quotes can have a policy, so only those ids are
+        // asked about.
+        Map<UUID, UUID> policyIds = policyService.findPolicyIdsByQuoteIds(
+                customerId,
+                quotes.stream()
+                        .filter(quote -> quote.getAcceptedAt() != null)
+                        .map(Quote::getId)
+                        .toList());
+
+        return quotes.stream()
+                .map(quote -> toResponse(quote, policyIds.get(quote.getId())))
                 .toList();
     }
 
-    private QuoteResponse toResponse(Quote quote) {
+    /**
+     * The policy a single quote produced, if any (Story 8.3). Only an
+     * accepted quote can have one, so an unaccepted quote costs no query at
+     * all - and `policy` is reached through its application layer, the one
+     * permitted direction (AD-1).
+     */
+    private UUID policyIdFor(Quote quote, UUID customerId) {
+        if (quote.getAcceptedAt() == null) {
+            return null;
+        }
+        return policyService.findPolicyIdsByQuoteIds(customerId, List.of(quote.getId())).get(quote.getId());
+    }
+
+    private QuoteResponse toResponse(Quote quote, UUID policyId) {
         return new QuoteResponse(
                 quote.getId(),
                 quote.getCreatedAt(),
@@ -143,6 +173,7 @@ public class QuoteService {
                 quote.getCurrency(),
                 quote.getValidUntil(),
                 quote.status(LocalDate.now(clock)),
-                quote.getAcceptedAt());
+                quote.getAcceptedAt(),
+                policyId);
     }
 }

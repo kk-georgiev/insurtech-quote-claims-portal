@@ -136,9 +136,24 @@ export function QuoteDetail() {
       )}
 
       {quote.status === 'ACCEPTED' && (
-        <Alert variant="success" data-testid="quote-detail-accepted-notice">
-          {t('quotes.detail.acceptedNotice')}
-        </Alert>
+        <div className="space-y-3">
+          <Alert variant="success" data-testid="quote-detail-accepted-notice">
+            {t('quotes.detail.acceptedNotice')}
+          </Alert>
+          {/* Story 8.3 completes what Story 6.3 could only stub: the
+              acceptance affordance is replaced by a way through to the
+              contract this quote produced (UX-DR7). `policyId` comes on the
+              quote itself, so no policy list is fetched to find it. */}
+          {quote.policyId && (
+            <Link
+              to={`/policies/${quote.policyId}`}
+              className="inline-block text-sm text-accent underline"
+              data-testid="quote-detail-policy-link"
+            >
+              {t('quotes.detail.viewPolicy')}
+            </Link>
+          )}
+        </div>
       )}
 
       <Link to="/quotes" className="inline-block text-sm text-accent underline">

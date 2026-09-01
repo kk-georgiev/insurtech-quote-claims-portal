@@ -7,8 +7,12 @@ import com.motorinsurance.policy.persistence.PolicyRepository;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.hibernate.exception.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -134,7 +138,50 @@ public class PolicyService {
     /** Owner-scoped read of the policy a quote was accepted into (AD-10). */
     @Transactional(readOnly = true)
     public Optional<PolicyView> findByQuoteId(UUID quoteId, UUID customerId) {
-        return policyRepository.findByQuoteIdAndCustomerId(quoteId, customerId).map(PolicyService::toView);
+        return policyRepository.findByQuoteIdAndCustomerId(quoteId, customerId).map(this::toView);
+    }
+
+    /**
+     * Owner-scoped detail read (Story 8.3, FR-M3-10). A policy that is not
+     * this customer's is indistinguishable from one that does not exist.
+     */
+    @Transactional(readOnly = true)
+    public PolicyView getById(UUID id, UUID customerId) {
+        return policyRepository
+                .findByIdAndCustomerId(id, customerId)
+                .map(this::toView)
+                .orElseThrow(() -> new PolicyNotFoundException(id));
+    }
+
+    /**
+     * Owner-scoped list, newest first (Story 8.3, AD-10/AD-12) - the same
+     * {@link PolicyView} the detail read returns, not a slimmed-down
+     * summary, so one shape serves both screens.
+     */
+    @Transactional(readOnly = true)
+    public List<PolicyView> listForCustomer(UUID customerId) {
+        return policyRepository.findAllByCustomerIdOrderByIssuedAtDesc(customerId).stream()
+                .map(this::toView)
+                .toList();
+    }
+
+    /**
+     * Which of these quotes have become policies, as quote id to policy id
+     * (Story 8.3). One query for a whole list, never one per row - a quote
+     * list of any length costs the same single lookup.
+     *
+     * <p>Takes quote ids as plain values and returns plain values: no join
+     * to {@code quotes}, no {@code Quote} type imported, nothing
+     * dereferenced (AD-1, AD-4). {@code quote} calls this; {@code policy}
+     * still knows nothing about it.
+     */
+    @Transactional(readOnly = true)
+    public Map<UUID, UUID> findPolicyIdsByQuoteIds(UUID customerId, Collection<UUID> quoteIds) {
+        if (quoteIds.isEmpty()) {
+            return Map.of();
+        }
+        return policyRepository.findAllByCustomerIdAndQuoteIdIn(customerId, quoteIds).stream()
+                .collect(Collectors.toMap(Policy::getQuoteId, Policy::getId));
     }
 
     /**
@@ -157,7 +204,12 @@ public class PolicyService {
         return message != null && message.contains(QUOTE_ID_UNIQUE_CONSTRAINT);
     }
 
-    private static PolicyView toView(Policy policy) {
+    /**
+     * Derives the status here rather than storing it (AD-3), from the one
+     * injected business-zone clock (AD-6) - which is why this is an
+     * instance method where every other mapper in this codebase is static.
+     */
+    private PolicyView toView(Policy policy) {
         return new PolicyView(
                 policy.getId(),
                 policy.getPolicyNumber(),
@@ -182,6 +234,7 @@ public class PolicyService {
                 policy.getInstallmentFee(),
                 policy.getTotalPremium(),
                 policy.getInstallmentAmount(),
-                policy.getCurrency());
+                policy.getCurrency(),
+                policy.status(LocalDate.now(clock)));
     }
 }

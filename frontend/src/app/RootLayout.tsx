@@ -67,9 +67,17 @@ export function RootLayout() {
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 sm:gap-x-6 sm:gap-y-3">
             <nav className="flex flex-wrap items-center gap-x-4 gap-y-2 sm:gap-x-5">
               {currentRole === 'CLIENT' && (
-                <Link className={navLinkClass} to="/quotes">
-                  {t('app.nav.myQuotes')}
-                </Link>
+                <>
+                  <Link className={navLinkClass} to="/quotes">
+                    {t('app.nav.myQuotes')}
+                  </Link>
+                  {/* Story 8.3. The nav wraps rather than collapsing behind
+                      a disclosure control, so a fourth entry costs a row on
+                      a phone, not a menu. */}
+                  <Link className={navLinkClass} to="/policies">
+                    {t('app.nav.myPolicies')}
+                  </Link>
+                </>
               )}
               {currentRole ? (
                 <Button variant="ghost" size="sm" onClick={handleLogout}>

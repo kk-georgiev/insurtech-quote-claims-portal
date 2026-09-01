@@ -6,7 +6,8 @@
       "login": "Login",
       "logout": "Logout",
       "health": "Health",
-      "myQuotes": "My quotes"
+      "myQuotes": "My quotes",
+      "myPolicies": "My policies"
     },
     "language": {
       "label": "Language",
@@ -121,7 +122,8 @@
       "notFound": "This quote could not be found.",
       "expiredNotice": "This offer expired on {{date}} and can no longer be accepted.",
       "newQuoteCta": "Calculate a new quote",
-      "acceptedNotice": "This quote has already been accepted."
+      "acceptedNotice": "This quote has already been accepted.",
+      "viewPolicy": "View the policy this quote produced"
     },
     "accept": {
       "heading": "Accept this quote",
@@ -138,14 +140,6 @@
         "vehicleRegistration": "Enter either a registration number or a VIN — one of the two, not both.",
         "vehicleVin": "A VIN is exactly 17 characters and does not contain the letters I, O or Q.",
         "coverageStart": "Choose a start date from today onwards, no more than 90 days ahead."
-      },
-      "success": {
-        "heading": "Your policy is issued",
-        "body": "The quote has been accepted and the policy below is now yours.",
-        "policyNumber": "Policy number",
-        "coveragePeriod": "Cover period",
-        "coverageRange": "{{from}} – {{to}}",
-        "totalPremium": "Total premium"
       }
     }
   },
@@ -181,9 +175,43 @@
       "QUOTE_COVERAGE_START_IN_PAST": "Coverage cannot start in the past. Choose today or a later date.",
       "QUOTE_COVERAGE_START_TOO_FAR_AHEAD": "Cover cannot start more than 90 days from now. Choose an earlier date.",
       "QUOTE_VEHICLE_IDENTIFIER_REQUIRED": "Enter either a registration number or a VIN — one of the two, not both.",
+      "POLICY_NOT_FOUND": "Policy not found.",
       "SHARED_VALIDATION_ERROR": "Please check the details you entered.",
       "SHARED_NOT_FOUND": "Not found.",
       "SHARED_INTERNAL_ERROR": "An unexpected error occurred. Please try again later."
+    }
+  },
+  "policies": {
+    "list": {
+      "heading": "My policies",
+      "loading": "Loading your policies…",
+      "empty": {
+        "fromQuotes": "You have no policies yet. Accept one of your quotes to get one.",
+        "fromQuotesCta": "Go to my quotes",
+        "noQuotes": "You have no policies yet, and no quotes to accept.",
+        "noQuotesCta": "Calculate your first quote"
+      },
+      "error": "Your policies could not be loaded.",
+      "retry": "Try again",
+      "vehicleSummary": "{{vehicle}} · {{engineCc}} cc"
+    },
+    "status": {
+      "scheduled": "Cover starts {{date}}",
+      "activeUntil": "Covered until {{date}}",
+      "expiredOn": "Cover ended on {{date}}",
+      "cancelled": "Cancelled"
+    },
+    "detail": {
+      "heading": "Policy details",
+      "backToList": "Back to my policies",
+      "notFound": "This policy could not be found.",
+      "policyNumber": "Policy number",
+      "coveragePeriod": "Cover period",
+      "coverageRange": "{{from}} – {{to}}",
+      "totalPremium": "Total premium",
+      "holderName": "Policyholder",
+      "vehicle": "Vehicle",
+      "issuedAt": "Issued on"
     }
   }
 }

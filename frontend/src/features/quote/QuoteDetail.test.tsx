@@ -46,6 +46,7 @@ function sampleQuote(overrides: Partial<QuoteResponse> = {}): QuoteResponse {
     validUntil: '2026-12-31',
     status: 'CALCULATED',
     acceptedAt: null,
+    policyId: null,
     ...overrides,
   };
 }
@@ -187,5 +188,35 @@ describe('QuoteDetail acceptance section (Story 8.2)', () => {
     // leaving a form that asserts acceptability from a stale fetch.
     expect(await screen.findByTestId('quote-detail-expired-notice')).toBeInTheDocument();
     expect(screen.queryByTestId('accept-form')).not.toBeInTheDocument();
+  });
+});
+
+describe('QuoteDetail accepted-quote link (Story 8.3)', () => {
+  it('replaces the acceptance affordance with a way through to the policy', async () => {
+    seedToken('CLIENT');
+    mockedApiFetch.mockResolvedValue(
+      sampleQuote({ status: 'ACCEPTED', acceptedAt: '2026-09-01T09:00:00Z', policyId: 'p-1' }),
+    );
+
+    renderAt(`/quotes/${QUOTE_ID}`);
+
+    // Completes what Story 6.3 could only stub (UX-DR7).
+    const link = await screen.findByTestId('quote-detail-policy-link');
+    expect(link).toHaveAttribute('href', '/policies/p-1');
+    expect(screen.queryByTestId('accept-form')).not.toBeInTheDocument();
+  });
+
+  it('shows no policy link when the backend sent no policy id', async () => {
+    seedToken('CLIENT');
+    // Defensive: the notice still renders, so the screen never depends on a
+    // field being present to say anything at all.
+    mockedApiFetch.mockResolvedValue(
+      sampleQuote({ status: 'ACCEPTED', acceptedAt: '2026-09-01T09:00:00Z', policyId: null }),
+    );
+
+    renderAt(`/quotes/${QUOTE_ID}`);
+
+    expect(await screen.findByTestId('quote-detail-accepted-notice')).toBeInTheDocument();
+    expect(screen.queryByTestId('quote-detail-policy-link')).not.toBeInTheDocument();
   });
 });

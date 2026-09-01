@@ -85,14 +85,14 @@ development_status:
   7-2-authenticated-visitors-skip-the-auth-screens: done
   epic-7-retrospective: done
 
-  epic-8: in-progress
-  8-1-accept-a-quote-and-issue-a-policy-backend: review
-  8-2-accepting-a-quote-from-the-detail-screen: review
-  8-3-my-policies-list-and-detail: review
-  epic-8-retrospective: optional
+  epic-8: done
+  8-1-accept-a-quote-and-issue-a-policy-backend: done
+  8-2-accepting-a-quote-from-the-detail-screen: done
+  8-3-my-policies-list-and-detail: done
+  epic-8-retrospective: done
 
   epic-9: in-progress
-  9-1-openapi-documentation-should-have: backlog
+  9-1-openapi-documentation-should-have: done
   9-2-documentation-and-legacy-css-cleanup-should-have: review
   epic-9-retrospective: optional
 action_items:
@@ -415,7 +415,7 @@ action_items:
       not only the three form components its AC names literally - split out a follow-up
       if it does not."
     owner: "Viktor"
-    status: open
+    status: done
     ref: "_bmad-output/implementation-artifacts/epic-6-retro-2026-08-31.md"
   - id: "epic-6-retro-item-45-split-quotecontrollertest-java-by-endpoi"
     epic: 6
@@ -444,3 +444,49 @@ action_items:
     owner: "Viktor"
     status: open
     ref: "_bmad-output/implementation-artifacts/epic-6-retro-2026-08-31.md"
+  - id: "epic-8-retro-item-48-fix-sprint-status-update-into-the-merge"
+    epic: 8
+    action: "Fix sprint-status update into the merge step itself, not left to the
+      next retro (escalating Epic 5 item 40 / Epic 6 item 47 - now a 3rd consecutive
+      epic)."
+    owner: "Konstantin"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-8-retro-2026-09-01.md"
+  - id: "epic-8-retro-item-49-add-timezone-utc-to-frontend-src-i18n-fo"
+    epic: 8
+    action: "Add timeZone: UTC to frontend/src/i18n/formatDate.ts intl.DateTimeFormat
+      call (escalating Epic 6 item 46 - now touches 5 call sites across quote and
+      policy screens)."
+    owner: "unassigned"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-8-retro-2026-09-01.md"
+  - id: "epic-8-retro-item-50-de-duplicate-currentuserid-authenticatio"
+    epic: 8
+    action: "De-duplicate currentUserId(Authentication) between QuoteController and
+      PolicyController into one shared helper before a third controller copies it
+      again."
+    owner: "unassigned"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-8-retro-2026-09-01.md"
+  - id: "epic-8-retro-item-51-route-quoteservice-policyidfor-single-qu"
+    epic: 8
+    action: "Route QuoteService.policyIdFor single-quote lookup through PolicyService.findByQuoteId
+      instead of the batch findPolicyIdsByQuoteIds."
+    owner: "unassigned"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-8-retro-2026-09-01.md"
+  - id: "epic-8-retro-item-52-resolve-policyservice-toview-per-row-clo"
+    epic: 8
+    action: "Resolve PolicyService.toView per-row clock read in listForCustomer -
+      compute LocalDate.now(clock) once per request, not once per row."
+    owner: "unassigned"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-8-retro-2026-09-01.md"
+  - id: "epic-8-retro-item-53-decide-whether-claude-launch-json-belong"
+    epic: 8
+    action: "Decide whether .claude/launch.json belongs in the repo (accidental commit
+      in Story 8.3s PR) - gitignore it or confirm it is an intentional shared dev-launch
+      config."
+    owner: "Konstantin"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-8-retro-2026-09-01.md"

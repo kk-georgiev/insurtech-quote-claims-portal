@@ -29,6 +29,8 @@ release PR, §3a. Delete this comment block before submitting.
 - [ ] Self-reviewed against §4: business-logic correctness, test coverage, security
       (IDOR, input validation), modular structure (thin controllers, business logic
       in `application`/`domain`, not in React components)
+- [ ] If this PR closes a story, `sprint-status.yaml` is updated to `done` in this
+      same PR (§3) — not left for a later PR or the next retrospective
 - [ ] CI is green, when available (§3/§6)
 - [ ] Reviewer aware of merge strategy: **Squash and merge** into `dev` (default) vs.
       **Merge commit** for a `dev → main` release PR (§3a)

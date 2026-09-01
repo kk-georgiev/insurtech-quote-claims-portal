@@ -1,7 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { apiFetch, ApiRequestError } from '../../api/client';
+import { useCancelledRef } from '../../hooks/useCancelledRef';
+import { AcceptQuoteForm } from './AcceptQuoteForm';
 import type { QuoteResponse } from './QuoteForm';
 import { QuoteResult } from './QuoteResult';
 import { quoteStatusPresentation } from './quoteStatusPresentation';
@@ -24,9 +26,8 @@ type Phase = 'loading' | 'not-found' | 'error' | 'ready';
  * affordance *replaced* by an explanation and a way out - never merely
  * disabled (UX EXPERIENCE.md, State Patterns). An accepted quote renders
  * the same way with a static notice; the link to its policy is Story 8.3's
- * job, once policies exist. A still-valid (`CALCULATED`) quote shows only
- * the breakdown and its status - the acceptance form itself is Story 8.2's
- * scope, not this one's.
+ * job, once policies exist. A still-valid (`CALCULATED`) quote carries the
+ * acceptance form below its breakdown (Story 8.2).
  */
 export function QuoteDetail() {
   const { id } = useParams<{ id: string }>();
@@ -36,13 +37,10 @@ export function QuoteDetail() {
   const [quote, setQuote] = useState<QuoteResponse | null>(null);
   const [reloadToken, setReloadToken] = useState(0);
 
-  const cancelledRef = useRef(false);
-  useEffect(() => {
-    cancelledRef.current = false;
-    return () => {
-      cancelledRef.current = true;
-    };
-  }, []);
+  // Shared with every other async screen since Story 8.2 (Epic 6 retro
+  // item 44): a load, so it takes the unmount guard alone. The acceptance
+  // form below brings its own phase machine via useFormSubmission.
+  const cancelledRef = useCancelledRef();
 
   useEffect(() => {
     if (!id) return;
@@ -114,6 +112,17 @@ export function QuoteDetail() {
       </div>
 
       <QuoteResult quote={quote} />
+
+      {/* Story 8.2: the acceptance section sits below the breakdown, in
+          reading order - what you are buying, then who you are, then when
+          it starts, then commit (UX-DR5). Only a still-valid quote gets one;
+          the EXPIRED and ACCEPTED branches below replace it entirely rather
+          than rendering a disabled form. On a refusal because the offer
+          expired mid-screen, the form asks for the re-read that flips this
+          screen into its expired state (UX-DR8). */}
+      {quote.status === 'CALCULATED' && (
+        <AcceptQuoteForm quoteId={quote.id} onQuoteExpired={() => setReloadToken((n) => n + 1)} />
+      )}
 
       {quote.status === 'EXPIRED' && (
         <Card data-testid="quote-detail-expired-notice">

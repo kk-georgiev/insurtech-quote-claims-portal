@@ -12,6 +12,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Locale;
 import java.util.UUID;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,11 +39,21 @@ public class QuoteAcceptanceTransaction {
     private final QuoteRepository quoteRepository;
     private final PolicyService policyService;
     private final Clock clock;
+    private final long maxCoverageStartDaysAhead;
 
-    public QuoteAcceptanceTransaction(QuoteRepository quoteRepository, PolicyService policyService, Clock clock) {
+    public QuoteAcceptanceTransaction(
+            QuoteRepository quoteRepository,
+            PolicyService policyService,
+            Clock clock,
+            @Value("${quote.max-coverage-start-days-ahead}") long maxCoverageStartDaysAhead) {
+        if (maxCoverageStartDaysAhead < 0) {
+            throw new IllegalArgumentException(
+                    "quote.max-coverage-start-days-ahead must not be negative, but was " + maxCoverageStartDaysAhead);
+        }
         this.quoteRepository = quoteRepository;
         this.policyService = policyService;
         this.clock = clock;
+        this.maxCoverageStartDaysAhead = maxCoverageStartDaysAhead;
     }
 
     @Transactional
@@ -66,6 +77,12 @@ public class QuoteAcceptanceTransaction {
         }
         if (request.coverageStart().isBefore(today)) {
             throw new CoverageStartInPastException(request.coverageStart(), today);
+        }
+        // Both ends of the window are inclusive (AD-6): cover may start
+        // today, and it may start on the last permitted day itself.
+        LocalDate latestCoverageStart = today.plusDays(maxCoverageStartDaysAhead);
+        if (request.coverageStart().isAfter(latestCoverageStart)) {
+            throw new CoverageStartTooFarAheadException(request.coverageStart(), latestCoverageStart);
         }
 
         String registration = normalized(request.vehicleRegistration());

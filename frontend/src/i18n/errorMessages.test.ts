@@ -21,6 +21,7 @@ const CODES = [
   'QUOTE_NOT_FOUND',
   'QUOTE_EXPIRED',
   'QUOTE_COVERAGE_START_IN_PAST',
+  'QUOTE_COVERAGE_START_TOO_FAR_AHEAD',
   'QUOTE_VEHICLE_IDENTIFIER_REQUIRED',
   'SHARED_VALIDATION_ERROR',
   'SHARED_NOT_FOUND',
@@ -117,6 +118,7 @@ describe('resolveFieldErrors', () => {
   // both catalogs would be replaced by the generic fallback.
   it.each([
     ['QUOTE_COVERAGE_START_IN_PAST', 'coverageStart'],
+    ['QUOTE_COVERAGE_START_TOO_FAR_AHEAD', 'coverageStart'],
     ['QUOTE_VEHICLE_IDENTIFIER_REQUIRED', 'vehicleRegistration'],
   ] as const)('prefers the specific %s over the generic fallback', (code, field) => {
     const error = new ApiRequestError('dev', 400, code, [{ field, message: 'raw backend prose' }]);

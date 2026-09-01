@@ -29,7 +29,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 08-23-2026 17:25
-last_updated: 09-01-2026 10:45
+last_updated: 09-01-2026 14:40
 project: Motor Insurance Quote & Claims Portal
 project_key: NOKEY
 tracking_system: file-system
@@ -87,7 +87,7 @@ development_status:
 
   epic-8: in-progress
   8-1-accept-a-quote-and-issue-a-policy-backend: review
-  8-2-accepting-a-quote-from-the-detail-screen: backlog
+  8-2-accepting-a-quote-from-the-detail-screen: review
   8-3-my-policies-list-and-detail: backlog
   epic-8-retrospective: optional
 

@@ -24,7 +24,7 @@ export type Translate = (key: string, options?: Record<string, unknown>) => stri
  * capped at 100 on login, and a shared message could not honestly describe
  * both.
  */
-export type FieldErrorNamespace = 'auth.login' | 'auth.register' | 'quote.form';
+export type FieldErrorNamespace = 'auth.login' | 'auth.register' | 'quote.form' | 'quotes.accept';
 
 /**
  * What a form *remembers* about a failure, as opposed to what it shows.
@@ -66,6 +66,7 @@ const FIELD_SPECIFIC_CODES: Record<string, string> = {
   // falls back to the generic message, discarding the copy the same change
   // added to both catalogs.
   QUOTE_COVERAGE_START_IN_PAST: 'coverageStart',
+  QUOTE_COVERAGE_START_TOO_FAR_AHEAD: 'coverageStart',
   QUOTE_VEHICLE_IDENTIFIER_REQUIRED: 'vehicleRegistration',
 };
 

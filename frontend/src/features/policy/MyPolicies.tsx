@@ -27,6 +27,10 @@ type Phase = 'loading' | 'error' | 'ready';
  * your quotes" is useless advice to someone with no quotes either, so when
  * the list comes back empty this screen asks once whether any quotes exist
  * and points at whichever screen can actually help (UX-DR6).
+ *
+ * The wrapping `<section>` drops the legacy `main > section` card chrome
+ * (`border-0 bg-transparent p-0`, Story 9.2) so each row's own `Card` is the
+ * only card - same pattern `ClientShell`/the role shells already use.
  */
 export function MyPolicies() {
   const { t, i18n } = useTranslation();
@@ -61,7 +65,11 @@ export function MyPolicies() {
   }, [reloadToken]);
 
   return (
-    <section aria-labelledby="my-policies-heading" data-testid="my-policies">
+    <section
+      aria-labelledby="my-policies-heading"
+      data-testid="my-policies"
+      className="border-0 bg-transparent p-0"
+    >
       <h2
         id="my-policies-heading"
         className="mb-4 mt-0 text-2xl font-semibold tracking-tight text-text"

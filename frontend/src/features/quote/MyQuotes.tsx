@@ -25,6 +25,10 @@ type Phase = 'loading' | 'error' | 'ready';
  * The four states (loading/empty/error/populated) sit below one stable
  * `<h2>` so the screen's identity doesn't flicker between them; none
  * renders as a blank screen (UX-DR6).
+ *
+ * The wrapping `<section>` drops the legacy `main > section` card chrome
+ * (`border-0 bg-transparent p-0`, Story 9.2) so each row's own `Card` is the
+ * only card - same pattern `ClientShell`/the role shells already use.
  */
 export function MyQuotes() {
   const { t, i18n } = useTranslation();
@@ -54,7 +58,11 @@ export function MyQuotes() {
   }, [reloadToken]);
 
   return (
-    <section aria-labelledby="my-quotes-heading" data-testid="my-quotes">
+    <section
+      aria-labelledby="my-quotes-heading"
+      data-testid="my-quotes"
+      className="border-0 bg-transparent p-0"
+    >
       <h2 id="my-quotes-heading" className="mb-4 mt-0 text-2xl font-semibold tracking-tight text-text">
         {t('quotes.list.heading')}
       </h2>

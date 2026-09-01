@@ -112,13 +112,17 @@ export function PolicyDetail() {
       <Card>
         <dl className="space-y-4">
           <div>
-            <dt className="text-sm text-text-muted">{t('policies.detail.policyNumber')}</dt>
+            <dt className="text-sm font-semibold text-text-muted">
+              {t('policies.detail.policyNumber')}
+            </dt>
             <dd data-testid="policy-number" className="text-xl font-semibold text-text">
               {policy.policyNumber}
             </dd>
           </div>
           <div>
-            <dt className="text-sm text-text-muted">{t('policies.detail.coveragePeriod')}</dt>
+            <dt className="text-sm font-semibold text-text-muted">
+              {t('policies.detail.coveragePeriod')}
+            </dt>
             <dd data-testid="policy-coverage-period" className="text-xl font-semibold text-text">
               {t('policies.detail.coverageRange', {
                 from: formatDate(policy.coverageStart, i18n.language),
@@ -127,24 +131,26 @@ export function PolicyDetail() {
             </dd>
           </div>
           <div>
-            <dt className="text-sm text-text-muted">{t('policies.detail.totalPremium')}</dt>
+            <dt className="text-sm font-semibold text-text-muted">
+              {t('policies.detail.totalPremium')}
+            </dt>
             <dd data-testid="policy-total-premium" className="text-xl font-semibold text-text">
               {policy.totalPremium} {policy.currency}
             </dd>
           </div>
 
           <div className="grid grid-cols-2 gap-x-4 gap-y-2 border-t border-border pt-4 text-sm">
-            <dt className="text-text-muted">{t('policies.detail.holderName')}</dt>
+            <dt className="font-semibold text-text-muted">{t('policies.detail.holderName')}</dt>
             <dd data-testid="policy-holder" className="text-right">
               {policy.holderName}
             </dd>
 
-            <dt className="text-text-muted">{t('policies.detail.vehicle')}</dt>
+            <dt className="font-semibold text-text-muted">{t('policies.detail.vehicle')}</dt>
             <dd data-testid="policy-vehicle" className="text-right">
               {policy.vehicleRegistration ?? policy.vehicleVin}
             </dd>
 
-            <dt className="text-text-muted">{t('policies.detail.issuedAt')}</dt>
+            <dt className="font-semibold text-text-muted">{t('policies.detail.issuedAt')}</dt>
             <dd data-testid="policy-issued-at" className="text-right">
               {formatDate(policy.issuedAt, i18n.language)}
             </dd>

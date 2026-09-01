@@ -380,3 +380,9 @@ Append-only. Entries collected from bmad-build review loopbacks. Do not modify e
 - source_spec: `_bmad-output/implementation-artifacts/spec-8-1-accept-a-quote-and-issue-a-policy-backend.md`
   summary: `PolicyService.violatesQuoteIdUniqueness`'s false branch — rethrowing an integrity violation that is not the `quote_id` uniqueness failure — has no test.
   evidence: Verification-gap review. Reaching it needs a `DataIntegrityViolationException` from a different constraint during issuance (a bad `customer_id`, a violated vehicle-identity check), which the acceptance path validates away beforehand; it would need a direct-bean test with a hand-built command. Real but low-value while the only caller is the acceptance transaction; worth adding when Story 8.3 or the agent flow gives `policy.application` a second caller.
+
+## Decision taken on: Story 8.1 deferral (2026-09-01, product owner)
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-8-1-accept-a-quote-and-issue-a-policy-backend.md`
+  summary: RESOLVED for Story 8.2 — coverage may start at most **90 days ahead** of today in the business zone. Deliberately NOT added to Story 8.1, which ships with only the past-date rule.
+  evidence: Product-owner decision, 2026-09-01, in response to the "no upper bound on coverageStart" deferral above. Explicitly a **project-specific rule, not an official or legal requirement** — say so wherever it is surfaced to a reader, the same way the bonus-malus scale's provenance is stated (NFR-8). It must be enforced in **both** places: a backend field-level validation error on the accept endpoint (a frontend-only `max` on the date input is not sufficient, since the API is reachable without the form — M1 AD-4), and the native date input's own bounds so the client is stopped before submitting. The backend rule is the authority; the input bound is the courtesy.

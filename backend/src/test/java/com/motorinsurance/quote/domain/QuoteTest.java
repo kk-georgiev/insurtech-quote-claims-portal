@@ -3,6 +3,7 @@ package com.motorinsurance.quote.domain;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -18,6 +19,7 @@ import org.junit.jupiter.api.Test;
 class QuoteTest {
 
     private static final LocalDate VALID_UNTIL = LocalDate.of(2026, 9, 14);
+    private static final Instant ACCEPTED_AT = Instant.parse("2026-09-01T10:15:30Z");
 
     @Test
     void status_todayBeforeValidUntil_isCalculated() {
@@ -44,18 +46,23 @@ class QuoteTest {
 
     @Test
     void status_acceptedQuote_isAcceptedRegardlessOfValidity() {
-        // acceptedAt is not settable through the public constructor this
-        // milestone (Story 8.1's job) - this test documents the intended
-        // rule via the status() contract itself: ACCEPTED takes precedence
-        // over the expiry check whenever acceptedAt is set. Re-verify this
-        // test still holds once Story 8.1 adds a way to set it.
+        // Story 8.1 supplies what this test previously could only describe:
+        // accept() is now the one way acceptedAt is ever set, so the
+        // ACCEPTED branch is asserted directly rather than documented.
         Quote quote = quoteValidUntil(VALID_UNTIL);
 
-        // Not yet accepted through this milestone's stories - documents the
-        // current, pre-8.1 state rather than asserting the ACCEPTED branch
-        // directly (no public API sets acceptedAt yet).
         assertThat(quote.getAcceptedAt()).isNull();
         assertThat(quote.status(VALID_UNTIL.plusDays(100))).isEqualTo(QuoteStatus.EXPIRED);
+
+        quote.accept(ACCEPTED_AT);
+
+        // ACCEPTED takes precedence over the expiry check: a quote accepted
+        // while it was still valid must not start reading EXPIRED once its
+        // offer window closes - the policy it produced does not expire with
+        // the offer.
+        assertThat(quote.getAcceptedAt()).isEqualTo(ACCEPTED_AT);
+        assertThat(quote.status(VALID_UNTIL.plusDays(100))).isEqualTo(QuoteStatus.ACCEPTED);
+        assertThat(quote.status(VALID_UNTIL.minusDays(1))).isEqualTo(QuoteStatus.ACCEPTED);
     }
 
     private static Quote quoteValidUntil(LocalDate validUntil) {

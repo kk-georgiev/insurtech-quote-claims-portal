@@ -26,6 +26,13 @@ jwt:
 quote:
   offer-validity-days: 14
 
+# Coverage period (Story 8.1, Architecture Spine AD-6/FR-M3-04): how many
+# months a policy covers from its coverage start date. PolicyService reads
+# this - never a literal `12` at a call site - and derives the (inclusive)
+# coverage end as start + this many months - 1 day.
+policy:
+  coverage-months: 12
+
 spring:
   application:
     name: motor-insurance-backend

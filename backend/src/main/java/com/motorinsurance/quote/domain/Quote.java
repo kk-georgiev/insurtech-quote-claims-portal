@@ -7,6 +7,7 @@ import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -24,9 +25,10 @@ import java.util.UUID;
  * <p>Carries no {@code status} column (Architecture Spine AD-3, Story 6.2) -
  * {@link #status} derives it on every call from {@link #validUntil} and
  * {@link #acceptedAt}, which is the one place this milestone's status rule
- * is implemented. {@code acceptedAt} stays {@code null} through every story
- * before 8.1 (Accept a Quote and Issue a Policy) - no code path in this
- * milestone's Epic 6 sets it.
+ * is implemented. {@code acceptedAt} is written by exactly one code path,
+ * {@link #accept} (Story 8.1 - Accept a Quote and Issue a Policy), and
+ * stays {@code null} for every quote nobody has accepted - the domain
+ * meaning that makes it the one nullable column AD-9 permits here.
  */
 @Entity
 @Table(name = "quotes")
@@ -215,6 +217,31 @@ public class Quote {
 
     public Instant getAcceptedAt() {
         return acceptedAt;
+    }
+
+    /**
+     * Marks this quote accepted (Story 8.1) - the one state change this
+     * entity permits, and the reason it has a single intention-revealing
+     * mutator rather than a setter. Called only from the acceptance
+     * transaction in {@code quote.application}, which also issues the
+     * policy in the same unit of work, so an accepted quote and its policy
+     * are created together or not at all (Architecture Spine AD-5, M3).
+     *
+     * <p>Nothing else changes: {@link #status} starts returning {@link
+     * QuoteStatus#ACCEPTED} purely because {@code acceptedAt} is now set
+     * (AD-3), and no {@code status} column exists to keep in step with it.
+     *
+     * @param acceptedAt the acceptance instant, resolved from the injected
+     *     business-zone clock by the caller (AD-6), never here
+     */
+    public void accept(Instant acceptedAt) {
+        if (this.acceptedAt != null) {
+            // A quote already holding a policy must not have its acceptance
+            // instant quietly rewritten - the replay path returns the
+            // existing policy instead of coming back through here.
+            throw new IllegalStateException("Quote " + id + " is already accepted");
+        }
+        this.acceptedAt = Objects.requireNonNull(acceptedAt, "acceptedAt");
     }
 
     /**

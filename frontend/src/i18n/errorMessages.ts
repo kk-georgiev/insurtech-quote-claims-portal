@@ -60,6 +60,13 @@ const FIELD_SPECIFIC_CODES: Record<string, string> = {
   PRICING_UNKNOWN_REGION: 'regionCode',
   PRICING_UNSUPPORTED_INSTALLMENTS: 'installments',
   PRICING_UNKNOWN_BONUS_MALUS_CLASS: 'bonusMalusClass',
+  // Story 8.1's acceptance errors. Registered with the codes rather than
+  // with the form that will render them (Story 8.2): the backend attaches
+  // `fieldErrors` for exactly these two, and an unregistered code silently
+  // falls back to the generic message, discarding the copy the same change
+  // added to both catalogs.
+  QUOTE_COVERAGE_START_IN_PAST: 'coverageStart',
+  QUOTE_VEHICLE_IDENTIFIER_REQUIRED: 'vehicleRegistration',
 };
 
 /**

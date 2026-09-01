@@ -75,6 +75,15 @@ public class SecurityConfig {
     // today.
     private static final String[] PUBLIC_POST_ENDPOINTS = {"/api/v1/auth/register", "/api/v1/auth/login"};
 
+    // springdoc's own routes (Story 9.1, FR-M3-14): the generated OpenAPI
+    // document and the Swagger UI that renders it. A docs endpoint for
+    // reviewers/teammates, not user data - same public-GET treatment as
+    // /actuator/health above. Production hardening is explicitly out of
+    // scope for this milestone (see deferred-work.md).
+    private static final String[] PUBLIC_GET_ENDPOINTS = {
+        "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html"
+    };
+
     @Bean
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http,
@@ -86,6 +95,8 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth.requestMatchers(HttpMethod.GET, "/actuator/health")
+                        .permitAll()
+                        .requestMatchers(HttpMethod.GET, PUBLIC_GET_ENDPOINTS)
                         .permitAll()
                         .requestMatchers(HttpMethod.POST, PUBLIC_POST_ENDPOINTS)
                         .permitAll()

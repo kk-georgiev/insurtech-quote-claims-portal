@@ -386,3 +386,17 @@ Append-only. Entries collected from bmad-build review loopbacks. Do not modify e
 - source_spec: `_bmad-output/implementation-artifacts/spec-8-1-accept-a-quote-and-issue-a-policy-backend.md`
   summary: RESOLVED for Story 8.2 — coverage may start at most **90 days ahead** of today in the business zone. Deliberately NOT added to Story 8.1, which ships with only the past-date rule.
   evidence: Product-owner decision, 2026-09-01, in response to the "no upper bound on coverageStart" deferral above. Explicitly a **project-specific rule, not an official or legal requirement** — say so wherever it is surfaced to a reader, the same way the bonus-malus scale's provenance is stated (NFR-8). It must be enforced in **both** places: a backend field-level validation error on the accept endpoint (a frontend-only `max` on the date input is not sufficient, since the API is reachable without the form — M1 AD-4), and the native date input's own bounds so the client is stopped before submitting. The backend rule is the authority; the input bound is the courtesy.
+
+## Deferred from: Story 9.1 review (2026-09-01)
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-9-1-openapi-documentation.md`
+  summary: `OpenApiConfig` registers no `SecurityScheme`/`SecurityRequirement`, so the generated Swagger UI has no "Authorize" button and doesn't indicate which endpoints require a bearer token.
+  evidence: Review-loop finding (blind-hunter). Not required by this story's AC (which only asks that every endpoint appear with its request/response shapes and that the bonus-malus disclaimer be present) — reflection-based shape inference doesn't cover auth documentation, since that lives in `SecurityConfig`, not in any controller/DTO springdoc reads. Worth adding a `@SecurityScheme(type = HTTP, scheme = "bearer")` + global `SecurityRequirement` on the `OpenApiConfig` bean if API docs become a more actively used reviewer/onboarding tool.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-9-1-openapi-documentation.md`
+  summary: `OpenApiConfigTest` asserts the 7 known path keys (covering all 8 endpoints) by literal string match, with no reciprocal test asserting the *count* of documented operations matches the actual number of `@RequestMapping` endpoints in the codebase.
+  evidence: Review-loop finding (blind-hunter). A future new endpoint added to any controller wouldn't be caught by this test as "missing from the docs" — it would just be silently absent, since nothing regresses. Low value today (this story's own AC only pins the 8 endpoints known now), but worth a symbol-count-based assertion (e.g. reflectively counting `@RequestMapping`-annotated methods across `**/api/*.java` and comparing to `paths` key count) if API docs coverage becomes a thing future stories are expected to keep current.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-9-1-openapi-documentation.md`
+  summary: No `@Tag` grouping annotations on `AuthController`/`QuoteController`/`PolicyController`, so generated Swagger UI lists all operations ungrouped.
+  evidence: Review-loop finding (blind-hunter). Cosmetic navigation gap for the "reviewer/teammate" audience this story is built for — with only 3 controllers and 8 endpoints today it's not yet a real usability problem, but worth adding `@Tag(name = "...")` per controller once the controller count grows enough that an ungrouped list becomes hard to scan.

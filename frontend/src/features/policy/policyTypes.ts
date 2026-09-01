@@ -1,4 +1,14 @@
 /**
+ * Mirrors the backend's `policy.domain.PolicyStatus` (Story 8.3). Never
+ * chosen by this frontend - always read off a `PolicyResponse`, derived
+ * server-side from the coverage dates (Architecture Spine AD-3).
+ * `CANCELLED` is reserved: no response can carry it this milestone, but the
+ * union already accounts for it so a later story does not have to widen it
+ * and every switch over it.
+ */
+export type PolicyStatus = 'SCHEDULED' | 'ACTIVE' | 'EXPIRED' | 'CANCELLED';
+
+/**
  * Mirrors the backend's `policy.application.PolicyView` field for field
  * (READ-ONLY — Story 8.1 owns the shape). This is what `POST
  * /api/v1/quotes/{id}/accept` returns, and what Story 8.3's policy list and
@@ -13,8 +23,8 @@
  * and `vehicleVin` are mutually exclusive: exactly one is non-null, decided
  * and enforced by the backend.
  *
- * No `status` field: deriving a policy's status from its coverage dates is
- * Story 8.3's job (FR-M3-09), together with the screens that display it.
+ * `status` is derived server-side from the coverage dates on every read
+ * (FR-M3-09) - never chosen or computed here.
  */
 export interface PolicyResponse {
   id: string;
@@ -41,4 +51,5 @@ export interface PolicyResponse {
   totalPremium: number;
   installmentAmount: number;
   currency: string;
+  status: PolicyStatus;
 }

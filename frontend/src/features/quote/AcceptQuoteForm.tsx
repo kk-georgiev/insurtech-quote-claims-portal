@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
+import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { apiFetch, ApiRequestError } from '../../api/client';
 import type { PolicyResponse } from '../policy/policyTypes';
 import { useFormSubmission } from '../../hooks/useFormSubmission';
-import { formatDate } from '../../i18n/formatDate';
 import { Alert } from '../../components/ui/Alert';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
@@ -57,17 +57,16 @@ interface AcceptQuoteFormProps {
  * (UX-DR5) - and read in the order what you are buying (the breakdown
  * above) -> who you are -> when it starts -> commit.
  *
- * On success it replaces itself with the issued policy in place. Story 8.3
- * changes this to navigate to that policy's own screen, once `/policies/:id`
- * exists; navigating there today would land on a blank page, so the
- * confirmation stays here for now (product-owner decision, 2026-09-01).
+ * On success the client is taken to the new policy's own screen (Story
+ * 8.3) - not back to a list, and no longer the in-place confirmation Story
+ * 8.2 shipped as an interim while `/policies/:id` did not yet exist.
  *
  * Nothing is shown as done before the backend confirms it (UX-DR14): the
- * policy number rendered below is the one the server returned, never a
- * predicted or optimistic value.
+ * navigation happens only once the server has answered with a real policy.
  */
 export function AcceptQuoteForm({ quoteId, onQuoteExpired }: AcceptQuoteFormProps) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
+  const navigate = useNavigate();
 
   const today = isoDate(new Date());
   const latestStart = isoDate(
@@ -78,7 +77,6 @@ export function AcceptQuoteForm({ quoteId, onQuoteExpired }: AcceptQuoteFormProp
   const [vehicleRegistration, setVehicleRegistration] = useState('');
   const [vehicleVin, setVehicleVin] = useState('');
   const [coverageStart, setCoverageStart] = useState(today);
-  const [policy, setPolicy] = useState<PolicyResponse | null>(null);
 
   const { submitting, formError, fieldErrors, submit } = useFormSubmission('quotes.accept', t, {
     knownFields: KNOWN_FIELDS,
@@ -104,7 +102,7 @@ export function AcceptQuoteForm({ quoteId, onQuoteExpired }: AcceptQuoteFormProp
           body,
         });
         if (isCancelled()) return;
-        setPolicy(issued);
+        navigate(`/policies/${issued.id}`);
       } catch (error) {
         // The one refusal this form cannot simply display: the offer died
         // while the screen sat open, so the screen itself is now wrong.
@@ -116,33 +114,6 @@ export function AcceptQuoteForm({ quoteId, onQuoteExpired }: AcceptQuoteFormProp
         throw error;
       }
     });
-  }
-
-  if (policy) {
-    return (
-      <Card title={t('quotes.accept.success.heading')} titleAs="h3" data-testid="accept-success">
-        <Alert variant="success">{t('quotes.accept.success.body')}</Alert>
-        <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-          <dt className="text-text-muted">{t('quotes.accept.success.policyNumber')}</dt>
-          <dd data-testid="accept-policy-number" className="text-right text-base font-semibold text-text">
-            {policy.policyNumber}
-          </dd>
-
-          <dt className="text-text-muted">{t('quotes.accept.success.coveragePeriod')}</dt>
-          <dd data-testid="accept-coverage-period" className="text-right">
-            {t('quotes.accept.success.coverageRange', {
-              from: formatDate(policy.coverageStart, i18n.language),
-              to: formatDate(policy.coverageEnd, i18n.language),
-            })}
-          </dd>
-
-          <dt className="text-text-muted">{t('quotes.accept.success.totalPremium')}</dt>
-          <dd data-testid="accept-total-premium" className="text-right text-base font-semibold text-text">
-            {policy.totalPremium} {policy.currency}
-          </dd>
-        </dl>
-      </Card>
-    );
   }
 
   return (

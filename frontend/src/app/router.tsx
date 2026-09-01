@@ -8,6 +8,8 @@ import { LoginForm } from '../features/auth/LoginForm';
 import { ClientShell } from '../features/shells/client/ClientShell';
 import { MyQuotes } from '../features/quote/MyQuotes';
 import { QuoteDetail } from '../features/quote/QuoteDetail';
+import { MyPolicies } from '../features/policy/MyPolicies';
+import { PolicyDetail } from '../features/policy/PolicyDetail';
 import { AgentShell } from '../features/shells/agent/AgentShell';
 import { LiquidatorShell } from '../features/shells/liquidator/LiquidatorShell';
 import { AdministratorShell } from '../features/shells/administrator/AdministratorShell';
@@ -41,6 +43,10 @@ export const routes: RouteObject[] = [
           { index: true, element: <ClientShell /> },
           { path: 'quotes', element: <MyQuotes /> },
           { path: 'quotes/:id', element: <QuoteDetail /> },
+          // Story 8.3: /policies and /policies/:id join the same CLIENT-only
+          // guard as the quote screens - again no new guard logic.
+          { path: 'policies', element: <MyPolicies /> },
+          { path: 'policies/:id', element: <PolicyDetail /> },
         ],
       },
       { path: 'health', element: <HealthStatus /> },

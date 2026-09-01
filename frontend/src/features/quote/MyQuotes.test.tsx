@@ -43,6 +43,7 @@ function sampleQuote(overrides: Partial<QuoteResponse> = {}): QuoteResponse {
     validUntil: '2026-12-31',
     status: 'CALCULATED',
     acceptedAt: null,
+    policyId: null,
     ...overrides,
   };
 }

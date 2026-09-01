@@ -41,6 +41,7 @@ const SAMPLE_QUOTE: QuoteResponse = {
   validUntil: '2026-09-11',
   status: 'CALCULATED',
   acceptedAt: null,
+  policyId: null,
 };
 
 function renderForm() {

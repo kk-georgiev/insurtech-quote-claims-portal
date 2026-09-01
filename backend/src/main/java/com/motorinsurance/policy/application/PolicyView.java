@@ -1,5 +1,6 @@
 package com.motorinsurance.policy.application;
 
+import com.motorinsurance.policy.domain.PolicyStatus;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -24,9 +25,10 @@ import java.util.UUID;
  * contract - exposing it is not the same as dereferencing it, which AD-4
  * forbids and nothing here does.
  *
- * <p>No {@code status} field this story: deriving one from the coverage
- * dates is FR-M3-09, which Story 8.3 adds together with the read endpoints
- * that need it.
+ * <p>{@code status} is derived on every read from the coverage dates
+ * (Story 8.3, FR-M3-09, AD-3), never stored - so a policy becomes
+ * {@code ACTIVE} and later {@code EXPIRED} on its own, with no column to
+ * keep in step and no job to run.
  */
 public record PolicyView(
         UUID id,
@@ -52,5 +54,6 @@ public record PolicyView(
         BigDecimal installmentFee,
         BigDecimal totalPremium,
         BigDecimal installmentAmount,
-        String currency) {
+        String currency,
+        PolicyStatus status) {
 }

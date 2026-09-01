@@ -42,5 +42,11 @@ public record QuoteResponse(
         // Epic 6 (see Quote's javadoc) and is only ever set by Story 8.1.
         LocalDate validUntil,
         QuoteStatus status,
-        Instant acceptedAt) {
+        Instant acceptedAt,
+        // Story 8.3 - the last field Architecture Spine AD-13 anticipates,
+        // and additive like every one before it. Null unless this quote has
+        // been accepted; it is what lets an accepted quote's screen link to
+        // the contract it produced rather than making the client fetch and
+        // match the whole policy list.
+        UUID policyId) {
 }

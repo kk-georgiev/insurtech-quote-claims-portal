@@ -261,4 +261,30 @@ public class Policy {
     public String getCurrency() {
         return currency;
     }
+
+    /**
+     * Derives this policy's status as of {@code today} (Story 8.3,
+     * FR-M3-09, Architecture Spine AD-3) - the one place this rule is
+     * implemented; every read path calls it rather than re-deriving it.
+     *
+     * <p>{@code today} is the caller's responsibility to resolve from the
+     * injected {@code Clock} in the business zone, never {@code
+     * LocalDate.now()} (AD-6). Keeping that out of here is what makes this
+     * a pure function, provable without a Spring context or a fixed clock
+     * bean - the same shape {@code quote.domain.Quote#status} takes.
+     *
+     * <p>Both coverage boundaries are inclusive: a policy is
+     * {@link PolicyStatus#ACTIVE} on its {@code coverageStart} and again on
+     * its {@code coverageEnd}, and only {@link PolicyStatus#EXPIRED} from
+     * the day after.
+     */
+    public PolicyStatus status(LocalDate today) {
+        if (today.isBefore(coverageStart)) {
+            return PolicyStatus.SCHEDULED;
+        }
+        if (today.isAfter(coverageEnd)) {
+            return PolicyStatus.EXPIRED;
+        }
+        return PolicyStatus.ACTIVE;
+    }
 }

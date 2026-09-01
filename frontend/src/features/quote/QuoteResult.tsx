@@ -1,9 +1,32 @@
 import type { QuoteResponse } from './QuoteForm';
+import type { PolicyResponse } from '../policy/policyTypes';
 import { useTranslation } from 'react-i18next';
 import { Card } from '../../components/ui/Card';
 
+/**
+ * Everything this breakdown renders. Story 8.3 widened the prop from
+ * `QuoteResponse` to this: a policy stores every component under the same
+ * names, so both screens show one identical breakdown rather than two that
+ * merely look alike (FR-M3-07/FR-M3-10) - which is what makes "presented
+ * identically" checkable instead of aspirational.
+ */
+export type QuoteBreakdown = Pick<
+  QuoteResponse & PolicyResponse,
+  | 'zoneId'
+  | 'basePremium'
+  | 'ageSurcharge'
+  | 'bonusMalusClass'
+  | 'bonusMalusFactor'
+  | 'oneTimePremium'
+  | 'installments'
+  | 'installmentFee'
+  | 'totalPremium'
+  | 'installmentAmount'
+  | 'currency'
+>;
+
 interface QuoteResultProps {
-  quote: QuoteResponse;
+  quote: QuoteBreakdown;
 }
 
 /**

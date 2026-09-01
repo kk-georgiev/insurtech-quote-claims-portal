@@ -55,6 +55,9 @@ export interface QuoteResponse {
   validUntil: string;
   status: QuoteStatus;
   acceptedAt: string | null;
+  // Story 8.3 - additive (AD-13). Null unless this quote has been accepted;
+  // it is how an accepted quote's screen links to the policy it produced.
+  policyId: string | null;
 }
 
 // Story 6.1 - the five classes seeded in `bonus_malus_class`. Fixed here

@@ -152,6 +152,9 @@
       "PRICING_UNSUPPORTED_INSTALLMENTS": "The selected number of installments is not supported. Choose 1, 2 or 4.",
       "PRICING_UNKNOWN_BONUS_MALUS_CLASS": "Unknown bonus-malus class. Choose a value from the list.",
       "QUOTE_NOT_FOUND": "Quote not found.",
+      "QUOTE_EXPIRED": "This offer has expired and can no longer be accepted. Calculate a new quote to continue.",
+      "QUOTE_COVERAGE_START_IN_PAST": "Coverage cannot start in the past. Choose today or a later date.",
+      "QUOTE_VEHICLE_IDENTIFIER_REQUIRED": "Enter either a registration number or a VIN — one of the two, not both.",
       "SHARED_VALIDATION_ERROR": "Please check the details you entered.",
       "SHARED_NOT_FOUND": "Not found.",
       "SHARED_INTERNAL_ERROR": "An unexpected error occurred. Please try again later."

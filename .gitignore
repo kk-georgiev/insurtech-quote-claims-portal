@@ -40,6 +40,14 @@ _bmad/
 # Backend (Maven)
 backend/target/
 
+# Locally stored claim attachments (Story 10.1). A native `mvn spring-boot:run`
+# writes uploads under backend/data/attachments (application.yml's
+# storage.local.base-dir default, overridable via STORAGE_DIR); the
+# containerized backend keeps them on a named volume instead. Real uploaded
+# files, never repository content.
+backend/data/
+data/attachments/
+
 # Frontend (Node/Vite)
 frontend/node_modules/
 frontend/dist/

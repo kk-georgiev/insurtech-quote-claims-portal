@@ -25,6 +25,15 @@ WORKDIR /app
 
 # Run as a non-root user rather than the image's default root.
 RUN addgroup -S spring && adduser -S spring -G spring
+
+# Story 10.1: the attachment storage directory (STORAGE_DIR in
+# docker-compose.yml). Created here and owned by `spring` so that the named
+# volume Compose mounts over it inherits that ownership - Docker seeds an
+# empty named volume from the image's directory, and a mount point that
+# doesn't exist in the image would come up root-owned, leaving the non-root
+# process unable to write a single upload.
+RUN mkdir -p /var/lib/motorinsurance/attachments && chown -R spring:spring /var/lib/motorinsurance
+
 USER spring:spring
 
 COPY --from=build /build/target/*.jar app.jar

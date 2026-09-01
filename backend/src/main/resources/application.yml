@@ -40,9 +40,42 @@ quote:
 policy:
   coverage-months: 12
 
+# Attachment storage (Story 10.1, Epic 10 upload rules). Read by
+# shared/storage/LocalFilesystemStorage.java and AttachmentValidator.java
+# through constructor @Value injection - never a literal at a call site - and
+# validated fail-fast at startup, so a non-positive cap or a blank directory
+# fails the deployment rather than every upload.
+storage:
+  local:
+    # Where uploaded bytes land. Env-indirected like the Postgres/JWT
+    # settings so the containerized backend can point at its named volume
+    # (docker-compose.yml) while a native `mvn spring-boot:run` writes under
+    # the working directory. Created on demand at the first store, so no
+    # pre-existing host path is needed for the app to start healthy.
+    base-dir: ${STORAGE_DIR:./data/attachments}
+  attachment:
+    # 5 MiB per file, 10 files per claim - a phone photo of a damaged car
+    # comfortably fits, a video does not. Both are the authority a client
+    # meets: see spring.servlet.multipart below, deliberately set higher.
+    max-file-size-bytes: 5242880
+    max-count: 10
+
 spring:
   application:
     name: motor-insurance-backend
+
+  servlet:
+    multipart:
+      # Deliberately ABOVE storage.attachment.* above, not equal to it
+      # (Story 10.1). These limits fire inside the servlet layer before any
+      # application code sees the request, so leaving them at Spring's 1MB
+      # default would make MaxUploadSizeExceededException - an opaque 500 -
+      # the real behaviour instead of our translated 400
+      # ATTACHMENT_TOO_LARGE. Sized as one file's headroom, and a request's
+      # as max-count x this, so our validator is always the rule that speaks
+      # while these still bound what a single request can buffer.
+      max-file-size: 10MB
+      max-request-size: 100MB
 
   datasource:
     url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:motorinsurance}

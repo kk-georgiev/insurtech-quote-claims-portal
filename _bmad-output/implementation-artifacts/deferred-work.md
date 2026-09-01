@@ -400,3 +400,31 @@ Append-only. Entries collected from bmad-build review loopbacks. Do not modify e
 - source_spec: `_bmad-output/implementation-artifacts/spec-9-1-openapi-documentation.md`
   summary: No `@Tag` grouping annotations on `AuthController`/`QuoteController`/`PolicyController`, so generated Swagger UI lists all operations ungrouped.
   evidence: Review-loop finding (blind-hunter). Cosmetic navigation gap for the "reviewer/teammate" audience this story is built for — with only 3 controllers and 8 endpoints today it's not yet a real usability problem, but worth adding `@Tag(name = "...")` per controller once the controller count grows enough that an ungrouped list becomes hard to scan.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-10-1-attachment-storage-and-validated-upload.md`
+  summary: `MaxUploadSizeExceededException` has no handler, so a file above `spring.servlet.multipart.max-file-size` (10MB) still returns an opaque 500 `SHARED_INTERNAL_ERROR` instead of a translated 400 `ATTACHMENT_TOO_LARGE`.
+  evidence: All three review layers flagged this independently. Raising the servlet limits moved the cliff but did not remove it; phone photos above 10MB are ordinary. `application.yml`'s own comment claims this case is covered, and it is not. Fix is one `@ExceptionHandler` in `GlobalExceptionHandler` — but that handler must not import a module exception, so the code needs to live where `shared` can reach it. Best taken in Story 10.2, when the endpoint that triggers it exists.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-10-1-attachment-storage-and-validated-upload.md`
+  summary: The count cap is enforced only after every part is already materialized as `byte[]`, so a client can push up to `max-request-size` (100MB) into heap before "at most 10 files" speaks.
+  evidence: `AttachmentValidator.validate` takes `List<Candidate>` with materialized content. There is also no aggregate batch cap — 10 x 5MiB is 50MiB of heap per request with no ceiling on concurrency. Needs the part count checked from the multipart request before reading parts, which is only possible once Story 10.2 owns the controller.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-10-1-attachment-storage-and-validated-upload.md`
+  summary: Client-supplied filenames are interpolated unbounded and unsanitized into `ApiError.message` and the field error, with no length cap and no control-character stripping.
+  evidence: `handleApiException` surfaces `ex.getMessage()` to the client (unlike the 500 path, which deliberately withholds it). A multi-KB filename containing newlines reaches the response body and any log that renders it. Cap and strip control characters at the boundary before the name reaches an exception or `StoredFile`.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-10-1-attachment-storage-and-validated-upload.md`
+  summary: `Storage.read` has no typed not-found result, so a missing key raises `UncheckedIOException` and lands on the 500 fallback — leaving Story 10.4's download endpoint no path to `ATTACHMENT_NOT_FOUND` (404).
+  evidence: Reachable without a client bug: a database restored without its matching volume, a manually pruned directory, or `docker compose down -v` having destroyed `attachment_data` while `postgres_data` survived. The port needs an existence query or a typed result before a controller is built on it.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-10-1-attachment-storage-and-validated-upload.md`
+  summary: The i18n copy hardcodes "5 MB" and "10 photos" while the real caps live in `storage.attachment.*`, and the stated size is wrong in two ways — the cap is 5 MiB, and it is inclusive.
+  evidence: Nothing binds the sentences to the configuration, so a config-only edit ships a message stating a limit the server does not enforce, in both languages. The repo already has the idiom for this (`QuoteAcceptanceControllerTest` injects the configured value rather than restating it).
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-10-1-attachment-storage-and-validated-upload.md`
+  summary: Nothing verifies the containerized attachment volume is writable by the non-root `spring` user — the entire reason for the Dockerfile and Compose edits can regress silently.
+  evidence: `LocalFilesystemStorage` creates its base directory on demand at first store, not at startup, so removing the Dockerfile `chown` still leaves `/actuator/health` green and the CI compose job passing. The failure would first appear as a 500 on a real upload after Story 10.2. One `docker compose exec` touch/rm probe in the existing job closes it.
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-10-1-attachment-storage-and-validated-upload.md`
+  summary: Assorted smaller findings from the Story 10.1 review layers, none blocking.
+  evidence: `deleteIfExists` in the `finally` can convert a successful store into a reported failure; `ImageContentSniffer.SIGNATURE_PREFIX_LENGTH = 12` is hand-maintained with no test tying it to the longest declared signature; `Signature`/`Candidate` records expose live `byte[]` without defensive copies; `ImageType`'s Javadoc justifies its naming with a CI mechanism that does not actually apply to unquoted identifiers; no EXIF stripping decision recorded for phone photos carrying GPS under GDPR; no logging on any store, delete or rejection; no orphaned `.part` sweeper; flat directory with no sharding; `doesNotContain("./")` is vacuous on Windows; README/backup note missing that `postgres_data` and `attachment_data` must now be captured together.

@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { apiFetch } from '../../api/client';
+import { useCancelledRef } from '../../hooks/useCancelledRef';
 import type { QuoteResponse } from './QuoteForm';
 import { quoteStatusPresentation } from './quoteStatusPresentation';
 import { formatDate } from '../../i18n/formatDate';
@@ -32,16 +33,11 @@ export function MyQuotes() {
   const [quotes, setQuotes] = useState<QuoteResponse[]>([]);
   const [reloadToken, setReloadToken] = useState(0);
 
-  // Same unmount-guard intent as QuoteForm.tsx's cancelledRef: a slow
-  // response resolving after the user has navigated away must not call a
-  // state setter on an unmounted component.
-  const cancelledRef = useRef(false);
-  useEffect(() => {
-    cancelledRef.current = false;
-    return () => {
-      cancelledRef.current = true;
-    };
-  }, []);
+  // A slow response resolving after the user has navigated away must not
+  // call a state setter on an unmounted component. Shared with every other
+  // async screen since Story 8.2 (Epic 6 retro item 44) - this is a load,
+  // not a submit, so it takes the guard alone and no phase machine.
+  const cancelledRef = useCancelledRef();
 
   useEffect(() => {
     setPhase('loading');

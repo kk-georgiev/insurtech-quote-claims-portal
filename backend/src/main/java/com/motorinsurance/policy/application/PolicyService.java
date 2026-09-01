@@ -1,5 +1,6 @@
 package com.motorinsurance.policy.application;
 
+import com.motorinsurance.policy.domain.CoveragePeriod;
 import com.motorinsurance.policy.domain.Policy;
 import com.motorinsurance.policy.domain.PolicyNumber;
 import com.motorinsurance.policy.persistence.PolicyRepository;
@@ -67,7 +68,8 @@ public class PolicyService {
      * acceptance sequence is one unit of work, AD-5), so a failure here
      * leaves neither a policy nor an accepted quote.
      *
-     * <p>The coverage period's length is this module's own rule, read from
+     * <p>The coverage period is this module's own rule (see {@link
+     * CoveragePeriod}), with its length read from
      * {@code policy.coverage-months} rather than written as a literal at a
      * call site, and both ends are inclusive (AD-6) - hence the
      * {@code minusDays(1)}.
@@ -86,7 +88,7 @@ public class PolicyService {
         Instant issuedAt = command.issuedAt();
         int issuanceYear = LocalDate.ofInstant(issuedAt, clock.getZone()).getYear();
         String policyNumber = PolicyNumber.format(issuanceYear, policyRepository.nextPolicyNumberValue());
-        LocalDate coverageEnd = command.coverageStart().plusMonths(coverageMonths).minusDays(1);
+        LocalDate coverageEnd = CoveragePeriod.endFor(command.coverageStart(), coverageMonths);
 
         Policy policy = new Policy(
                 command.customerId(),

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { routes } from '../../app/router';
 import { seedToken } from '../../test/seedToken';
@@ -116,5 +117,75 @@ describe('QuoteDetail', () => {
     renderAt(`/quotes/${QUOTE_ID}`);
 
     expect(await screen.findByRole('link', { name: bg.quotes.detail.backToList })).toBeInTheDocument();
+  });
+});
+
+// --- Story 8.2: the acceptance section ---
+
+describe('QuoteDetail acceptance section (Story 8.2)', () => {
+  it('offers acceptance below the breakdown for a still-valid quote', async () => {
+    seedToken('CLIENT');
+    mockedApiFetch.mockResolvedValue(sampleQuote());
+
+    renderAt(`/quotes/${QUOTE_ID}`);
+
+    const form = await screen.findByTestId('accept-form');
+    const breakdown = screen.getByTestId('quote-result');
+    // Reading order (UX-DR5): what you are buying, then the commitment -
+    // asserted on real document order, not on styling.
+    expect(breakdown.compareDocumentPosition(form)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+  });
+
+  it('is the only primary button on the screen', async () => {
+    seedToken('CLIENT');
+    mockedApiFetch.mockResolvedValue(sampleQuote());
+
+    renderAt(`/quotes/${QUOTE_ID}`);
+    await screen.findByTestId('accept-form');
+
+    // `primary` is the navy-filled call to action (Button's cva variant);
+    // a second one would leave the client with two competing commitments.
+    const primaries = screen
+      .getAllByRole('button')
+      .filter((button) => button.className.includes('bg-primary'));
+    expect(primaries).toHaveLength(1);
+    expect(primaries[0]).toHaveTextContent(bg.quotes.accept.submit);
+  });
+
+  it.each(['EXPIRED', 'ACCEPTED'] as const)(
+    'offers no acceptance affordance at all for a %s quote',
+    async (status) => {
+      seedToken('CLIENT');
+      mockedApiFetch.mockResolvedValue(sampleQuote({ status, validUntil: '2026-08-01' }));
+
+      renderAt(`/quotes/${QUOTE_ID}`);
+
+      await screen.findByTestId('quote-detail');
+      // Replaced, never merely disabled (UX EXPERIENCE.md, State Patterns).
+      expect(screen.queryByTestId('accept-form')).not.toBeInTheDocument();
+    },
+  );
+
+  it('re-reads the quote and re-renders as expired when the offer dies mid-screen', async () => {
+    const user = userEvent.setup();
+    seedToken('CLIENT');
+    // First load: still acceptable. The accept call is refused because the
+    // offer expired in the meantime; the re-read then returns the expired
+    // quote (UX-DR8).
+    mockedApiFetch
+      .mockResolvedValueOnce(sampleQuote())
+      .mockRejectedValueOnce(new ApiRequestError('dev prose', 409, 'QUOTE_EXPIRED'))
+      .mockResolvedValueOnce(sampleQuote({ status: 'EXPIRED', validUntil: '2026-08-01' }));
+
+    renderAt(`/quotes/${QUOTE_ID}`);
+    await screen.findByTestId('accept-form');
+    await user.type(screen.getByLabelText(bg.quotes.accept.holderName), 'Ivan Petrov');
+    await user.type(screen.getByLabelText(bg.quotes.accept.vehicleRegistration), 'CA1234BM');
+    await user.click(screen.getByRole('button', { name: bg.quotes.accept.submit }));
+
+    // The screen itself is now wrong, so it corrects itself rather than
+    // leaving a form that asserts acceptability from a stale fetch.
+    expect(await screen.findByTestId('quote-detail-expired-notice')).toBeInTheDocument();
+    expect(screen.queryByTestId('accept-form')).not.toBeInTheDocument();
   });
 });

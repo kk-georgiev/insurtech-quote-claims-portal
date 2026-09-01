@@ -75,6 +75,10 @@ class QuoteAcceptanceControllerTest {
     @Value("${policy.coverage-months}")
     private int coverageMonths;
 
+    /** Likewise for Story 8.2's coverage-start horizon - the boundary tests read the configured value. */
+    @Value("${quote.max-coverage-start-days-ahead}")
+    private long maxCoverageStartDaysAhead;
+
     @Test
     void clientRole_acceptsOwnValidQuote_issuesOnePolicyWithTheQuotesOwnFigures() {
         String token = clientToken();
@@ -155,22 +159,37 @@ class QuoteAcceptanceControllerTest {
     }
 
     @Test
-    void coveragePeriod_startingOnALeapDay_endsUnderTheSameMonthArithmetic() {
-        // Pins the month-end behaviour of the configured period rather than
-        // leaving it to whichever ordinary date the suite happens to run on:
-        // 29 Feb 2028 + 12 months clamps to 28 Feb 2029, so the inclusive end
-        // is the 27th. Documented here as the decided rule (AD-6's formula),
-        // not discovered later by a client on a leap day.
+    void clientRole_coverageStartOnTheLastPermittedDay_isAccepted() {
+        // The horizon's boundary is inclusive, like every other date
+        // boundary this milestone defines (Story 8.2).
         String token = clientToken();
         UUID quoteId = createQuote(token);
-        LocalDate leapDayStart = LocalDate.of(2028, 2, 29);
 
-        ResponseEntity<String> response =
-                accept(quoteId, acceptBody(leapDayStart, "Ivan Petrov", "CA1234BM", null), token);
+        ResponseEntity<String> response = accept(
+                quoteId,
+                acceptBody(today().plusDays(maxCoverageStartDaysAhead), "Ivan Petrov", "CA1234BM", null),
+                token);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-        assertThat(extract(response.getBody(), "coverageStart")).isEqualTo("2028-02-29");
-        assertThat(extract(response.getBody(), "coverageEnd")).isEqualTo("2029-02-27");
+    }
+
+    @Test
+    void clientRole_coverageStartBeyondTheHorizon_isFieldLevelErrorAndLeavesNothingBehind() {
+        // The backend is the authority here, not the form's date input: this
+        // request never went through a browser (Story 8.2, M1 AD-4).
+        String token = clientToken();
+        UUID quoteId = createQuote(token);
+
+        ResponseEntity<String> response = accept(
+                quoteId,
+                acceptBody(today().plusDays(maxCoverageStartDaysAhead + 1), "Ivan Petrov", "CA1234BM", null),
+                token);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody()).contains("\"code\":\"QUOTE_COVERAGE_START_TOO_FAR_AHEAD\"");
+        assertThat(response.getBody()).contains("\"field\":\"coverageStart\"");
+        assertThat(policyCount(quoteId)).isZero();
+        assertThat(acceptedAt(quoteId)).isNull();
     }
 
     @Test

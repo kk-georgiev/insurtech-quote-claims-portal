@@ -122,6 +122,31 @@
       "expiredNotice": "This offer expired on {{date}} and can no longer be accepted.",
       "newQuoteCta": "Calculate a new quote",
       "acceptedNotice": "This quote has already been accepted."
+    },
+    "accept": {
+      "heading": "Accept this quote",
+      "intro": "Tell us who the policy is for and when cover should begin. Nothing is issued until you press the button below.",
+      "holderName": "Policyholder name",
+      "vehicleRegistration": "Registration number",
+      "vehicleVin": "VIN",
+      "vehicleNote": "Fill in one of the two: the registration number, or the VIN if the vehicle is not yet registered.",
+      "coverageStart": "Cover starts on",
+      "horizonNote": "Cover can start today or up to {{days}} days from now. This is the portal's own scheduling rule, not an official or legal requirement.",
+      "submit": "Accept and issue the policy",
+      "fieldErrors": {
+        "holderName": "Enter the policyholder's name, between 2 and 120 characters.",
+        "vehicleRegistration": "Enter either a registration number or a VIN — one of the two, not both.",
+        "vehicleVin": "A VIN is exactly 17 characters and does not contain the letters I, O or Q.",
+        "coverageStart": "Choose a start date from today onwards, no more than 90 days ahead."
+      },
+      "success": {
+        "heading": "Your policy is issued",
+        "body": "The quote has been accepted and the policy below is now yours.",
+        "policyNumber": "Policy number",
+        "coveragePeriod": "Cover period",
+        "coverageRange": "{{from}} – {{to}}",
+        "totalPremium": "Total premium"
+      }
     }
   },
   "shells": {
@@ -154,6 +179,7 @@
       "QUOTE_NOT_FOUND": "Quote not found.",
       "QUOTE_EXPIRED": "This offer has expired and can no longer be accepted. Calculate a new quote to continue.",
       "QUOTE_COVERAGE_START_IN_PAST": "Coverage cannot start in the past. Choose today or a later date.",
+      "QUOTE_COVERAGE_START_TOO_FAR_AHEAD": "Cover cannot start more than 90 days from now. Choose an earlier date.",
       "QUOTE_VEHICLE_IDENTIFIER_REQUIRED": "Enter either a registration number or a VIN — one of the two, not both.",
       "SHARED_VALIDATION_ERROR": "Please check the details you entered.",
       "SHARED_NOT_FOUND": "Not found.",

@@ -1,9 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { apiFetch, ApiRequestError } from '../../api/client';
-import { resolveFieldErrors, resolveFormError } from '../../i18n/errorMessages';
-import type { FieldFailure, FormFailure } from '../../i18n/errorMessages';
+import { apiFetch } from '../../api/client';
+import { useFormSubmission } from '../../hooks/useFormSubmission';
 import { Alert } from '../../components/ui/Alert';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
@@ -16,8 +15,6 @@ interface RegisterResponse {
   email: string;
   role: string;
 }
-
-type FormPhase = 'editing' | 'submitting' | 'success';
 
 
 
@@ -32,63 +29,30 @@ export function RegisterForm() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [phase, setPhase] = useState<FormPhase>('editing');
-  const [formFailure, setFormFailure] = useState<FormFailure>(null);
-  const [fieldFailure, setFieldFailure] = useState<FieldFailure>(null);
+  // Registration's own success state stays here, not in the shared hook
+  // (Story 8.2): each form's success means something different, and one
+  // hook carrying three of them would be worse than the duplication it
+  // replaced. The mechanics - phase, guards, error routing - are shared.
+  const [registered, setRegistered] = useState(false);
 
-  // Unmount guard, same intent as HealthStatus.tsx's `cancelled` flag: the
-  // request can still resolve after the user navigates away mid-submit, and
-  // without this the `then`/`catch` handlers below would call state setters
-  // on an unmounted component. A ref (not a plain effect-local variable) is
-  // needed here because the async work is kicked off from the submit event
-  // handler, not from an effect - but that means the mount effect must
-  // explicitly reset it to `false`, not just register the `true`-setting
-  // cleanup: React's StrictMode dev double-invoke (mount -> cleanup -> mount)
-  // would otherwise leave a stale `true` behind after the very first mount,
-  // permanently blocking every future submit's state updates.
-  const cancelledRef = useRef(false);
-  useEffect(() => {
-    cancelledRef.current = false;
-    return () => {
-      cancelledRef.current = true;
-    };
-  }, []);
+  const { submitting, formError, fieldErrors, submit } = useFormSubmission('auth.register', t, {
+    formLevelCodes: ['AUTH_EMAIL_TAKEN'],
+  });
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (phase === 'submitting') return;
-    setPhase('submitting');
-    setFormFailure(null);
-    setFieldFailure(null);
 
-    try {
+    await submit(async (isCancelled) => {
       await apiFetch<RegisterResponse>('/api/v1/auth/register', {
         method: 'POST',
         body: { email, password },
       });
-      if (cancelledRef.current) return;
-      setPhase('success');
-    } catch (error) {
-      if (cancelledRef.current) return;
-
-      // Form stays editable after any error - never locked/cleared.
-      setPhase('editing');
-
-      if (error instanceof ApiRequestError) {
-        if (error.code === 'AUTH_EMAIL_TAKEN') {
-          setFormFailure({ source: error });
-          return;
-        }
-        if (error.fieldErrors && error.fieldErrors.length > 0) {
-          setFieldFailure({ fieldErrors: error.fieldErrors, code: error.code });
-          return;
-        }
-      }
-      setFormFailure({ source: error });
-    }
+      if (isCancelled()) return;
+      setRegistered(true);
+    });
   }
 
-  if (phase === 'success') {
+  if (registered) {
     return (
       <Card title={t('auth.register.success')} titleAs="h2">
         {/* Same shared banner as the failure path, in its success variant —
@@ -100,16 +64,6 @@ export function RegisterForm() {
       </Card>
     );
   }
-
-  // Resolved during render, never stored resolved: an error already on
-  // screen must re-translate the instant the language changes, with no
-  // resubmit. `formFailure`/`fieldFailure` hold language-neutral sources.
-  const formError = formFailure ? resolveFormError(formFailure.source, t) : null;
-  const fieldErrors = fieldFailure
-    ? resolveFieldErrors(fieldFailure.fieldErrors, 'auth.register', fieldFailure.code, t)
-    : {};
-
-  const submitting = phase === 'submitting';
 
   return (
     <Card title={t('auth.register.heading')} titleAs="h2">

@@ -27,8 +27,16 @@ replay_pid*
 # via `npx bmad-method install`. _bmad-output/ (PRD, architecture, epics,
 # sprint tracking) is intentionally NOT ignored below — those are real team
 # decisions/documentation, not disposable tooling output.
+#
+# .claude/ is per-developer local agent configuration: installed skills, editor
+# launch configs, and personal permission settings. It was previously ignored
+# only at .claude/skills/, which let .claude/launch.json reach the repo by
+# accident in Story 8.3's PR (Epic 8 retro item 53). Widened to the whole
+# directory and that file untracked — every developer's launch config points at
+# their own ports and paths, so there is nothing shared to keep in version
+# control.
 _bmad/
-.claude/skills/
+.claude/
 
 # Environment files — never commit real secrets (NFR-2). Ignore every .env*
 # variant (.env, .env.local, .env.production, .env.staging, etc.) except the

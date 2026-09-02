@@ -1,5 +1,7 @@
 package com.motorinsurance.quote.api;
 
+import static com.motorinsurance.shared.api.CurrentUser.currentUserId;
+
 import com.motorinsurance.policy.application.PolicyView;
 import com.motorinsurance.quote.application.AcceptanceOutcome;
 import com.motorinsurance.quote.application.QuoteAcceptanceService;
@@ -100,9 +102,5 @@ public class QuoteController {
 
         return ResponseEntity.status(outcome.created() ? HttpStatus.CREATED : HttpStatus.OK)
                 .body(outcome.policy());
-    }
-
-    private UUID currentUserId(Authentication authentication) {
-        return (UUID) authentication.getPrincipal();
     }
 }

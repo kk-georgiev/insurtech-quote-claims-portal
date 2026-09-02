@@ -3,6 +3,7 @@ package com.motorinsurance.shared.storage;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.regex.Pattern;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -40,6 +41,18 @@ public class AttachmentValidator {
 
     /** Stands in for a client that sent no filename at all, so a message still names something. */
     private static final String UNNAMED_FILE = "(unnamed file)";
+
+    /**
+     * Matches {@code attachments.display_filename VARCHAR(255)}
+     * ({@code V11__create_attachments_table.sql}, Story 10.2) - the display
+     * name is client-controlled, so it is capped and stripped of control
+     * characters at this boundary before it can reach that column, an
+     * exception message, or a field error (Story 10.1 review finding: it
+     * was previously "interpolated unbounded and unsanitized").
+     */
+    private static final int MAX_DISPLAY_FILENAME_LENGTH = 255;
+
+    private static final Pattern CONTROL_CHARACTERS = Pattern.compile("\\p{Cntrl}");
 
     private final long maxFileSizeBytes;
     private final int maxCount;
@@ -79,16 +92,30 @@ public class AttachmentValidator {
         if (candidates == null || candidates.isEmpty()) {
             return List.of();
         }
-        if (candidates.size() > maxCount) {
-            // Checked before anything else: the count is a property of the
-            // submission, so there is no useful per-file answer to give.
-            throw new TooManyAttachmentsException(candidates.size(), maxCount);
-        }
+        // Also re-checked by validateCount below when a caller uses it, but
+        // kept here too: a caller that skips that pre-check must still get
+        // the same answer.
+        validateCount(candidates.size());
         List<ValidatedAttachment> validated = new ArrayList<>(candidates.size());
         for (Candidate candidate : candidates) {
             validated.add(validateOne(candidate));
         }
         return List.copyOf(validated);
+    }
+
+    /**
+     * The count check alone, usable before any candidate's bytes are read
+     * into memory (Story 10.2, closing a Story 10.1 review finding: the
+     * count cap was previously enforced only after every part was already
+     * materialized as {@code byte[]}). A multipart controller can call this
+     * against the raw part count first, then only build {@link Candidate}s -
+     * which requires reading every file's bytes - once it is known the
+     * batch is not already over the cap.
+     */
+    public void validateCount(int count) {
+        if (count > maxCount) {
+            throw new TooManyAttachmentsException(count, maxCount);
+        }
     }
 
     private ValidatedAttachment validateOne(Candidate candidate) {
@@ -106,7 +133,13 @@ public class AttachmentValidator {
     }
 
     private static String displayName(String filename) {
-        return filename == null || filename.isBlank() ? UNNAMED_FILE : filename;
+        if (filename == null || filename.isBlank()) {
+            return UNNAMED_FILE;
+        }
+        String sanitized = CONTROL_CHARACTERS.matcher(filename).replaceAll("");
+        return sanitized.length() > MAX_DISPLAY_FILENAME_LENGTH
+                ? sanitized.substring(0, MAX_DISPLAY_FILENAME_LENGTH)
+                : sanitized;
     }
 
     /**

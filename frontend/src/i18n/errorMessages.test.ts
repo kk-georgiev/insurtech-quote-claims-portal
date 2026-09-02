@@ -24,6 +24,11 @@ const CODES = [
   'QUOTE_COVERAGE_START_TOO_FAR_AHEAD',
   'QUOTE_VEHICLE_IDENTIFIER_REQUIRED',
   'POLICY_NOT_FOUND',
+  // Story 10.2's claim-submission rejections. The FNOL form that renders
+  // them lands in Story 10.3; registered now for the same reason the
+  // Story 10.1 codes below already are.
+  'CLAIM_INCIDENT_OUTSIDE_COVERAGE',
+  'CLAIM_INCIDENT_DATE_IN_FUTURE',
   // Story 10.1's upload rejections. The FNOL form that renders them lands in
   // Story 10.3; the codes are registered with their catalog entries now,
   // because the backend can emit them as soon as an endpoint calls the

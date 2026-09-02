@@ -176,6 +176,8 @@
       "QUOTE_COVERAGE_START_TOO_FAR_AHEAD": "Cover cannot start more than 90 days from now. Choose an earlier date.",
       "QUOTE_VEHICLE_IDENTIFIER_REQUIRED": "Enter either a registration number or a VIN — one of the two, not both.",
       "POLICY_NOT_FOUND": "Policy not found.",
+      "CLAIM_INCIDENT_OUTSIDE_COVERAGE": "The incident date is outside the policy's coverage period.",
+      "CLAIM_INCIDENT_DATE_IN_FUTURE": "The incident date cannot be in the future.",
       "ATTACHMENT_UNSUPPORTED_TYPE": "Only JPEG, PNG and WebP images can be attached. Remove the file that is not one of these and try again.",
       "ATTACHMENT_TOO_LARGE": "One of the files is too large. Each photo must be smaller than 5 MB.",
       "ATTACHMENT_TOO_MANY": "Too many files. Attach at most 10 photos.",

@@ -12,6 +12,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 import tools.jackson.databind.exc.MismatchedInputException;
 
@@ -127,6 +128,35 @@ public class GlobalExceptionHandler {
                 .toList();
         ApiError body = ApiError.of(
                 HttpStatus.BAD_REQUEST.value(), VALIDATION_ERROR_CODE, "Request validation failed", fieldErrors);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+    }
+
+    /**
+     * A multipart upload above {@code spring.servlet.multipart.max-file-size}
+     * / {@code max-request-size} (Story 10.1 deferred finding, closed by
+     * Story 10.2): Spring rejects the request during multipart resolution,
+     * before any controller or {@code shared.storage.AttachmentValidator}
+     * code ever runs, so - left unhandled - this previously fell through to
+     * {@link #handleUnexpected} as an opaque 500 even though
+     * {@code application.yml}'s own comment claimed the case was covered.
+     *
+     * <p>Reuses the literal {@code "ATTACHMENT_TOO_LARGE"} code Story 10.1
+     * already shipped {@code bg}/{@code en} entries for, rather than minting
+     * a second one - to a client, "this file is too large" is the same
+     * answer whether our own {@code storage.attachment.max-file-size-bytes}
+     * cap or Spring's own higher servlet-level cap is what actually fired.
+     *
+     * <p>{@link MaxUploadSizeExceededException} is a framework type, not a
+     * module exception - handling it here does not invert AD-2's dependency
+     * direction the way importing a module's own exception would.
+     */
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ApiError> handleMaxUploadSizeExceeded(MaxUploadSizeExceededException ex) {
+        ApiError body = ApiError.of(
+                HttpStatus.BAD_REQUEST.value(),
+                "ATTACHMENT_TOO_LARGE",
+                "Upload exceeded the server's multipart size limit",
+                List.of(new ApiError.FieldError("attachments", "One of the files is too large")));
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
     }
 

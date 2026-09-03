@@ -4,7 +4,7 @@ type: 'feature'
 created: '2026-09-03'
 status: 'review'
 baseline_commit: 'ce922c0a62810c3c5c41cd3e204c62bfa0e29824'
-review_loop_iteration: 0
+review_loop_iteration: 1
 context:
   - '{project-root}/_bmad-output/implementation-artifacts/epic-10-context.md'
 ---
@@ -48,12 +48,16 @@ context:
 | Wrong type | `.pdf` chosen | Excluded client-side, listed with "unsupported" reason | No request |
 | 11th file | Count > cap | Excess excluded, listed with "too many" reason | No request |
 | Future incident date | `max` blocks it in-browser; still sent (e.g. edited devtools) | Field error under Incident date | `CLAIM_INCIDENT_DATE_IN_FUTURE` (400) |
-| Outside coverage | `min`/`max` block it in-browser; still sent, or policy state changed since load | Field error under Incident date | `CLAIM_INCIDENT_OUTSIDE_COVERAGE` (409) |
+| Outside coverage | `min`/`max` block it in-browser; still sent, or policy state changed since load | Form-level `Alert` (this exception carries no `fieldErrors`) | `CLAIM_INCIDENT_OUTSIDE_COVERAGE` (409) |
 | Backend rejects a file client missed | e.g. content-sniff mismatch | Field error under photo list | `ATTACHMENT_*` (400) |
 | Not the client's policy | Direct nav to another client's `:policyId` | Same not-found screen as `PolicyDetail` | `POLICY_NOT_FOUND` → 404 |
 | Double submit | Two rapid clicks | One request only | N/A |
 
 </frozen-after-approval>
+
+## Spec Change Log
+
+- Finding (implementation, verified against `ClaimIncidentOutsideCoverageException.java`): the frozen I/O matrix's "Outside coverage" row originally read "Field error under Incident date," but this exception is a 409 conflict-with-state and carries no `fieldErrors` at all — unlike `CLAIM_INCIDENT_DATE_IN_FUTURE` (400), which does. Amended: the row now reads "Form-level `Alert` (this exception carries no `fieldErrors`)," matching what `FnolForm.test.tsx`'s "renders a form-level error for an outside-coverage rejection" test actually exercises. Avoids: a spec that asserts behavior the current backend contract cannot produce. KEEP: `CLAIM_INCIDENT_OUTSIDE_COVERAGE` stays registered in `FIELD_SPECIFIC_CODES` (Boundaries) as forward-compatible dead weight — harmless now, and no rework needed if a future story adds a `fieldErrors` entry to that exception. No backend or test change made; this entry only reconciles the spec's own text with already-verified, already-tested behavior.
 
 ## Code Map
 

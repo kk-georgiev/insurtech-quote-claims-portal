@@ -1,5 +1,7 @@
 package com.motorinsurance.policy.api;
 
+import static com.motorinsurance.shared.api.CurrentUser.currentUserId;
+
 import com.motorinsurance.policy.application.PolicyService;
 import com.motorinsurance.policy.application.PolicyView;
 import java.util.List;
@@ -52,9 +54,5 @@ public class PolicyController {
     @PreAuthorize("hasRole('CLIENT')")
     public PolicyView getById(@PathVariable("id") UUID id, Authentication authentication) {
         return policyService.getById(id, currentUserId(authentication));
-    }
-
-    private UUID currentUserId(Authentication authentication) {
-        return (UUID) authentication.getPrincipal();
     }
 }

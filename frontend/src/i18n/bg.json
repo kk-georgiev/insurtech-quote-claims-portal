@@ -7,7 +7,8 @@
       "logout": "Изход",
       "health": "Състояние",
       "myQuotes": "Моите оферти",
-      "myPolicies": "Моите полици"
+      "myPolicies": "Моите полици",
+      "myClaims": "Моите щети"
     },
     "language": {
       "label": "Език",
@@ -176,11 +177,13 @@
       "QUOTE_COVERAGE_START_TOO_FAR_AHEAD": "Покритието не може да започне повече от 90 дни напред. Изберете по-ранна дата.",
       "QUOTE_VEHICLE_IDENTIFIER_REQUIRED": "Въведете или регистрационен номер, или VIN — едно от двете, не и двете.",
       "POLICY_NOT_FOUND": "Полицата не е намерена.",
+      "CLAIM_NOT_FOUND": "Щетата не е намерена.",
       "CLAIM_INCIDENT_OUTSIDE_COVERAGE": "Датата на инцидента е извън периода на покритие на полицата.",
       "CLAIM_INCIDENT_DATE_IN_FUTURE": "Датата на инцидента не може да е в бъдещето.",
       "ATTACHMENT_UNSUPPORTED_TYPE": "Може да прикачите само изображения във формат JPEG, PNG или WebP. Премахнете файла, който не е такъв, и опитайте отново.",
       "ATTACHMENT_TOO_LARGE": "Един от файловете е твърде голям. Всяка снимка трябва да е по-малка от 5 MB.",
       "ATTACHMENT_TOO_MANY": "Твърде много файлове. Прикачете най-много 10 снимки.",
+      "ATTACHMENT_NOT_FOUND": "Прикаченият файл не е намерен.",
       "SHARED_VALIDATION_ERROR": "Моля, проверете попълнените данни.",
       "SHARED_NOT_FOUND": "Търсеното не е намерено.",
       "SHARED_INTERNAL_ERROR": "Възникна неочаквана грешка. Моля, опитайте отново по-късно."
@@ -221,6 +224,37 @@
     }
   },
   "claims": {
+    "status": {
+      "submitted": "Подадена",
+      "underReview": "На преглед",
+      "approved": "Одобрена",
+      "rejected": "Отхвърлена",
+      "paid": "Изплатена"
+    },
+    "list": {
+      "heading": "Моите щети",
+      "loading": "Зареждане на щетите ви…",
+      "empty": {
+        "body": "Все още нямате подадени щети. Подайте от полицата, за която се отнася.",
+        "cta": "Към моите полици"
+      },
+      "error": "Щетите не можаха да бъдат заредени.",
+      "retry": "Опитайте отново",
+      "policyNumber": "Полица {{policyNumber}}"
+    },
+    "detail": {
+      "heading": "Детайли за щетата",
+      "backToList": "Обратно към моите щети",
+      "notFound": "Тази щета не е намерена.",
+      "claimNumber": "Номер на щета",
+      "description": "Какво се случи",
+      "policyNumber": "Полица",
+      "incidentDate": "Дата на инцидента",
+      "location": "Къде се случи",
+      "submittedAt": "Подадена на",
+      "statusHistory": "История на статуса",
+      "attachments": "Снимки"
+    },
     "form": {
       "heading": "Подаване на щета",
       "policyLabel": "Подавате щета по полица {{policyNumber}}",

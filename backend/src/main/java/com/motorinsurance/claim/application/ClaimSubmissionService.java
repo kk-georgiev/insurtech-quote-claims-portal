@@ -142,7 +142,11 @@ public class ClaimSubmissionService {
                 claim.getLocation(),
                 claim.getStatus(),
                 claim.getSubmittedAt(),
-                attachments.stream().map(ClaimSubmissionService::toAttachmentView).toList());
+                attachments.stream().map(ClaimSubmissionService::toAttachmentView).toList(),
+                // Synthetic, one entry only - see ClaimView.StatusHistoryEntry's
+                // own Javadoc (Story 10.4). A freshly submitted claim has never
+                // transitioned, so its history is only the SUBMITTED event.
+                List.of(new ClaimView.StatusHistoryEntry(claim.getStatus(), claim.getSubmittedAt())));
     }
 
     private static AttachmentView toAttachmentView(Attachment attachment) {

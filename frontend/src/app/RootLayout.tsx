@@ -77,6 +77,10 @@ export function RootLayout() {
                   <Link className={navLinkClass} to="/policies">
                     {t('app.nav.myPolicies')}
                   </Link>
+                  {/* Story 10.4. */}
+                  <Link className={navLinkClass} to="/claims">
+                    {t('app.nav.myClaims')}
+                  </Link>
                 </>
               )}
               {currentRole ? (

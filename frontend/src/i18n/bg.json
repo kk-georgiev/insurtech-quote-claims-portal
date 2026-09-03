@@ -216,7 +216,32 @@
       "totalPremium": "Обща премия",
       "holderName": "Застрахован",
       "vehicle": "Автомобил",
-      "issuedAt": "Издадена на"
+      "issuedAt": "Издадена на",
+      "fileClaim": "Подай щета"
+    }
+  },
+  "claims": {
+    "form": {
+      "heading": "Подаване на щета",
+      "policyLabel": "Подавате щета по полица {{policyNumber}}",
+      "incidentDate": "Дата на инцидента",
+      "description": "Какво се случи",
+      "location": "Къде се случи",
+      "attachments": "Снимки",
+      "attachmentsHint": "Незадължително. Само изображения във формат JPEG, PNG или WebP, до 5 MB всяка, най-много 10 снимки.",
+      "submit": "Подай щета",
+      "submitting": "Подаване…",
+      "success": {
+        "heading": "Щетата е подадена",
+        "claimNumber": "Номерът на щетата ви е {{claimNumber}}.",
+        "backToPolicy": "Обратно към полицата"
+      },
+      "fieldErrors": {
+        "incidentDate": "Въведете валидна дата на инцидента.",
+        "description": "Опишете какво се случи, между 10 и 2000 знака.",
+        "location": "Въведете местоположение, между 2 и 200 знака.",
+        "attachments": "Една от прикачените снимки не можа да бъде приета."
+      }
     }
   }
 }

@@ -24,7 +24,12 @@ export type Translate = (key: string, options?: Record<string, unknown>) => stri
  * capped at 100 on login, and a shared message could not honestly describe
  * both.
  */
-export type FieldErrorNamespace = 'auth.login' | 'auth.register' | 'quote.form' | 'quotes.accept';
+export type FieldErrorNamespace =
+  | 'auth.login'
+  | 'auth.register'
+  | 'quote.form'
+  | 'quotes.accept'
+  | 'claim.form';
 
 /**
  * What a form *remembers* about a failure, as opposed to what it shows.
@@ -68,6 +73,15 @@ const FIELD_SPECIFIC_CODES: Record<string, string> = {
   QUOTE_COVERAGE_START_IN_PAST: 'coverageStart',
   QUOTE_COVERAGE_START_TOO_FAR_AHEAD: 'coverageStart',
   QUOTE_VEHICLE_IDENTIFIER_REQUIRED: 'vehicleRegistration',
+  // Story 10.3's FNOL form. Both incident-date rejections point at the same
+  // native date input; all three attachment rejections point at the same
+  // photo input, mirroring how the three ATTACHMENT_* exceptions each carry
+  // a field error on `attachments` already (shared/storage).
+  CLAIM_INCIDENT_OUTSIDE_COVERAGE: 'incidentDate',
+  CLAIM_INCIDENT_DATE_IN_FUTURE: 'incidentDate',
+  ATTACHMENT_UNSUPPORTED_TYPE: 'attachments',
+  ATTACHMENT_TOO_LARGE: 'attachments',
+  ATTACHMENT_TOO_MANY: 'attachments',
 };
 
 /**

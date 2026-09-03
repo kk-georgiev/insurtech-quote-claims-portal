@@ -43,6 +43,16 @@ export class ApiRequestError extends Error {
 }
 
 export interface ApiFetchOptions extends Omit<RequestInit, 'body'> {
+  /**
+   * A plain body is JSON-stringified with `Content-Type: application/json`
+   * attached, same as always. A `FormData` body (Story 10.3's `FnolForm`,
+   * the first multipart caller) is sent as-is, with no `Content-Type` set
+   * at all — the browser computes and attaches its own `multipart/form-data;
+   * boundary=...` header, which is only possible when `fetch` is left to set
+   * it itself; a manually-set header here would carry no boundary and the
+   * backend could not parse the body. Additive: every existing JSON caller
+   * is unaffected.
+   */
   body?: unknown;
   /**
    * When `true`, attaches `Authorization: Bearer <token>` using the token
@@ -74,16 +84,18 @@ export async function apiFetch<TResponse>(
     }
   }
 
+  const isFormData = body instanceof FormData;
+
   let response: Response;
   try {
     response = await fetch(`${API_URL}${path}`, {
       ...rest,
       headers: {
-        ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
+        ...(body !== undefined && !isFormData ? { 'Content-Type': 'application/json' } : {}),
         ...authHeaders,
         ...headers,
       },
-      body: body !== undefined ? JSON.stringify(body) : undefined,
+      body: body === undefined ? undefined : isFormData ? body : JSON.stringify(body),
     });
   } catch {
     throw new ApiRequestError(`Network error calling ${path}`);

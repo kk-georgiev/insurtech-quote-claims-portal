@@ -10,6 +10,7 @@ import { MyQuotes } from '../features/quote/MyQuotes';
 import { QuoteDetail } from '../features/quote/QuoteDetail';
 import { MyPolicies } from '../features/policy/MyPolicies';
 import { PolicyDetail } from '../features/policy/PolicyDetail';
+import { FnolForm } from '../features/claim/FnolForm';
 import { AgentShell } from '../features/shells/agent/AgentShell';
 import { LiquidatorShell } from '../features/shells/liquidator/LiquidatorShell';
 import { AdministratorShell } from '../features/shells/administrator/AdministratorShell';
@@ -47,6 +48,10 @@ export const routes: RouteObject[] = [
           // guard as the quote screens - again no new guard logic.
           { path: 'policies', element: <MyPolicies /> },
           { path: 'policies/:id', element: <PolicyDetail /> },
+          // Story 10.3: the FNOL form. Reached from PolicyDetail's "File a
+          // claim" link - same CLIENT-only guard as every other client
+          // route, no new guard logic.
+          { path: 'policies/:policyId/claims/new', element: <FnolForm /> },
         ],
       },
       { path: 'health', element: <HealthStatus /> },

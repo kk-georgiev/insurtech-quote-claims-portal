@@ -104,9 +104,21 @@ export function PolicyDetail() {
         <h2 className="text-2xl font-semibold tracking-tight text-text">
           {t('policies.detail.heading')}
         </h2>
-        <Badge variant={status.variant} data-testid="policy-detail-status">
-          {status.label}
-        </Badge>
+        <div className="flex items-center gap-3">
+          {/* Story 10.3: a claim always starts from the policy it belongs to
+              (epic-10-context.md, Routes). No new guard logic - the route
+              this leads to sits inside the same CLIENT-only RoleGuard. */}
+          <Link
+            to={`/policies/${policy.id}/claims/new`}
+            className="text-sm text-accent underline"
+            data-testid="policy-detail-file-claim"
+          >
+            {t('policies.detail.fileClaim')}
+          </Link>
+          <Badge variant={status.variant} data-testid="policy-detail-status">
+            {status.label}
+          </Badge>
+        </div>
       </div>
 
       <Card>

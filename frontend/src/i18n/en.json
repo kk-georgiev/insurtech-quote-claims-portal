@@ -216,7 +216,32 @@
       "totalPremium": "Total premium",
       "holderName": "Policyholder",
       "vehicle": "Vehicle",
-      "issuedAt": "Issued on"
+      "issuedAt": "Issued on",
+      "fileClaim": "File a claim"
+    }
+  },
+  "claims": {
+    "form": {
+      "heading": "File a claim",
+      "policyLabel": "Filing a claim against policy {{policyNumber}}",
+      "incidentDate": "Incident date",
+      "description": "What happened",
+      "location": "Where it happened",
+      "attachments": "Photos",
+      "attachmentsHint": "Optional. JPEG, PNG or WebP images only, up to 5 MB each, at most 10 photos.",
+      "submit": "Submit claim",
+      "submitting": "Submitting…",
+      "success": {
+        "heading": "Claim submitted",
+        "claimNumber": "Your claim number is {{claimNumber}}.",
+        "backToPolicy": "Back to the policy"
+      },
+      "fieldErrors": {
+        "incidentDate": "Enter a valid incident date.",
+        "description": "Describe what happened, between 10 and 2000 characters.",
+        "location": "Enter a location, between 2 and 200 characters.",
+        "attachments": "One of the attached photos could not be accepted."
+      }
     }
   }
 }

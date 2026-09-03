@@ -29,7 +29,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 # - Retrospective appends its action items to action_items; the status view surfaces open ones
 generated: 08-23-2026 17:25
-last_updated: 09-03-2026 13:30
+last_updated: 09-03-2026 15:00
 project: Motor Insurance Quote & Claims Portal
 project_key: NOKEY
 tracking_system: file-system
@@ -100,7 +100,7 @@ development_status:
   10-1-attachment-storage-and-validated-upload: done
   10-2-claim-submission-coverage-check-and-claim-number: done
   10-3-the-fnol-form: review
-  10-4-my-claims-list-and-detail: backlog
+  10-4-my-claims-list-and-detail: review
   epic-10-retrospective: optional
 
   epic-11: backlog

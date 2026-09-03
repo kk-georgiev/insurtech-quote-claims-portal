@@ -7,7 +7,8 @@
       "logout": "Logout",
       "health": "Health",
       "myQuotes": "My quotes",
-      "myPolicies": "My policies"
+      "myPolicies": "My policies",
+      "myClaims": "My claims"
     },
     "language": {
       "label": "Language",
@@ -176,11 +177,13 @@
       "QUOTE_COVERAGE_START_TOO_FAR_AHEAD": "Cover cannot start more than 90 days from now. Choose an earlier date.",
       "QUOTE_VEHICLE_IDENTIFIER_REQUIRED": "Enter either a registration number or a VIN — one of the two, not both.",
       "POLICY_NOT_FOUND": "Policy not found.",
+      "CLAIM_NOT_FOUND": "Claim not found.",
       "CLAIM_INCIDENT_OUTSIDE_COVERAGE": "The incident date is outside the policy's coverage period.",
       "CLAIM_INCIDENT_DATE_IN_FUTURE": "The incident date cannot be in the future.",
       "ATTACHMENT_UNSUPPORTED_TYPE": "Only JPEG, PNG and WebP images can be attached. Remove the file that is not one of these and try again.",
       "ATTACHMENT_TOO_LARGE": "One of the files is too large. Each photo must be smaller than 5 MB.",
       "ATTACHMENT_TOO_MANY": "Too many files. Attach at most 10 photos.",
+      "ATTACHMENT_NOT_FOUND": "Attachment not found.",
       "SHARED_VALIDATION_ERROR": "Please check the details you entered.",
       "SHARED_NOT_FOUND": "Not found.",
       "SHARED_INTERNAL_ERROR": "An unexpected error occurred. Please try again later."
@@ -221,6 +224,37 @@
     }
   },
   "claims": {
+    "status": {
+      "submitted": "Submitted",
+      "underReview": "Under review",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "paid": "Paid"
+    },
+    "list": {
+      "heading": "My claims",
+      "loading": "Loading your claims…",
+      "empty": {
+        "body": "You have no claims yet. File one from the policy it applies to.",
+        "cta": "Go to my policies"
+      },
+      "error": "Your claims could not be loaded.",
+      "retry": "Try again",
+      "policyNumber": "Policy {{policyNumber}}"
+    },
+    "detail": {
+      "heading": "Claim details",
+      "backToList": "Back to my claims",
+      "notFound": "This claim could not be found.",
+      "claimNumber": "Claim number",
+      "description": "What happened",
+      "policyNumber": "Policy",
+      "incidentDate": "Incident date",
+      "location": "Where it happened",
+      "submittedAt": "Submitted on",
+      "statusHistory": "Status history",
+      "attachments": "Photos"
+    },
     "form": {
       "heading": "File a claim",
       "policyLabel": "Filing a claim against policy {{policyNumber}}",

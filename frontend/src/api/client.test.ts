@@ -116,3 +116,70 @@ describe('apiFetch session-expiry handling (Story 7.1)', () => {
     });
   });
 });
+
+// Story 10.4: the additive `responseType: 'blob'` option `ClaimDetail` uses
+// for its authenticated per-attachment image fetch - unmocked `fetch` here
+// too, so the real branch (not a mocked `apiFetch`) is what's exercised.
+describe('apiFetch responseType option (Story 10.4)', () => {
+  function stubBlobFetch(status: number, body: BodyInit, contentType: string) {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(new Response(body, { status, headers: { 'Content-Type': contentType } }));
+    vi.stubGlobal('fetch', fetchMock);
+    return fetchMock;
+  }
+
+  afterEach(() => {
+    onSessionExpired(() => {});
+  });
+
+  it('resolves a Blob, not parsed JSON, on a 2xx response when responseType is "blob"', async () => {
+    stubBlobFetch(200, new Blob(['fake-image-bytes'], { type: 'image/jpeg' }), 'image/jpeg');
+
+    const result = await apiFetch<Blob>('/api/v1/claims/c1/attachments/a1', {
+      authenticated: true,
+      responseType: 'blob',
+    });
+
+    // Not `toBeInstanceOf(Blob)`, and not an exact byte count: the test
+    // environment's `Response.blob()` is a different realm/implementation
+    // than plain Node's, with its own chunking quirks unrelated to this
+    // option's own logic. `type`/`size > 0`/`arrayBuffer` are enough to
+    // prove this really is blob data, not the JSON envelope this path
+    // resolved to before `responseType` existed.
+    expect(result.type).toBe('image/jpeg');
+    expect(result.size).toBeGreaterThan(0);
+    expect(typeof result.arrayBuffer).toBe('function');
+  });
+
+  it('still parses the JSON error envelope on a non-2xx response, even when responseType is "blob"', async () => {
+    stubBlobFetch(404, JSON.stringify({ status: 404, code: 'ATTACHMENT_NOT_FOUND' }), 'application/json');
+
+    await expect(
+      apiFetch('/api/v1/claims/c1/attachments/a1', { authenticated: true, responseType: 'blob' }),
+    ).rejects.toMatchObject({ status: 404, code: 'ATTACHMENT_NOT_FOUND' });
+  });
+
+  it('still clears the token and notifies session-expiry on a 401, even when responseType is "blob"', async () => {
+    saveToken('a-jwt-token');
+    const handler = vi.fn();
+    onSessionExpired(handler);
+    stubBlobFetch(401, JSON.stringify({ status: 401, code: 'AUTH_UNAUTHENTICATED' }), 'application/json');
+
+    await expect(
+      apiFetch('/api/v1/claims/c1/attachments/a1', { authenticated: true, responseType: 'blob' }),
+    ).rejects.toThrow();
+
+    expect(getToken()).toBeNull();
+    expect(handler).toHaveBeenCalledTimes(1);
+  });
+
+  it('parses JSON as before when responseType is omitted (default unchanged)', async () => {
+    const fetchMock = stubFetch(200, { id: 'q1' });
+
+    const result = await apiFetch<{ id: string }>('/api/v1/quotes/q1', { authenticated: true });
+
+    expect(result).toEqual({ id: 'q1' });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+});

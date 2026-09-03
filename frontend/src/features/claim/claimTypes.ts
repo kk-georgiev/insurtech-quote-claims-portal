@@ -23,10 +23,25 @@ export interface AttachmentResponse {
 }
 
 /**
+ * Mirrors the backend's `claim.application.ClaimView.StatusHistoryEntry`
+ * (Story 10.4, READ-ONLY, claim/application). This story's backend ever
+ * produces exactly one entry - the claim's current status paired with its
+ * `submittedAt` - never a richer, inferred timeline (see `ClaimView`'s own
+ * Javadoc); this frontend type carries the shape honestly rather than
+ * assuming a single-entry array.
+ */
+export interface StatusHistoryEntryResponse {
+  status: ClaimStatus;
+  occurredAt: string;
+}
+
+/**
  * Mirrors the backend's `claim.application.ClaimView` (READ-ONLY, claim/
  * application) - what `POST /api/v1/claims` returns on success (Story
- * 10.2). Lives under `features/claim/` as this story's own first artifact
- * in that module; Story 10.4's list/detail screens are its next consumers.
+ * 10.2), and what Story 10.4's `GET /api/v1/claims` (list) and
+ * `GET /api/v1/claims/{id}` (detail) both return - the same shape, per
+ * M4-AD-12. Lives under `features/claim/` as this story's own first
+ * artifact in that module.
  */
 export interface ClaimResponse {
   id: string;
@@ -39,4 +54,5 @@ export interface ClaimResponse {
   status: ClaimStatus;
   submittedAt: string;
   attachments: AttachmentResponse[];
+  statusHistory: StatusHistoryEntryResponse[];
 }

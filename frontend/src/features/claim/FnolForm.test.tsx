@@ -71,6 +71,7 @@ function sampleClaim(overrides: Partial<ClaimResponse> = {}): ClaimResponse {
     status: 'SUBMITTED',
     submittedAt: '2020-06-02T10:00:00Z',
     attachments: [],
+    statusHistory: [{ status: 'SUBMITTED', occurredAt: '2020-06-02T10:00:00Z' }],
     ...overrides,
   };
 }

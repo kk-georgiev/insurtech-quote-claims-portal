@@ -10,6 +10,8 @@ import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -32,7 +34,8 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 /**
  * Full-stack HTTP proof for {@code POST /api/v1/claims} (Story 10.2,
- * FR-M4-04) against a real Postgres, mirroring {@code
+ * FR-M4-04) and, since Story 10.4, its {@code GET} list/detail/attachment-
+ * download endpoints - against a real Postgres, mirroring {@code
  * policy.api.PolicyControllerTest}'s pattern: policies are created the way a
  * client creates them (register, quote, accept) rather than inserted, and a
  * policy whose coverage has already ended is reached the same way that test
@@ -267,6 +270,213 @@ class ClaimControllerTest {
         assertThat(response.getBody()).contains("\"code\":\"AUTH_FORBIDDEN\"");
     }
 
+    // --- Story 10.4: GET list / detail / attachment download ---
+
+    @Test
+    void clientRole_listClaims_returnsOnlyOwnClaimsNewestFirst() {
+        String ownerToken = clientToken();
+        String otherToken = clientToken();
+        UUID first = claimId(
+                submitClaim(ownerToken, issuePolicy(ownerToken, today()), today(), VALID_DESCRIPTION, VALID_LOCATION)
+                        .getBody());
+        UUID second = claimId(
+                submitClaim(ownerToken, issuePolicy(ownerToken, today()), today(), VALID_DESCRIPTION, VALID_LOCATION)
+                        .getBody());
+        // Belongs to a different customer - must never appear in the owner's
+        // list, under any parameter (M4-AD-12 / AD-10).
+        submitClaim(otherToken, issuePolicy(otherToken, today()), today(), VALID_DESCRIPTION, VALID_LOCATION);
+
+        ResponseEntity<String> response = get(CLAIMS_PATH, ownerToken);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        // A bare JSON array (M4-AD-12) - not an envelope object.
+        assertThat(response.getBody()).startsWith("[").endsWith("]");
+        assertThat(extractAllIds(response.getBody())).containsExactly(second, first);
+    }
+
+    @Test
+    void clientRole_listClaims_noneYet_returnsEmptyArrayNotError() {
+        ResponseEntity<String> response = get(CLAIMS_PATH, clientToken());
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isEqualTo("[]");
+    }
+
+    @Test
+    void clientRole_claimDetail_carriesStatusHistoryAndAttachments() {
+        String token = clientToken();
+        UUID policyId = issuePolicy(token, today());
+        UUID claimId = claimId(
+                submitClaim(token, policyId, today(), VALID_DESCRIPTION, VALID_LOCATION, jpeg(16), png(16)).getBody());
+
+        ResponseEntity<String> response = get(CLAIMS_PATH + "/" + claimId, token);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        String body = response.getBody();
+        // Synthetic history: exactly the one SUBMITTED event this story
+        // actually has (spec Boundaries) - never padded or inferred.
+        assertThat(body).contains("\"statusHistory\":[{\"status\":\"SUBMITTED\"");
+        assertThat(body).contains("\"contentType\":\"image/jpeg\"");
+        assertThat(body).contains("\"contentType\":\"image/png\"");
+    }
+
+    @Test
+    void clientRole_listAndDetail_returnTheSameShape() {
+        String token = clientToken();
+        UUID claimId = claimId(
+                submitClaim(token, issuePolicy(token, today()), today(), VALID_DESCRIPTION, VALID_LOCATION).getBody());
+
+        String fromList = get(CLAIMS_PATH, token).getBody();
+        String fromDetail = get(CLAIMS_PATH + "/" + claimId, token).getBody();
+
+        // M4-AD-12: the list returns the same DTO the detail endpoint does.
+        assertThat(fromList).isEqualTo("[" + fromDetail + "]");
+    }
+
+    @Test
+    void clientRole_anotherCustomersClaim_returnsNotFoundNotForbidden() {
+        String ownerToken = clientToken();
+        String otherToken = clientToken();
+        UUID claimId = claimId(
+                submitClaim(ownerToken, issuePolicy(ownerToken, today()), today(), VALID_DESCRIPTION, VALID_LOCATION)
+                        .getBody());
+
+        ResponseEntity<String> response = get(CLAIMS_PATH + "/" + claimId, otherToken);
+
+        // Never 403: the response must not confirm the id belongs to someone
+        // else (M4-AD-12 / AD-10).
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(response.getBody()).contains("\"code\":\"CLAIM_NOT_FOUND\"");
+    }
+
+    @Test
+    void clientRole_unknownClaimId_returnsNotFound() {
+        ResponseEntity<String> response = get(CLAIMS_PATH + "/" + UUID.randomUUID(), clientToken());
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(response.getBody()).contains("\"code\":\"CLAIM_NOT_FOUND\"");
+    }
+
+    @Test
+    void noToken_onListOrDetail_isRejectedUnauthenticated() {
+        for (String path : new String[] {CLAIMS_PATH, CLAIMS_PATH + "/" + UUID.randomUUID()}) {
+            ResponseEntity<String> response = get(path, null);
+
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+            assertThat(response.getBody()).contains("\"code\":\"AUTH_UNAUTHENTICATED\"");
+        }
+    }
+
+    @Test
+    void nonClientRole_onListOrDetail_isRejectedForbidden() {
+        String agentToken = jwtService.issueToken(UUID.randomUUID(), Role.AGENT);
+
+        for (String path : new String[] {CLAIMS_PATH, CLAIMS_PATH + "/" + UUID.randomUUID()}) {
+            ResponseEntity<String> response = get(path, agentToken);
+
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+            assertThat(response.getBody()).contains("\"code\":\"AUTH_FORBIDDEN\"");
+        }
+    }
+
+    @Test
+    void ownerClient_downloadsOwnAttachment_getsBytesWithInlineDisposition() {
+        String token = clientToken();
+        String claim = submitClaim(token, issuePolicy(token, today()), today(), VALID_DESCRIPTION, VALID_LOCATION, jpeg(16))
+                .getBody();
+        UUID claimId = claimId(claim);
+        UUID attachmentId = extractAttachmentId(claim);
+
+        ResponseEntity<byte[]> response = getBytes(attachmentPath(claimId, attachmentId), token);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getHeaders().getContentType()).isEqualTo(MediaType.IMAGE_JPEG);
+        assertThat(response.getHeaders().getFirst(HttpHeaders.CONTENT_DISPOSITION)).contains("inline");
+        assertThat(response.getBody().length).isGreaterThan(0);
+    }
+
+    @Test
+    void anyLiquidator_downloadsAnyClaimsAttachment_getsBytes() {
+        String ownerToken = clientToken();
+        String claim = submitClaim(
+                        ownerToken, issuePolicy(ownerToken, today()), today(), VALID_DESCRIPTION, VALID_LOCATION, png(16))
+                .getBody();
+        UUID claimId = claimId(claim);
+        UUID attachmentId = extractAttachmentId(claim);
+        String liquidatorToken = jwtService.issueToken(UUID.randomUUID(), Role.LIQUIDATOR);
+
+        ResponseEntity<byte[]> response = getBytes(attachmentPath(claimId, attachmentId), liquidatorToken);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getHeaders().getContentType()).isEqualTo(MediaType.IMAGE_PNG);
+    }
+
+    @Test
+    void differentClient_downloadingAnotherClaimsAttachment_isNotFoundNotForbidden() {
+        String ownerToken = clientToken();
+        String otherToken = clientToken();
+        String claim = submitClaim(
+                        ownerToken, issuePolicy(ownerToken, today()), today(), VALID_DESCRIPTION, VALID_LOCATION, jpeg(16))
+                .getBody();
+        UUID claimId = claimId(claim);
+        UUID attachmentId = extractAttachmentId(claim);
+
+        ResponseEntity<byte[]> response = getBytes(attachmentPath(claimId, attachmentId), otherToken);
+
+        // Never 403 (spec Boundaries: the download endpoint must never
+        // return 403 for any caller) - indistinguishable from "not found".
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    void agentOrAdministrator_downloadingAnAttachment_isNotFoundNeverForbidden() {
+        String ownerToken = clientToken();
+        String claim = submitClaim(
+                        ownerToken, issuePolicy(ownerToken, today()), today(), VALID_DESCRIPTION, VALID_LOCATION, jpeg(16))
+                .getBody();
+        UUID claimId = claimId(claim);
+        UUID attachmentId = extractAttachmentId(claim);
+
+        for (Role wrongRole : new Role[] {Role.AGENT, Role.ADMINISTRATOR}) {
+            String token = jwtService.issueToken(UUID.randomUUID(), wrongRole);
+
+            ResponseEntity<byte[]> response = getBytes(attachmentPath(claimId, attachmentId), token);
+
+            // The AC forbids 403 for *any* wrong caller, including an
+            // authenticated staff role with no relationship to this claim
+            // (spec Boundaries: "the download endpoint must never return
+            // 403") - so even AGENT/ADMINISTRATOR get 404, not 403.
+            assertThat(response.getStatusCode())
+                    .as("role %s", wrongRole)
+                    .isEqualTo(HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @Test
+    void noToken_downloadingAnAttachment_isRejectedUnauthenticated() {
+        String ownerToken = clientToken();
+        String claim = submitClaim(
+                        ownerToken, issuePolicy(ownerToken, today()), today(), VALID_DESCRIPTION, VALID_LOCATION, jpeg(16))
+                .getBody();
+        UUID claimId = claimId(claim);
+        UUID attachmentId = extractAttachmentId(claim);
+
+        ResponseEntity<byte[]> response = getBytes(attachmentPath(claimId, attachmentId), null);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+    }
+
+    @Test
+    void downloadingAnUnknownAttachmentId_onAnOwnedClaim_isNotFound() {
+        String token = clientToken();
+        UUID claimId = claimId(
+                submitClaim(token, issuePolicy(token, today()), today(), VALID_DESCRIPTION, VALID_LOCATION).getBody());
+
+        ResponseEntity<byte[]> response = getBytes(attachmentPath(claimId, UUID.randomUUID()), token);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
     // --- helpers ---
 
     private static LocalDate today() {
@@ -297,6 +507,59 @@ class ClaimControllerTest {
 
     private Integer countClaims(UUID policyId) {
         return jdbcTemplate.queryForObject("SELECT count(*) FROM claims WHERE policy_id = ?", Integer.class, policyId);
+    }
+
+    private ResponseEntity<String> get(String path, String bearerToken) {
+        RestClient.RequestHeadersSpec<?> spec = client().get().uri(path);
+        if (bearerToken != null) {
+            spec = spec.header(HttpHeaders.AUTHORIZATION, "Bearer " + bearerToken);
+        }
+        return spec.exchange(this::toEntity);
+    }
+
+    private ResponseEntity<byte[]> getBytes(String path, String bearerToken) {
+        RestClient.RequestHeadersSpec<?> spec = client().get().uri(path);
+        if (bearerToken != null) {
+            spec = spec.header(HttpHeaders.AUTHORIZATION, "Bearer " + bearerToken);
+        }
+        return spec.exchange(this::toBytesEntity);
+    }
+
+    private static String attachmentPath(UUID claimId, UUID attachmentId) {
+        return CLAIMS_PATH + "/" + claimId + "/attachments/" + attachmentId;
+    }
+
+    private static UUID claimId(String claimJson) {
+        return extractId(claimJson);
+    }
+
+    /**
+     * The first attachment's id from a claim JSON body - distinct from
+     * {@link #extractId}, which would match the claim's own {@code id} field
+     * first (it appears earlier in {@code ClaimView}'s field order).
+     */
+    private static UUID extractAttachmentId(String claimJson) {
+        Matcher matcher = Pattern.compile("\"attachments\":\\[\\{\"id\":\"([0-9a-fA-F-]{36})\"").matcher(claimJson);
+        assertThat(matcher.find())
+                .as("claim body should carry at least one attachment: %s", claimJson)
+                .isTrue();
+        return UUID.fromString(matcher.group(1));
+    }
+
+    /**
+     * Every top-level {@code id} in a claim list body, mirroring {@code
+     * PolicyControllerTest}'s identical helper. Unlike a policy, a claim can
+     * carry nested {@code attachments[].id} values that would also match
+     * this naive pattern - callers of this helper submit claims with no
+     * photos, so that never arises here.
+     */
+    private static List<UUID> extractAllIds(String responseBody) {
+        Matcher matcher = Pattern.compile("\\{\"id\":\"([0-9a-fA-F-]{36})\"").matcher(responseBody);
+        List<UUID> ids = new ArrayList<>();
+        while (matcher.find()) {
+            ids.add(UUID.fromString(matcher.group(1)));
+        }
+        return ids;
     }
 
     private UUID createQuote(String token) {
@@ -417,6 +680,14 @@ class ClaimControllerTest {
         return ResponseEntity.status(response.getStatusCode())
                 .headers(response.getHeaders())
                 .body(response.bodyTo(String.class));
+    }
+
+    private ResponseEntity<byte[]> toBytesEntity(
+            HttpRequest request, RestClient.RequestHeadersSpec.ConvertibleClientHttpResponse response)
+            throws IOException {
+        return ResponseEntity.status(response.getStatusCode())
+                .headers(response.getHeaders())
+                .body(response.bodyTo(byte[].class));
     }
 
     private RestClient client() {

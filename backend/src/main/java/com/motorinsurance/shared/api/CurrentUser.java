@@ -25,4 +25,22 @@ public final class CurrentUser {
     public static UUID currentUserId(Authentication authentication) {
         return (UUID) authentication.getPrincipal();
     }
+
+    /**
+     * True when the authenticated caller holds {@code role} (Story 10.4) -
+     * checks the {@code ROLE_<role>} authority format {@code
+     * auth.config.JwtAuthenticationFilter} always sets, matching what
+     * {@code @PreAuthorize("hasRole('...')")} checks internally. Exists for
+     * {@code claim.application.ClaimQueryService}'s attachment-download
+     * branch, which cannot use {@code @PreAuthorize} role-gating at all (that
+     * throws a 403 for the wrong role, forbidden by that endpoint's own AC) -
+     * this is the one authorization helper besides {@link
+     * #currentUserId(Authentication)} that {@code shared.api} exposes, and no
+     * other module needs a second one.
+     */
+    public static boolean hasRole(Authentication authentication, String role) {
+        String authority = "ROLE_" + role;
+        return authentication.getAuthorities().stream()
+                .anyMatch(granted -> authority.equals(granted.getAuthority()));
+    }
 }

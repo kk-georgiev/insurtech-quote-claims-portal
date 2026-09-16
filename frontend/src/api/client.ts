@@ -64,17 +64,33 @@ export interface ApiFetchOptions extends Omit<RequestInit, 'body'> {
    * never as a special case here.
    */
   authenticated?: boolean;
+  /**
+   * `'json'` (the default, unchanged behaviour) parses the response body
+   * with `response.json()`. `'blob'` (Story 10.4, `ClaimDetail`'s
+   * authenticated attachment fetch) resolves `response.blob()` instead - the
+   * one call site needing this is a JWT-authenticated image fetch, since a
+   * plain `<img src>`/`<a href>` cannot attach the `Authorization` header
+   * this app's in-memory-token auth model requires.
+   *
+   * <p>Additive and applies only after a successful (2xx) response: a
+   * non-2xx response always goes through the existing JSON error-envelope
+   * parse below regardless of this option, and the 401 -> `clearToken()` +
+   * `notifySessionExpired()` branch fires identically either way.
+   */
+  responseType?: 'json' | 'blob';
 }
 
 /**
- * Calls `${VITE_API_URL}${path}` and parses the JSON response.
- * Throws {@link ApiRequestError} on network failure or a non-2xx response.
+ * Calls `${VITE_API_URL}${path}` and parses the response - as JSON by
+ * default, or as a `Blob` when `options.responseType === 'blob'` (Story
+ * 10.4). Throws {@link ApiRequestError} on network failure or a non-2xx
+ * response, parsed the same way regardless of `responseType`.
  */
 export async function apiFetch<TResponse>(
   path: string,
   options: ApiFetchOptions = {},
 ): Promise<TResponse> {
-  const { body, headers, authenticated, ...rest } = options;
+  const { body, headers, authenticated, responseType = 'json', ...rest } = options;
 
   const authHeaders: Record<string, string> = {};
   if (authenticated) {
@@ -138,6 +154,14 @@ export async function apiFetch<TResponse>(
 
   if (response.status === 204) {
     return undefined as TResponse;
+  }
+
+  if (responseType === 'blob') {
+    try {
+      return (await response.blob()) as TResponse;
+    } catch {
+      throw new ApiRequestError(`Response from ${path} was not a readable blob`, response.status);
+    }
   }
 
   try {
